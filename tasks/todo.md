@@ -17,59 +17,57 @@
 
 ---
 
-## Phase Actuelle : Phase 0 — Setup & Fondations
+## Phase Actuelle : Phase 1 — MVP
 
 ---
 
-# PHASE 0 — Setup & Fondations (Semaine 1)
+# PHASE 0 — Setup & Fondations ✅ (12 juin 2026)
 
 ## 0.1 Initialisation du projet
-- [ ] `ionic start abide blank --type vue` (Vue 3 + Ionic)
-- [ ] Installer Capacitor 6 + `npx cap init`
-- [ ] Configurer `capacitor.config.js` (appId, appName, plugins)
-- [ ] Configurer Vite : alias `@/` → `src/`, variables d'env
-- [ ] Ajouter `.gitignore` (node_modules, .env.local, ios/, android/, dist/)
-- [ ] Init Git + premier commit
-- [ ] Créer `.env.example` documentant toutes les variables nécessaires
+- [x] Setup Vue 3 + Ionic 8 + Capacitor 6 (installation manuelle, dossier non vide)
+- [x] Configurer `capacitor.config.json` (appId: com.abide.app, appName: Abide)
+- [x] Configurer Vite : alias `@/` → `src/`, variables d'env
+- [x] Ajouter `.gitignore` (node_modules, .env.local, ios/, android/, dist/)
+- [x] Init Git + premier commit
+- [x] Créer `.env.example` documentant toutes les variables nécessaires
 
 ## 0.2 Structure & outils de base
-- [ ] Créer l'arborescence complète (views, components, composables, lib, stores, assets)
-- [ ] Installer + configurer Pinia (créer les stores vides : auth, bible, audio, ai, plan, streak, ads)
-- [ ] Installer + configurer Vue Router (routes vides + structure tabs)
-- [ ] Configurer ESLint + Prettier (cohérence du code)
-- [ ] Créer `src/lib/supabase.js` (client singleton)
+- [x] Créer l'arborescence complète (views, components, composables, lib, stores, assets)
+- [x] Installer + configurer Pinia (stores : auth, bible, audio, ai, plan, streak, ads)
+- [x] Installer + configurer Vue Router (routes + guards auth + structure tabs)
+- [x] Créer `src/lib/supabase.js` (client singleton)
+- [ ] Configurer ESLint + Prettier (cohérence du code) ← à faire en Phase 1
 
 ## 0.3 Supabase
-- [ ] Créer le projet Supabase
-- [ ] Activer l'extension pgvector
-- [ ] Migration 001_profiles.sql
-- [ ] Migration 002_reading_progress.sql
-- [ ] Migration 003_reading_plans.sql
-- [ ] Migration 004_ai_sessions.sql
-- [ ] Migration 005_prayers.sql
-- [ ] Migration 006_bible_embeddings.sql
-- [ ] Activer Row Level Security (RLS) sur toutes les tables
-- [ ] Écrire les policies RLS (chaque user accède uniquement à ses données)
-- [ ] Tester les migrations en local (`supabase db reset`)
+- [x] Projet Supabase existant (URL + clé dans .env.local)
+- [ ] Activer l'extension pgvector (Dashboard → Database → Extensions)
+- [x] Migration 001_profiles.sql (avec trigger création auto + RLS)
+- [x] Migration 002_reading_progress.sql (+ streaks + RLS)
+- [x] Migration 003_reading_plans.sql (+ RLS)
+- [x] Migration 004_ai_sessions.sql (+ RLS, INSERT/UPDATE via Edge Function uniquement)
+- [x] Migration 005_prayers.sql (+ RLS)
+- [x] Migration 006_bible_embeddings.sql (pgvector + fonction search_bible)
+- [ ] Appliquer les migrations sur le projet Supabase ← à faire manuellement (Dashboard SQL Editor)
+- [ ] Tester les migrations en local (`supabase db reset`) ← optionnel, CLI Supabase à installer
 
 ## 0.4 Contenu biblique de base
-- [ ] Télécharger LSG 1910 depuis eBible.org (format USFM ou JSON)
-- [ ] Écrire `scripts/convert-bible.js` (USFM/JSON → SQLite)
-- [ ] Générer `src/assets/bibles/lsg1910.db`
-- [ ] Installer capacitor-sqlite
-- [ ] Tester lecture d'un verset depuis la Bible locale
+- [x] Écrire `scripts/convert-bible.js` (getbible.net API → SQLite)
+- [x] Générer `src/assets/bibles/lsg1910.db` (31 170 versets, 6.65 MB)
+- [x] `@capacitor-community/sqlite` installé
+- [ ] Tester lecture d'un verset depuis la Bible locale ← test en Phase 1 (BibleChapterView)
 
 ## 0.5 APIs externes (comptes + tests)
-- [ ] Créer compte BibleBrain + obtenir clé API dev
+- [ ] Créer compte BibleBrain + obtenir clé API dev ← **BLOQUANT pour l'audio**
 - [ ] Tester appel BibleBrain (lister versions audio françaises)
-- [ ] Créer compte OpenRouter + tester un appel LLM
-- [ ] Créer bucket Cloudflare R2 + configurer CORS
+- [x] OpenRouter testé ✅ (GPT-4o-mini répond correctement)
+- [x] Cloudflare R2 : credentials dans .env.local ✅
 
 ## 0.6 Build & vérification
-- [ ] Configurer EAS (Expo Application Services)
-- [ ] Premier build Android (`npx cap run android`)
-- [ ] Premier build iOS (`npx cap run ios`)
-- [ ] Vérifier que l'app démarre sur les deux simulateurs
+- [x] ~~EAS~~ — n'est pas utilisé (c'est Expo). Capacitor utilisé directement.
+- [x] Plateforme Android ajoutée (`npx cap add android`)
+- [ ] Premier build Android (`npx cap run android`) ← nécessite Android Studio
+- [ ] Premier build iOS ← nécessite un Mac + Xcode
+- [x] `vite build` compilé sans erreur ✅
 
 ---
 

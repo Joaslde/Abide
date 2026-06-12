@@ -52,7 +52,23 @@
 
 ## Apprentissages en Cours
 
-*(Claude remplit cette section au fil du développement)*
+```
+[2026-06-12] | ARCH | ionic start ne fonctionne pas sur dossier non vide | Initialiser le projet manuellement (package.json + npm install + fichiers de config) quand le dossier contient déjà des fichiers .md ou .env.
+
+[2026-06-12] | ARCH | capacitor.config.json préféré à capacitor.config.js | Avec "type":"module" dans package.json, le fichier .js Capacitor génère une erreur ESM. Utiliser capacitor.config.json qui est universel et toujours supporté.
+
+[2026-06-12] | BUG | "type":"module" casse module.exports dans capacitor.config.js | Remplacer module.exports par export default OU mieux : utiliser capacitor.config.json (format JSON, aucun problème ESM/CJS).
+
+[2026-06-12] | API | eBible.org — URLs de téléchargement cassées | Les URLs https://ebible.org/Scriptures/fra_lsg*.zip retournent 404. Utiliser getbible.net API à la place : GET https://api.getbible.net/v2/ls1910/{bookNr}.json — retourne tout un livre (tous chapitres + versets) en une requête. ID de la LSG 1910 = "ls1910".
+
+[2026-06-12] | API | getbible.net structure de réponse | La réponse retourne chapters[] (tableau), chaque chapitre contient verses[] avec {chapter, verse, text}. Pas un objet mais un tableau. Ne pas utiliser chapters.'1' mais chapters[0].
+
+[2026-06-12] | CAPACITOR | Plateformes Capacitor 6 — @capacitor/cli doit être local | npx cap add android échoue si @capacitor/cli n'est pas dans devDependencies du projet. L'installer avec npm install --save-dev @capacitor/cli avant d'ajouter les plateformes.
+
+[2026-06-12] | ARCH | iOS build impossible sur Windows | npx cap add ios échoue sur Windows. Les builds iOS nécessitent un Mac + Xcode. À faire sur Mac uniquement (Phase 1.9 — build stores).
+
+[2026-06-12] | SECU | OPENROUTER_KEY ne doit pas avoir le préfixe VITE_ | La clé est dans .env.local sans VITE_ car elle est réservée aux Edge Functions Supabase. Ne jamais l'exposer côté client.
+```
 
 ---
 
