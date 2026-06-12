@@ -1,0 +1,7 @@
+{
+  "name": "abide",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}
