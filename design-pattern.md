@@ -122,85 +122,99 @@ border-left: 3px solid var(--gold);
 
 ## 3. Typographie
 
-### Familles de polices
+> ⚠️ DÉCISION (2026-06-19) : on n'impose PAS de polices Google fixes dans l'app.
+> L'application doit s'adapter à la police définie par l'utilisateur sur son
+> téléphone (flexibilité système). Les anciennes polices imposées (Cormorant,
+> Playfair, Lora, DM Sans) sont retirées de l'app. Elles restent réservées au
+> site web Nuxt si besoin, mais PAS dans l'app mobile.
 
-L'app utilise 4 rôles typographiques distincts.
-Le site utilise Cormorant Garamond + Nunito.
-L'app va plus loin avec une typographie plus riche et adaptée à la lecture longue.
+### Règle de police (hiérarchie de repli)
 
-```
-Font 1 — BRAND (logo, nom de l'app)
-  Famille : Cormorant Garamond
-  Source  : Google Fonts
-  Usage   : Logo Abide, citations bibliques hero, versets mis en exergue
-  Caractère : Même font que le site web — cohérence de marque totale
-  Poids   : 300 (light), 400 (regular), 600 (semibold) + italic
+L'app utilise **une seule famille serif cohérente** partout, résolue dans cet ordre :
 
-Font 2 — DISPLAY (titres de sections, headers)
-  Famille : Playfair Display
-  Source  : Google Fonts
-  Usage   : Titres de pages, noms des piliers, headers principaux
-  Caractère : Éditorial, élégant, différent du site mais dans le même univers
-
-Font 3 — BODY/BIBLE (lecture continue)
-  Famille : Lora
-  Source  : Google Fonts
-  Usage   : Versets bibliques, corps de texte long, réponses du guide IA
-  Caractère : Serif chaleureux, optimisé pour la lecture sur écran sombre
-
-Font 4 — UI (interface, labels, données)
-  Famille : DM Sans
-  Source  : Google Fonts
-  Usage   : Boutons, labels, navigation, notifications, chiffres
-  Caractère : Propre, lisible, neutre — ne concurrence pas les serifs
-```
-
-### Chargement Google Fonts
-```html
-<link href="https://fonts.googleapis.com/css2?
-  family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&
-  family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&
-  family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&
-  family=DM+Sans:wght@300;400;500;600;700&
-  display=swap" rel="stylesheet">
-```
-
-### Échelle typographique
+1. **Police serif du système** (`ui-serif`) — la variante serif définie/choisie par
+   l'utilisateur dans les réglages de son appareil. L'app hérite de ce choix.
+2. **Roboto Serif** (fallback chargé via Google Fonts) — si l'appareil n'impose
+   aucune police serif particulière.
+3. **Georgia / Times New Roman / serif** — replis génériques ultimes.
 
 ```css
-/* BRAND — Cormorant Garamond */
---text-brand-hero:   font-size: clamp(2.8rem, 8vw, 5.5rem); font-weight: 300; line-height: 1.05;
---text-brand-title:  font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 300; line-height: 1.2;
---text-brand-quote:  font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 300; font-style: italic;
---text-brand-verse:  font-size: 1.3rem; font-weight: 400; font-style: italic; line-height: 1.9;
+--font-app: ui-serif, 'Roboto Serif', Georgia, 'Times New Roman', serif;
+```
 
-/* DISPLAY — Playfair Display */
---text-display-xl:   font-size: 28px; font-weight: 700; line-height: 1.2;
---text-display-lg:   font-size: 24px; font-weight: 600; line-height: 1.25;
---text-display-md:   font-size: 20px; font-weight: 600; line-height: 1.3;
---text-display-sm:   font-size: 17px; font-weight: 600; line-height: 1.35;
+Cette variable (`--font-app`) est la police de TOUTE l'application. Les variables
+historiques `--font-brand`, `--font-display`, `--font-ui` pointent toutes vers
+`--font-app` (compatibilité ascendante) — il n'y a plus qu'une police.
 
-/* BODY/BIBLE — Lora */
---text-bible-lg:     font-size: 20px; font-weight: 400; line-height: 1.85;
---text-bible-md:     font-size: 18px; font-weight: 400; line-height: 1.8;
---text-bible-sm:     font-size: 16px; font-weight: 400; line-height: 1.75;
+### Police du lecteur Bible (réglable par l'utilisateur)
 
-/* UI — DM Sans */
---text-ui-lg:        font-size: 16px; font-weight: 500; line-height: 1.4;
---text-ui-md:        font-size: 14px; font-weight: 500; line-height: 1.4;
---text-ui-sm:        font-size: 12px; font-weight: 500; line-height: 1.35;
---text-ui-label:     font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
+Dans le lecteur Bible, un réglage en haut permet de changer **la taille** ET **la
+police** du texte biblique uniquement :
+
+```css
+--font-bible-user: var(--font-app);   /* défaut = police de l'app (= police du tél.) */
+--font-bible:      var(--font-bible-user);
+--bible-font-size: 18px;              /* réglable 16 → 24px */
+```
+
+- Si l'utilisateur n'a PAS choisi de police Bible → fallback sur la police de l'app
+  (elle-même influencée par la police du téléphone).
+- Si même le téléphone n'impose rien → **Roboto Serif** (via `--font-app`).
+- Le store `preferences` pilote `bibleFont` et `bibleFontSize` (persistés).
+
+### Chargement de la police de repli
+```html
+<!-- Roboto Serif uniquement, en fallback. L'app suit d'abord la police du tél. -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+```
+
+### Échelle typographique (tailles/poids — la famille reste --font-app)
+
+```css
+/* Titres / héros */
+--text-hero:    font-size: clamp(2.4rem, 7vw, 3.2rem); font-weight: 600; line-height: 1.1;
+--text-title:   font-size: 24px; font-weight: 600; line-height: 1.25;
+--text-section: font-size: 20px; font-weight: 600; line-height: 1.3;
+
+/* Lecture Bible (taille réglée par --bible-font-size) */
+--text-bible:   font-weight: 400; line-height: 1.85;
+
+/* Interface */
+--text-ui-lg:   font-size: 16px; font-weight: 500; line-height: 1.4;
+--text-ui-md:   font-size: 14px; font-weight: 500; line-height: 1.4;
+--text-ui-sm:   font-size: 12px; font-weight: 500; line-height: 1.35;
+--text-ui-label:font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
 ```
 
 ### Règles typographiques
-- Les versets bibliques utilisent TOUJOURS Lora (lisibilité longue durée sur fond sombre)
-- Le logo "Abide" et les citations héro utilisent Cormorant Garamond
-- Les titres de sections/pages utilisent Playfair Display
-- Les boutons, labels, données utilisent DM Sans
+- Toute l'app utilise `var(--font-app)` (serif système → Roboto Serif). Jamais de
+  police hardcodée dans un composant.
 - Taille minimale affichée : 12px (jamais en dessous)
 - Line-height minimum pour la lecture Bible : 1.75
-- L'utilisateur peut régler la taille de police dans le lecteur Bible (16px → 24px, paliers de 2px)
-- Les labels et tags utilisent letter-spacing: 0.08em à 0.2em (comme sur le site)
+- L'utilisateur peut régler la taille (16→24px, paliers de 2px) ET la police dans le lecteur Bible
+- Les labels et tags utilisent letter-spacing: 0.08em à 0.2em
+
+---
+
+## 3bis. Thème (sombre / clair / système) & Langue
+
+> DÉCISION (2026-06-19) : thème ET langue sont des préférences de premier ordre,
+> posées dès la fondation (pas après coup). Gérées par le store `preferences`.
+
+### Thème
+- 3 modes : `dark` | `light` | `system` (défaut : **system**, suit l'OS).
+- Le mode sombre reste l'atmosphère native d'Abide ; le clair est pleinement supporté.
+- Appliqué via la classe `.theme-light` sur `<html>` (voir `variables.css`).
+- En mode `system`, l'app écoute `prefers-color-scheme` et réagit en direct.
+- Réglable dans Settings. Toujours designer/tester en sombre d'abord, puis vérifier en clair.
+- Exception : l'écran **Welcome** reste toujours sombre (c'est une image), quel que soit le thème.
+
+### Langue (i18n)
+- 2 langues à ce stade : **français** (`fr`) et **anglais** (`en`), défaut = langue du téléphone.
+- Tous les libellés de l'app passent par `vue-i18n` (`t('clé')`) — jamais de texte codé en dur.
+- Fichiers : `src/i18n/locales/fr.js` et `en.js`. Toute nouvelle chaîne ajoutée dans les DEUX.
+- Le contenu Bible (versets) et l'audio gèrent leurs propres langues séparément (API).
+- Réglable dans Settings.
 
 ---
 

@@ -1,0 +1,161 @@
+<template>
+  <div class="plan-card">
+    <!-- Aucun plan → invitation -->
+    <template v-if="!plan.activePlan">
+      <p class="pc-label">{{ t('plan.title') }}</p>
+      <p class="pc-empty">{{ t('plan.noPlan') }}</p>
+      <button class="pc-cta" @click="goSetup">{{ t('plan.start') }}</button>
+    </template>
+
+    <!-- Plan terminé -->
+    <template v-else-if="plan.isCompleted">
+      <p class="pc-label">{{ t('plan.title') }}</p>
+      <p class="pc-done">🎉 {{ t('plan.completed') }}</p>
+      <button class="pc-cta" @click="goSetup">{{ t('plan.startNew') }}</button>
+    </template>
+
+    <!-- Plan actif -->
+    <template v-else>
+      <div class="pc-head">
+        <div class="pc-titles">
+          <p class="pc-name">{{ activeTitle }}</p>
+          <p class="pc-label">{{ t('plan.dayOf', { day: plan.currentDay, total: plan.totalDays }) }}</p>
+        </div>
+        <button class="pc-change" @click="goSetup">{{ t('plan.change') }}</button>
+      </div>
+
+      <div class="pc-items">
+        <button
+          v-for="(it, i) in plan.todayItems"
+          :key="i"
+          class="pc-item"
+          @click="openChapter(it)"
+        >
+          {{ bookLabels[it.book_id] || it.book_id }} {{ it.chapter }}
+        </button>
+      </div>
+
+      <div class="pc-bar"><div class="pc-fill" :style="{ width: plan.progress + '%' }" /></div>
+
+      <button class="pc-cta" @click="markDone">{{ t('plan.markRead') }}</button>
+    </template>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { toastController } from '@ionic/vue'
+import { useI18n } from 'vue-i18n'
+import { usePlanStore } from '@/stores/plan'
+import { useBibleStore } from '@/stores/bible'
+import { getBooks } from '@/lib/bible-db'
+import { scopeLabelKey } from '@/data/planLabels'
+
+const { t } = useI18n()
+const router = useRouter()
+const plan = usePlanStore()
+const bible = useBibleStore()
+
+// Titre affiché : titre i18n (profil/préétabli) ou libellé dérivé de la portée (custom).
+const activeTitle = computed(() => {
+  const p = plan.activePlan
+  if (!p) return ''
+  return p.title ? t(p.title) : t(scopeLabelKey(p.scope))
+})
+
+// Nom lisible des livres (pour l'affichage des chapitres du jour).
+const bookLabels = ref({})
+onMounted(async () => {
+  const books = await getBooks(bible.activeVersion)
+  bookLabels.value = Object.fromEntries(books.map((b) => [b.book_id, b.name]))
+})
+
+function goSetup() {
+  router.push('/tabs/immersion/plan')
+}
+
+function openChapter(it) {
+  router.push(`/tabs/immersion/book/${it.book_id}/${it.chapter}`)
+}
+
+async function markDone() {
+  await plan.completeToday()
+  const tt = await toastController.create({
+    message: plan.isCompleted ? t('plan.completed') : t('plan.dayDone'),
+    duration: 1600, position: 'bottom', color: 'dark'
+  })
+  await tt.present()
+}
+</script>
+
+<style scoped>
+.plan-card {
+  background: var(--card-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+.pc-head { display: flex; align-items: flex-start; justify-content: space-between; }
+.pc-titles { min-width: 0; }
+.pc-name {
+  font-family: var(--font-app);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cream);
+  margin: 0 0 2px;
+}
+.pc-label {
+  font-family: var(--font-app);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 var(--space-2);
+}
+.pc-change {
+  background: none; border: none; padding: 0;
+  color: var(--muted); font-family: var(--font-app); font-size: 12px; cursor: pointer;
+}
+.pc-empty, .pc-done {
+  font-family: var(--font-app);
+  font-size: 15px;
+  color: var(--cream);
+  margin: 0 0 var(--space-4);
+}
+
+.pc-items { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.pc-item {
+  padding: 6px 12px;
+  background: var(--navy2);
+  border: 1px solid var(--gold-border-md);
+  border-radius: var(--radius-full);
+  color: var(--cream);
+  font-family: var(--font-app);
+  font-size: 14px;
+  cursor: pointer;
+}
+.pc-item:active { border-color: var(--gold); }
+
+.pc-bar {
+  height: 6px;
+  background: var(--gold-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+.pc-fill { height: 100%; background: var(--gold); transition: width var(--duration-normal); }
+
+.pc-cta {
+  width: 100%;
+  padding: 12px;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--navy);
+  font-family: var(--font-app);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+</style>

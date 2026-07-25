@@ -21,3 +21,10 @@ Thumbs.db
 
 # Capacitor
 .capacitor/
+
+# Google OAuth secrets (ne jamais commiter)
+client_secret_*.json
+
+# Bibles téléchargeables générées (régénérables via scripts/generate-version.js)
+dist-bibles/
+CLAUDE.md

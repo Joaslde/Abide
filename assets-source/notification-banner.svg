@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="85%">
+      <stop offset="0%" stop-color="#162340"/>
+      <stop offset="55%" stop-color="#0F1A2E"/>
+      <stop offset="100%" stop-color="#0B1624"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C96B"/>
+      <stop offset="55%" stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#B8963E"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="512" fill="url(#bg)"/>
+  <ellipse cx="512" cy="260" rx="360" ry="220" fill="url(#halo)"/>
+
+  <!-- Étoiles discrètes (ciel de nuit) -->
+  <g fill="#F5F0E6" opacity="0.5">
+    <circle cx="140" cy="90" r="2.5"/>
+    <circle cx="220" cy="150" r="1.6"/>
+    <circle cx="860" cy="80" r="2.2"/>
+    <circle cx="900" cy="160" r="1.6"/>
+    <circle cx="780" cy="60" r="1.6"/>
+    <circle cx="90" cy="220" r="1.6"/>
+  </g>
+
+  <!-- Cep / flamme centrale (identique à l'icône app, cohérence de marque) -->
+  <g fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M512 400 C512 350 491 320 512 280 C533 240 512 210 512 190"/>
+    <path d="M512 350 C476 340 461 320 466 290"/>
+    <path d="M512 300 C483 290 471 272 475 250"/>
+    <path d="M512 350 C548 340 563 320 558 290"/>
+    <path d="M512 300 C541 290 553 272 549 250"/>
+  </g>
+  <path d="M512 190 C499 212 499 232 512 246 C525 232 525 212 512 190 Z" fill="url(#gold)"/>
+  <circle cx="464" cy="288" r="7" fill="#C9A84C"/>
+  <circle cx="560" cy="288" r="7" fill="#C9A84C"/>
+</svg>

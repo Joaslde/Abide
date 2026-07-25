@@ -1,0 +1,217 @@
+/* =========================================================================
+   variables.css — Design System Abide
+   Source : design-pattern.md (charte officielle navy/gold)
+   Règle : ne jamais hardcoder de couleur ailleurs — toujours via ces variables.
+   ========================================================================= */
+
+:root {
+  /* === FONDS === */
+  --navy:      #0B1624;   /* Fond principal — nuit profonde */
+  --navy2:     #111E31;   /* Fond sections alternées */
+  --navy3:     #162340;   /* Fond intermédiaire */
+  --card-bg:   #14213A;   /* Fond des cards et surfaces élevées */
+  --navy-deep: #0F1A2E;   /* Fond le plus sombre */
+
+  /* === OR (couleur de marque) === */
+  --gold:           #C9A84C;
+  --gold2:          #E8C96B;
+  --gold-dim:       rgba(201, 168, 76, 0.22);
+  --gold-glow:      rgba(201, 168, 76, 0.08);
+  --gold-border:    rgba(201, 168, 76, 0.15);
+  --gold-border-md: rgba(201, 168, 76, 0.28);
+
+  /* === TEXTES === */
+  --cream:    #F5F0E6;
+  --muted:    #8A9BB5;
+  --white:    #FFFFFF;
+  --cream-70: rgba(245, 240, 230, 0.70);
+  --cream-50: rgba(245, 240, 230, 0.50);
+
+  /* === STATUTS === */
+  --color-success: #3A8B5C;
+  --color-error:   #C04040;
+  --color-warning: #D4840A;
+  --color-streak:  #E85C20;
+  --color-premium: var(--gold);
+
+  /* === ESPACEMENTS (base 4px) === */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 20px;  --space-6: 24px;  --space-8: 32px;  --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* === BORDURES ARRONDIES === */
+  --radius-sharp: 2px;
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    20px;
+  --radius-xl:    28px;
+  --radius-full:  9999px;
+
+  /* === DURÉES === */
+  --duration-fast:   150ms;
+  --duration-normal: 300ms;
+  --duration-slow:   500ms;
+  --duration-breath: 4s;
+
+  /* === POLICES ===
+     Règle (cf. design-pattern.md §3) :
+     1. La police de l'app privilégie le SERIF du téléphone (ui-serif = variante
+        serif choisie/définie par le système de l'utilisateur).
+     2. Si l'appareil n'impose rien → fallback "Roboto Serif".
+     3. Repli ultime générique → serif.
+     L'app utilise une seule famille serif cohérente partout. Le lecteur Bible
+     peut surcharger sa police via --font-bible-user (réglage utilisateur). */
+  --font-app:   ui-serif, 'Roboto Serif', Georgia, 'Times New Roman', serif;
+
+  /* Toutes ces variables pointent vers la police de l'app (compatibilité ascendante) */
+  --font-brand:   var(--font-app);
+  --font-display: var(--font-app);
+  --font-ui:      var(--font-app);
+
+  /* Police du texte biblique : réglage utilisateur sinon police de l'app */
+  --font-bible-user: var(--font-app);
+  --font-bible:      var(--font-bible-user);
+
+  /* Taille du texte biblique (réglable par l'utilisateur, 16→24px) */
+  --bible-font-size: 18px;
+}
+
+/* === SURCHARGE DES VARIABLES IONIC === */
+:root {
+  --ion-background-color: var(--navy);
+  --ion-background-color-rgb: 11, 22, 36;
+  --ion-text-color: var(--cream);
+  --ion-text-color-rgb: 245, 240, 230;
+  --ion-font-family: var(--font-ui);
+
+  --ion-color-primary: #C9A84C;
+  --ion-color-primary-rgb: 201, 168, 76;
+  --ion-color-primary-contrast: #0B1624;
+  --ion-color-primary-contrast-rgb: 11, 22, 36;
+  --ion-color-primary-shade: #b1942b;
+  --ion-color-primary-tint: #E8C96B;
+
+  --ion-toolbar-background: var(--navy2);
+  --ion-item-background: var(--card-bg);
+  --ion-border-color: var(--gold-border);
+  --ion-tab-bar-background: var(--navy2);
+  --ion-tab-bar-color: var(--muted);
+  --ion-tab-bar-color-selected: var(--gold);
+}
+
+/* === OVERLAYS IONIC (action-sheet, alert, popover, select) ===
+   Par défaut ces overlays gardent un fond clair / texte sombre → contraste
+   illisible sur le thème navy. On force le fond navy + texte crème partout. */
+ion-action-sheet {
+  --background: var(--navy2);
+  --color: var(--cream);
+  --button-background: var(--navy2);
+  --button-background-selected: var(--card-bg);
+  --button-color: var(--cream);
+}
+ion-action-sheet .action-sheet-title { color: var(--muted); }
+/* Le libellé et l'icône de chaque bouton : Ionic leur applique une couleur
+   interne (gris) qui l'emporte sur --button-color → on force le crème. */
+ion-action-sheet .action-sheet-button,
+ion-action-sheet .action-sheet-button-inner { color: var(--cream) !important; }
+ion-action-sheet .action-sheet-icon { color: var(--gold) !important; opacity: 1; }
+ion-action-sheet .action-sheet-cancel,
+ion-action-sheet .action-sheet-cancel .action-sheet-button-inner {
+  color: var(--gold) !important;
+  font-weight: 600;
+}
+/* Boutons destructifs (supprimer…) restent bien lisibles. */
+ion-action-sheet .action-sheet-destructive,
+ion-action-sheet .action-sheet-destructive .action-sheet-button-inner,
+ion-action-sheet .action-sheet-destructive .action-sheet-icon {
+  color: var(--ion-color-danger, #eb445a) !important;
+}
+
+ion-alert {
+  --background: var(--navy2);
+}
+ion-alert .alert-title,
+ion-alert .alert-message,
+ion-alert .alert-radio-label,
+ion-alert .alert-checkbox-label { color: var(--cream) !important; }
+ion-alert .alert-button { color: var(--gold) !important; }
+
+ion-popover {
+  --background: var(--navy2);
+  --color: var(--cream);
+}
+/* Options d'un ion-select (quel que soit l'interface) */
+.select-interface-option,
+.select-interface-option .alert-radio-label { color: var(--cream) !important; }
+
+/* === MODE CLAIR (secondaire) === */
+.theme-light {
+  --navy:    #FBF7EE;
+  --navy2:   #F5EFE0;
+  --navy3:   #EDE4D0;
+  --card-bg: #FFFFFF;
+  --cream:   #1C1208;
+  --muted:   #7A6A50;
+
+  --ion-background-color: var(--navy);
+  --ion-text-color: var(--cream);
+  --ion-item-background: var(--card-bg);
+}
+
+/* =========================================================================
+   Classes utilitaires partagées (boutons, inputs, cards)
+   ========================================================================= */
+
+.btn-primary {
+  background-color: var(--gold);
+  color: var(--navy);
+  padding: 14px 28px;
+  border: none;
+  border-radius: var(--radius-sharp);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.30);
+  transition: background var(--duration-normal), transform var(--duration-fast);
+  cursor: pointer;
+}
+.btn-primary:hover { background-color: var(--gold2); transform: translateY(-2px); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.5; box-shadow: none; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  border: 1px solid rgba(201, 168, 76, 0.5);
+  color: var(--gold);
+  background: transparent;
+  padding: 14px 28px;
+  border-radius: var(--radius-sharp);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color var(--duration-normal);
+  cursor: pointer;
+}
+.btn-secondary:hover { border-color: var(--gold); }
+
+.btn-full { display: block; width: 100%; text-align: center; }
+
+.section-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Entrée de page douce */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

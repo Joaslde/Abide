@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#162340"/>
+      <stop offset="60%" stop-color="#0F1A2E"/>
+      <stop offset="100%" stop-color="#0B1624"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C96B"/>
+      <stop offset="55%" stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#B8963E"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="44%" r="26%">
+      <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="2732" height="2732" fill="url(#bg)"/>
+  <circle cx="1366" cy="1200" r="620" fill="url(#halo)"/>
+
+  <!-- Cep central (échelle réduite, reste dans la zone de sécurité centrale
+       car le splash est recadré différemment selon les appareils) -->
+  <g transform="translate(1366 1200) scale(1.35) translate(-512 -512)">
+    <g fill="none" stroke="url(#gold)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M512 720 C512 620 470 560 512 480 C554 400 512 340 512 300"/>
+      <path d="M512 620 C440 600 410 560 420 500"/>
+      <path d="M512 520 C455 500 432 465 440 420"/>
+      <path d="M512 620 C584 600 614 560 604 500"/>
+      <path d="M512 520 C569 500 592 465 584 420"/>
+    </g>
+    <path d="M512 300 C486 344 486 384 512 412 C538 384 538 344 512 300 Z" fill="url(#gold)"/>
+    <circle cx="418" cy="498" r="14" fill="#C9A84C"/>
+    <circle cx="606" cy="498" r="14" fill="#C9A84C"/>
+    <circle cx="438" cy="418" r="12" fill="#E8C96B"/>
+    <circle cx="586" cy="418" r="12" fill="#E8C96B"/>
+  </g>
+</svg>

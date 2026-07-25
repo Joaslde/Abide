@@ -16,6 +16,17 @@ Avant de toucher quoi que ce soit, dans cet ordre exact :
 
 ---
 
+## SUPABASE MCP (connecté depuis juin 2026)
+
+Supabase est connecté directement via MCP (`mcp__supabase__*`). Règles absolues :
+
+- **Lecture** (list_tables, execute_sql SELECT, get_logs…) → libre, pas besoin de demander
+- **Écriture / Modification / Suppression** (apply_migration, execute_sql INSERT/UPDATE/DELETE/DROP, deploy_edge_function…) → **TOUJOURS informer l'utilisateur et attendre confirmation avant d'exécuter**
+- Ne jamais enchaîner plusieurs actions destructives sans re-confirmation à chaque étape
+- Le projet Supabase est `puzhmjrdhjgzookjptod` (URL : https://puzhmjrdhjgzookjptod.supabase.co)
+
+---
+
 ## STACK TECHNIQUE (immuable — ne jamais dévier sans discussion explicite)
 
 ```
@@ -24,7 +35,8 @@ Langage    : JavaScript (Composition API) — PAS TypeScript
 State      : Pinia
 Routing    : Vue Router + Ionic Tabs
 Storage    : capacitor-sqlite (Bible) + @capacitor/preferences (prefs)
-Audio      : @capacitor-community/audio (background natif)
+Audio      : capacitor-music-controls-plugin (contrôles lock-screen) + <audio> HTML5 (streaming)
+             ⚠️ PAS @capacitor-community/audio (inexistant sur npm — voir lessons.md 2026-06-26)
 Notifs     : @capacitor/push-notifications (FCM + APNs)
 Pub        : capacitor-admob (Google AdMob)
 
@@ -139,14 +151,35 @@ Si des bugs sont détectés lors du test → les corriger immédiatement avant d
 
 ### AdMob (Publicités)
 
+**Modèle YouVersion (décidé le 2026-07-18) : uniquement des INTERSTITIELS plein écran,
+PAS de bannières.** L'utilisateur peut passer la pub après ~5s (non bloquante — l'accès à
+la fonctionnalité n'est jamais conditionné au visionnage).
+
+Déclencheurs et fréquence :
+
+| Déclencheur | Fréquence |
+|-------------|-----------|
+| Navigation entre pages | « De temps en temps » : au plus **1 fois / 4 min**, jamais deux d'affilée |
+| Ouverture du Guide IA | À chaque ouverture (soumis au même cooldown de 4 min pour ne pas doubler) |
+| Lancer / relancer un quiz | À chaque fois (interstitiel vidéo) |
+| « Méditer sur un verset » → Guide | À chaque fois (interstitiel vidéo) |
+
 - Les publicités ne s'affichent JAMAIS pendant :
-  - La lecture d'un passage biblique
+  - La lecture d'un passage biblique (le texte lui-même)
   - La lecture audio (Bible ou IA)
-  - Une session de prière (journal)
-  - Une session avec le guide IA
-- Les publicités s'affichent uniquement sur les pages de navigation
-- Vérifier systématiquement `!authStore.isPremium` avant d'afficher une pub
+  - Une session de prière (journal, moments Sanctuaire)
+  - **L'échange avec le guide IA** (entre l'envoi d'une question et la réponse) — la pub IA
+    est UNIQUEMENT à l'OUVERTURE de l'écran, jamais pendant la conversation
+- Vérifier systématiquement `!authStore.isPremium` avant TOUTE pub — **sans exception**
 - Ne jamais appeler AdMob si `isPremium === true`
+- Une pub qui échoue à charger ne bloque JAMAIS l'accès à la fonctionnalité (quiz, guide…)
+
+### Voix & relation utilisateur
+
+- **Utiliser le prénom de l'utilisateur fréquemment** : salutations, questions de l'onboarding, notifications, messages du guide IA, écrans de félicitation. Le but est une relation chaleureuse et personnelle, jamais administrative.
+- Toujours prévoir un **repli gracieux** si le prénom est absent (invité, nom non renseigné) — ne jamais afficher "Bonjour ," ou "Bonjour {name}".
+- Source unique du prénom : le computed `firstName` du store auth (`src/stores/auth.js`) — ne pas redupliquer l'extraction du premier mot ailleurs.
+- Ton pastoral et bienveillant, tutoiement ("tu"), voir `design-pattern.md` (voix de marque).
 
 ### Capacitor / Mobile
 

@@ -316,6 +316,26 @@ OpenRouter FCBH API  Cloudflare R2
 - Compteur sessions IA (OBLIGATOIREMENT cote serveur)
 - Embeddings bibliques (pgvector pour RAG)
 
+### Preferences & Internationalisation (fondation, 2026-06-19)
+
+Store `src/stores/preferences.js` — persiste via `@capacitor/preferences` :
+
+| Cle            | Valeurs                     | Defaut            | Effet |
+|----------------|-----------------------------|-------------------|-------|
+| `locale`       | `fr` / `en`                 | langue du tel.    | i18n de tous les libelles app |
+| `theme`        | `system` / `dark` / `light` | `system`          | classe `.theme-light` sur `<html>` |
+| `bibleFont`    | `null` / nom de police      | `null` (= app)    | police du lecteur Bible |
+| `bibleFontSize`| `16`..`24`                  | `18`              | taille du texte biblique |
+| `firstLaunchDone` | bool                     | `false`           | masque l'ecran Welcome apres 1er passage |
+
+- **i18n** : `vue-i18n` (`src/i18n/`), messages `fr.js` + `en.js`. Toute chaine app
+  passe par `t('cle')`. Le contenu Bible/audio gere ses langues separement (API).
+- **Police** : suit le serif systeme du telephone, fallback Roboto Serif
+  (cf. design-pattern.md §3). Une seule famille pour toute l'app.
+- **Theme** : sombre natif, clair pleinement supporte, `system` suit l'OS en direct.
+- **Init** : `preferences.init()` + `auth.init()` sont appeles dans `main.js`
+  AVANT le montage, pour que les guards du router aient le bon etat.
+
 ---
 
 ## 6. Structure Complete du Projet
@@ -602,23 +622,66 @@ WHERE notif_time >= NOW()::TIME AND notif_time < (NOW() + INTERVAL '1 hour')::TI
 
 ### Premier lancement
 ```
-Splash screen (2s)
+Splash screen
      |
      v
-Onboarding (premiere fois uniquement)
-  -> Etape 1 : "Qu'est-ce qui te pese spirituellement en ce moment ?"
-     (Anxiete / Manque de regularite / Deuil / Croissance)
-  -> Etape 2 : "Combien de temps peux-tu donner a Dieu chaque jour ?"
-     (5 min / 10 min / 20 min / Plus)
-  -> Etape 3 : "Tu fais partie d'une eglise ?" (nom optionnel)
-  -> Etape 4 : Pilier recommande + "Commencer avec [Immersion/Sanctuaire/Ancre/Phare]"
+ECRAN WELCOME (tout premier lancement uniquement — flag firstLaunchDone en Preferences)
+  -> Image plein ecran sombre (croix) + overlay degrade vertical vers le bas
+  -> "Abide" + slogan (Jean 15.4)
+  -> [Continuer avec Google]  [Continuer avec un e-mail]
+  -> [Skip / Passer] en haut a droite -> ACCES INVITE
+     |
+     +--> [Skip] ----------> Page principale en mode INVITE
+     |                       (lecture Bible + audio uniquement, reste -> login)
+     |
+     +--> [Email] ---------> Page de connexion (Login / Register / Forgot)
+     |
+     +--> [Google] --------> OAuth Google (provider a configurer, todo 1.1)
+                                  |
+                                  v
+                  Connexion reussie -> Onboarding si non termine
+                                  |
+                                  v
+Onboarding (apres connexion, tant que onboarding_done = false)
+  -> Salutation animee (prenom + texte FadeInWords)
+     -> [Oui, avec plaisir] ---------> Quiz de personnalisation
+     -> [Je le ferai plus tard] -----> App (revient au quiz au prochain lancement)
+     -> [Non merci...] (culpabilisant) -> App (onboarding_done = true, ne revient pas)
      |
      v
-Creation de compte (email + Magic Link)
+Quiz de personnalisation (13 questions, 4 blocs, 1 vue data-driven)
+  -> BLOC 1 Identite : naissance, genre, pays/ville, eglise (optionnel)
+  -> BLOC 2 Parcours de foi : duree, etape actuelle
+  -> BLOC 3 Niveau biblique : familiarite, reperes, frequence, profondeur
+  -> BLOC 4 Vie spirituelle : defi principal, creneau, temps dispo
      |
      v
-Page principale (TabsLayout) - Pilier recommande actif
+Calcul : niveau biblique (4 paliers) + profil (5 profils) + pilier de depart
+     |
+     v
+Ecran de revelation du profil ("Tu es L'Explorateur" + niveau + pilier + consentement RGPD)
+  -> [Commencer mon parcours] -> sauvegarde unique en base (onboarding_done = true)
+     |
+     v
+Page principale (TabsLayout) - Pilier du profil actif
+
+Reference complete : docs/onboarding-quiz.md (questions, scoring, profils, personnalisation).
+Stockage : colonnes dediees sur profiles (migration 007). Sauvegarde en un seul appel a la fin.
 ```
+
+> **Regle de marque — usage du prenom** : Abide utilise le prenom de l'utilisateur
+> frequemment (salutations, questions de l'onboarding, notifications, messages de l'IA)
+> pour une relation chaleureuse et personnelle. Source unique : le computed `firstName`
+> du store auth. Toujours un repli gracieux si le prenom est absent.
+
+### Acces invite (sans connexion)
+- Declenche par [Skip] sur l'ecran Welcome.
+- AUTORISE : lecture de la Bible (texte) + ecoute audio.
+- BLOQUE (redirige vers /auth/login) : Sanctuaire (priere), Ancre (guide IA),
+  Phare, premium, reglages avances.
+- Implementation : `meta.requiresAuth` sur les routes protegees uniquement
+  (cf. `src/router/index.js`). Les onglets Bible/audio n'ont pas ce flag.
+- L'ecran Welcome ne reapparait jamais une fois passe (firstLaunchDone = true).
 
 ### Session quotidienne type
 ```

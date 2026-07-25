@@ -1,17 +1,10 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Immersion</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <!-- Phase 1 : DailyPlanCard + StreakBadge -->
-      <p>Pilier Immersion — en construction</p>
-    </ion-content>
-  </ion-page>
+  <!-- Le pilier Immersion EST le lecteur Bible. La vue d'accueil de la Bible
+       (onglets AT/NT + liste des livres) s'affiche directement dans l'onglet.
+       Les sous-écrans (livre, chapitre) sont des routes sous l'onglet /tabs/immersion/*. -->
+  <bible-home-view />
 </template>
 
 <script setup>
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue'
+import BibleHomeView from '@/views/bible/BibleHomeView.vue'
 </script>

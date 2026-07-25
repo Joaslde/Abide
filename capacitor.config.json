@@ -15,6 +15,14 @@
       "iosDatabaseLocation": "Library/CapacitorDatabase",
       "iosIsEncryption": false,
       "androidIsEncryption": false
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "34894391883-sn5akdqig9b66jun8t3bgb0h36hdlpmq.apps.googleusercontent.com",
+      "androidClientId": "34894391883-eehn8sdl9gpq45ek25cnl097gfv9a84s.apps.googleusercontent.com"
     }
   },
   "android": {

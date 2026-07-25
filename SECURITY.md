@@ -111,6 +111,8 @@ CREATE POLICY "read_embeddings" ON bible_embeddings
 | KKiaPay public key | Client (VITE_) | OUI (clé publique) |
 | KKiaPay private key | Edge Functions UNIQUEMENT | JAMAIS |
 | AdMob App ID | Client | OUI (public par nature) |
+| Cloudflare R2 access/secret keys | Scripts LOCAUX d'upload UNIQUEMENT | JAMAIS dans l'app |
+| URL publique R2 + manifeste Bible | Client (VITE_) | OUI (contenu public, lecture seule) |
 
 ### Règles
 - Les clés sont dans `.env.local` (jamais commité) — `.gitignore` vérifié
@@ -124,6 +126,18 @@ CREATE POLICY "read_embeddings" ON bible_embeddings
 - Ne JAMAIS mettre la clé OpenRouter dans l'app
 - Un attaquant qui extrait la clé du bundle peut générer pour des milliers de dollars sur ton compte
 - TOUS les appels LLM passent par l'Edge Function `ai-chat` qui détient la clé
+
+### Bucket R2 public (versions Bible téléchargeables) — séparation stricte
+- Le bucket R2 public ne contient QUE des fichiers publics, en LECTURE SEULE :
+  des `.db` de Bible (texte du domaine public) + le manifeste JSON des versions.
+- Il ne contient AUCUN secret et AUCUNE donnée utilisateur. Les données utilisateurs
+  (profils, prières, premium…) vivent dans Supabase PostgreSQL, protégées par RLS,
+  sur un service totalement séparé. Un bucket R2 public n'ouvre AUCUN chemin vers Supabase.
+- L'app ne fait que TÉLÉCHARGER une URL publique. Les clés secrètes R2 (write) restent
+  sur la machine de dev (scripts `generate-version.js` / `upload-version.js`) — jamais dans l'APK.
+- « Public » = lecture seule : personne ne peut écrire/modifier le bucket sans les clés secrètes.
+- Mettre les clés R2 dans l'app serait le vrai danger (accès write si décompilation) → on passe
+  donc toujours par URL publique, jamais par clés côté client.
 
 ---
 

@@ -23,3 +23,8 @@ ALTER TABLE reading_plans ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Utilisateur gère ses plans de lecture"
   ON reading_plans FOR ALL
   USING (auth.uid() = user_id);
+
+
+
+  Voilà exactement la structure que je désire Mais tout en respectant notre charte graphique et en utilisant les couleurs. En haut à droite il y a toujours le bouton ski juste en bas il y a habit écrit avec la même police habituelle emballait le mot bienvenue en français ou bien Welcome en anglais et ensuite il y a "Let's get ...."(Bref le texte de courtoisie pour la connexion) en dessous. Ensuite le champ Email mot de passe le mot mot de passe oublié et le gros bouton se connecter en bas il y a se connecter avec Google juste le bouton se connecter avec Google et tout en bas hein Y a je n'ai pas de compte. Qui permet d'ouvrir maintenant la vue du register. 
+  

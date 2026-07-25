@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C96B"/>
+      <stop offset="55%" stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#B8963E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent : seul le motif est visible, le fond vient de icon-background.svg.
+       Échelle réduite + centré pour tenir dans la zone de sécurité adaptive-icon
+       (~66% central — l'OS masque/rogne les bords selon la forme du launcher). -->
+  <g transform="translate(512 512) scale(0.62) translate(-512 -512)">
+    <g fill="none" stroke="url(#gold)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M512 720 C512 620 470 560 512 480 C554 400 512 340 512 300"/>
+      <path d="M512 620 C440 600 410 560 420 500"/>
+      <path d="M512 520 C455 500 432 465 440 420"/>
+      <path d="M512 620 C584 600 614 560 604 500"/>
+      <path d="M512 520 C569 500 592 465 584 420"/>
+    </g>
+    <path d="M512 300 C486 344 486 384 512 412 C538 384 538 344 512 300 Z" fill="url(#gold)"/>
+    <circle cx="418" cy="498" r="14" fill="#C9A84C"/>
+    <circle cx="606" cy="498" r="14" fill="#C9A84C"/>
+    <circle cx="438" cy="418" r="12" fill="#E8C96B"/>
+    <circle cx="586" cy="418" r="12" fill="#E8C96B"/>
+  </g>
+</svg>
