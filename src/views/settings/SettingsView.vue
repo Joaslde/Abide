@@ -119,6 +119,7 @@ import {
   bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline,
   giftOutline
 } from 'ionicons/icons'
+import { Browser } from '@capacitor/browser'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useAuthStore } from '@/stores/auth'
 
@@ -139,9 +140,16 @@ function onToggleDark(ev) {
   prefs.toggleDark(dark.value)
 }
 
-// Liens légaux : URLs réelles à brancher (todo). Pour l'instant no-op silencieux.
-function openLink() {
-  /* TODO(legal) : ouvrir la page CGU / confidentialité / FAQ (URL ou vue in-app) */
+// Landing statique (dossier landing/, déployée sur Vercel — cf. landing/README.md).
+const LEGAL_URLS = {
+  faq: 'https://toabide.online/faq.html',
+  terms: 'https://toabide.online/terms.html',
+  privacy: 'https://toabide.online/privacy.html'
+}
+
+/** Ouvre une page légale/FAQ dans le navigateur in-app (pas Safari/Chrome externe). */
+async function openLink(key) {
+  await Browser.open({ url: LEGAL_URLS[key] })
 }
 </script>
 

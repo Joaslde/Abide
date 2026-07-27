@@ -18,16 +18,35 @@ Ce dossier est 100 % statique : aucun build, aucune dépendance. Déployable tel
 - **Netlify** : glisser-déposer le dossier sur app.netlify.com/drop
 - **GitHub Pages** : pousser ce dossier sur une branche `gh-pages` ou activer Pages sur `main`
 
-Une fois en ligne, tu obtiens 3 URLs stables, par exemple :
-- `https://abide.app/` (accueil)
-- `https://abide.app/privacy.html` (politique de confidentialité)
-- `https://abide.app/terms.html` (conditions d'utilisation)
+## Déployé (2026-07-27)
+
+Hébergé sur Vercel, connecté au dépôt du projet (dossier `landing/` sélectionné
+comme racine de déploiement).
+
+- URL finale : `https://toabide.online/` — DNS en cours de propagation
+- URL provisoire (déjà fonctionnelle) : `https://abide-ivory-three.vercel.app/`
+
+| Page | URL finale | URL provisoire |
+|---|---|---|
+| Accueil | `https://toabide.online/` | `https://abide-ivory-three.vercel.app/` |
+| FAQ | `https://toabide.online/faq.html` | `https://abide-ivory-three.vercel.app/faq.html` |
+| Confidentialité | `https://toabide.online/privacy.html` | `https://abide-ivory-three.vercel.app/privacy.html` |
+| Conditions | `https://toabide.online/terms.html` | `https://abide-ivory-three.vercel.app/terms.html` |
+
+`vercel.json` (`cleanUrls: false`) est nécessaire : sans lui, Vercel redirige toutes
+les pages secondaires vers `/` (comportement SPA par défaut) — bug rencontré et
+corrigé le 2026-07-27, cf. tasks/lessons.md.
+
+Ces URLs sont câblées dans `src/views/settings/SettingsView.vue` (FAQ/CGU/confidentialité,
+via `@capacitor/browser`) avec l'URL **finale** (`toabide.online`) — à vérifier une fois
+le DNS propagé.
 
 ## À faire avant publication définitive
 
-- [ ] Remplacer l'email de contact si `createurdecontenus@gmail.com` n'est pas définitif
+- [ ] Vérifier que `https://toabide.online/` répond bien (DNS propagé) avant la
+      soumission Google Play — sinon utiliser temporairement l'URL Vercel provisoire
+      dans la fiche Play Console et dans l'app
 - [ ] Mettre à jour le lien Google Play dans `index.html` une fois l'app publiée
       (actuellement pointe vers `com.abide.app`, correct si l'app est publiée sous cet id)
-- [ ] Donner les URLs finales (privacy + terms) pour :
-  1. la fiche Google Play Console (champ "Politique de confidentialité")
-  2. `src/views/settings/SettingsView.vue` dans l'app (liens CGU/confidentialité, actuellement `// TODO(legal)`)
+- [ ] Donner l'URL de confidentialité finale à la fiche Google Play Console
+      (champ "Politique de confidentialité")

@@ -66,9 +66,18 @@ combler ce profil**, vignette vérifiée visuellement, 0 erreur de validation ca
 1. **Publication Play Store** — voir section dédiée ci-dessous. C'est le seul gros morceau restant.
 2. **SMTP Resend** — compte + domaine en cours côté utilisateur ; clé à fournir, puis
    configuration du template OTP dans Supabase → débloque le mot de passe oublié.
-3. **Mini-site (landing + politique de confidentialité)** — livré dans `landing/`
-   (index/privacy/terms, statique, zéro dépendance), en attente de déploiement par
-   l'utilisateur puis fourniture des URLs finales (fiche Play Console + SettingsView).
+3. **Mini-site — DÉPLOYÉ (2026-07-27)** sur Vercel via toabide.online (DNS en cours
+   de propagation ; URL provisoire déjà fonctionnelle : abide-ivory-three.vercel.app).
+   4 pages : index, faq (nouveau), privacy, terms. Bug Vercel "SPA fallback" corrigé
+   (`landing/vercel.json`, cf. lessons.md). Email de contact : ldejoas@gmail.com
+   (mis à jour partout : landing + app).
+   - [x] Câblé dans `SettingsView.vue` (FAQ/CGU/Confidentialité) via `@capacitor/browser`
+         (installé en @6.0.6, compatible Capacitor 6 — dernière stable de la branche 6.x)
+   - [ ] ⚠️ À TESTER SUR APPAREIL : Réglages → FAQ/CGU/Confidentialité → ouvre le
+         navigateur in-app sur la bonne page (pas d'écran blanc, pas de 404)
+   - [ ] ⚠️ Vérifier que https://toabide.online/ répond (DNS propagé) AVANT la
+         soumission Google Play — sinon re-câbler temporairement sur l'URL Vercel
+   - [ ] Donner l'URL de confidentialité finale à la fiche Google Play Console
 
 **✅ Code de parrainage manuel à l'onboarding — FAIT (2026-07-27)**
 > Contournement TEMPORAIRE : le lien OneLink ne peut pas être testé tant que l'app
