@@ -44,6 +44,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { enterGuestBrowsing } from '@/router'
 import { useI18n } from 'vue-i18n'
 import { IonPage, IonContent } from '@ionic/vue'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -59,11 +60,13 @@ const loading = ref(false)
 /** Accès invité : lecture Bible + audio uniquement, le reste demandera la connexion. */
 async function onSkip() {
   await prefs.completeFirstLaunch()
+  enterGuestBrowsing() // navigue librement cette session (Welcome reviendra au prochain démarrage)
   router.replace('/tabs/immersion')
 }
 
 async function onEmail() {
   await prefs.completeFirstLaunch()
+  enterGuestBrowsing() // évite d'être renvoyé à Welcome pendant la saisie du login
   router.replace('/auth/login')
 }
 

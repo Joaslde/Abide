@@ -77,25 +77,26 @@ export function buildScheduleFromChapters(chapters, totalDays) {
 /* ─────────────────── Plans « selon mon profil » ─────────────────── */
 
 /**
- * Recette de plan par profil onboarding.
- * scope/bookId définissent le contenu ; days la durée ; title une clé i18n.
+ * Profil onboarding (5, cf. onboardingScoring.js) → id d'un plan PRÉÉTABLI
+ * réel (presetPlans.js), pas une portée générique. Choisis pour leur
+ * adéquation au sens du profil :
+ *   - source (foi récente/chercheur)    → Apprendre à prier (douceur, 10j)
+ *   - marcheur (constance, par défaut)  → De la Création à l'Alliance (25j)
+ *   - explorateur (sens profond/théo)   → Qui je suis en Christ (21j, dense)
+ *   - veilleur (période difficile)      → La paix plus forte que l'anxiété (7j)
+ *   - porteur (évangélisation)          → Partager sa foi (14j)
  */
-export const PROFILE_RECIPES = {
-  // La Source (nouveau/chercheur) : l'Évangile de Jean, en douceur, 21 jours.
-  source: { scope: 'book', bookId: 'JHN', days: 21, title: 'plan.profileTitles.source' },
-  // Le Marcheur (constance) : tout le Nouveau Testament, 60 jours.
-  marcheur: { scope: 'nt', days: 60, title: 'plan.profileTitles.marcheur' },
-  // L'Explorateur (profondeur) : l'épître aux Romains, 16 jours.
-  explorateur: { scope: 'book', bookId: 'ROM', days: 16, title: 'plan.profileTitles.explorateur' },
-  // Le Veilleur (réconfort) : les Psaumes, 30 jours.
-  veilleur: { scope: 'psalms', days: 30, title: 'plan.profileTitles.veilleur' },
-  // Le Porteur (évangélisation) : les Actes des Apôtres, 28 jours.
-  porteur: { scope: 'book', bookId: 'ACT', days: 28, title: 'plan.profileTitles.porteur' }
+export const PROFILE_PRESET_IDS = {
+  source: 'learn-to-pray',
+  marcheur: 'creation-to-covenant',
+  explorateur: 'identity-in-christ',
+  veilleur: 'peace-over-anxiety',
+  porteur: 'sharing-your-faith'
 }
 
-/** Recette de plan pour un profil (repli marcheur si inconnu/invité). */
-export function recipeForProfile(profile) {
-  return PROFILE_RECIPES[profile] ?? PROFILE_RECIPES.marcheur
+/** Id du preset recommandé pour un profil (repli marcheur si inconnu/invité). */
+export function presetIdForProfile(profile) {
+  return PROFILE_PRESET_IDS[profile] ?? PROFILE_PRESET_IDS.marcheur
 }
 
 /**

@@ -11,34 +11,321 @@
 
 ---
 
+## ⚠️ COORDINATION — 2 SESSIONS EN PARALLÈLE (2026-07-25)
+
+> Deux sessions Claude travaillent en même temps sur ce projet. Règles de non-collision :
+>
+> | Session | Périmètre EXCLUSIF |
+> |---------|--------------------|
+> | **A — Parrainage** | migrations `referrals`/`referral_code`, **trigger `protect_premium_columns`**, Edge Functions `referral-*`, SDK AppsFlyer, `ReferralView.vue` |
+> | **B — Limites IA** | Edge Function `ai-chat` (quota), table `ai_sessions`, écran « quota atteint » côté client |
+>
+> - Le **trigger `protect_premium_columns` appartient à la session Parrainage** (Étape 0
+>   de son plan, et sa logique de paliers doit pouvoir écrire `premium_expires` côté serveur).
+>   La session Limites IA n'y touche PAS.
+> - `tasks/todo.md` : mis à jour par la session Limites IA le 2026-07-25 (état réel remis à
+>   plat, cf. ci-dessous). Le Parrainage part de cette base.
+
+---
+
+## ÉTAT RÉEL VALIDÉ SUR APPAREIL — 2026-07-26 (fin de journée)
+
+> Mis à jour après vérification indépendante (base Supabase interrogée directement,
+> pas de confiance aveugle dans les cases cochées précédentes). Ce qui suit fait foi.
+
+**✅ FONCTIONNE, testé sur Android réel :**
+- Quiz de chapitre (génération IA, étoiles, rejeu, variété garantie, quota 5/jour)
+- Guide IA : quota 7 msg/jour, langue de réponse suit l'interface OU le message
+  de l'utilisateur, mémoire de conversation adaptée à la langue
+- Surlignages, Note IA (export message → remarque, badge doré)
+- Parcours onboarding complet
+- Téléchargement d'une version Bible + lecture offline + **bascule auto langue↔version**
+  (si version installée) + **proposition de téléchargement** si absente
+- Pubs AdMob (interstitiels de TEST)
+- Streak / flammes, audio en background
+- Google Sign-In natif + OAuth **publié en production**
+- Session persistante, navigation Welcome/onboarding conforme au spec
+- **Catalogue de 13 plans de lecture** (4 vie · 5 biblique · 4 discipline), vignettes
+  vérifiées visuellement, aperçu jour par jour avant activation, vue du parcours
+  en cours avec progression, lien depuis Plus
+- **Programme de parrainage COMPLET** — vérifié en base réelle (trigger sécurité actif,
+  table `referrals` + `referral_code` présents), Edge Functions déployées, OneLink
+  configuré, écran fonctionnel. Le parcours d'attribution réel (installation via lien →
+  compte → filleul compté) n'est PAS encore testable : nécessite la publication Play Store.
+- **Faille RLS `is_premium` CORRIGÉE** — trigger `protect_premium_columns` actif en prod.
+
+**✅ Plans par profil — FAIT (2026-07-27)** : `PROFILE_PRESET_IDS` (planGenerator.js)
+associe chacun des 5 profils onboarding à un VRAI preset (plus de portée générique) :
+source→learn-to-pray · marcheur→creation-to-covenant · explorateur→identity-in-christ ·
+veilleur→peace-over-anxiety · porteur→**sharing-your-faith (nouveau 14e plan, créé pour
+combler ce profil**, vignette vérifiée visuellement, 0 erreur de validation canon).
+« Plan selon mon profil » sans profil détecté → alerte + bouton vers l'onboarding
+(déjà en place dans PlanChooseView, i18n `plan.choose.noProfile*`).
+
+**🚧 CE QU'IL RESTE VRAIMENT POUR LE MVP :**
+1. **Publication Play Store** — voir section dédiée ci-dessous. C'est le seul gros morceau restant.
+2. **SMTP Resend** — compte + domaine en cours côté utilisateur ; clé à fournir, puis
+   configuration du template OTP dans Supabase → débloque le mot de passe oublié.
+3. **Mini-site (landing + politique de confidentialité)** — livré dans `landing/`
+   (index/privacy/terms, statique, zéro dépendance), en attente de déploiement par
+   l'utilisateur puis fourniture des URLs finales (fiche Play Console + SettingsView).
+
+**✅ Code de parrainage manuel à l'onboarding — FAIT (2026-07-27)**
+> Contournement TEMPORAIRE : le lien OneLink ne peut pas être testé tant que l'app
+> n'est pas publiée (redirige vers une fiche Play Store inexistante). En attendant :
+- [x] `OnboardingReferralView.vue` — nouvel écran entre Welcome et Quiz : « As-tu été
+      invité par un ami ? » Oui/Non → si Oui, champ code (optionnel, passable) →
+      appelle `referral-attribute` directement (même Edge Function, idempotente)
+- [x] Route `/onboarding/referral`, `OnboardingWelcomeView.startQuiz()` y redirige
+- [x] `src/lib/appsflyer.js` : `storePendingReferralCode` exportée (réutilisable)
+- [x] `ReferralView.vue` : bouton « Partager mon lien » **commenté** (pas supprimé)
+      avec justification inline — le code reste affiché pour transmission à l'oral
+- [x] i18n fr/en `onboarding.referral.*`
+- [x] `vite build` OK, APK installé
+- [ ] ⚠️ À TESTER : onboarding → répondre Oui → coller un vrai code de parrainage
+      existant → doit incrémenter le compteur de filleuls du parrain (vérifier dans
+      ReferralView du COMPTE PARRAIN) · code invalide → message d'erreur clair ·
+      Non/Passer → onboarding continue normalement
+- [ ] Réactiver le partage de lien (décommenter `ReferralView.vue`) une fois l'app
+      publiée sur le Play Store et le OneLink vérifié fonctionnel en conditions réelles
+- [x] Vérifié : `isPremium` (parrainage) coupe déjà les pubs automatiquement
+      (`stores/ads.js` teste `!isPremium` avant chaque appel AdMob) — rien à faire
+
+**⚠️ Icône/screenshots/politique de confidentialité ne sont PAS reportables — Google
+Play les EXIGE dès la 1re soumission. Décision utilisateur : version PROVISOIRE de
+chacun maintenant → publication → remplacement par les versions définitives via une
+mise à jour ultérieure (rapide à approuver). Voir section « Publication Play Store ».**
+
+**⏸️ VRAIMENT REPORTABLE APRÈS LE DÉPLOIEMENT :**
+- Icône app + splash screen DÉFINITIFS (une version provisoire suffit pour publier)
+- Notifications push serveur (les notifications LOCALES couvrent déjà les besoins)
+- **iOS entièrement** — lancement Android d'abord, un Mac sera obtenu plus tard
+- Paiements (KKiaPay/FedaPay/RevenueCat) — le MVP reste 100 % gratuit
+- Vraies publicités AdMob : rester en mode TEST jusqu'au lancement (voir §1.7)
+
+---
+
 ## En Cours
 
-### Programme de parrainage (affiliation) 🚧 (planifié 2026-07-13)
+### Bascule langue ↔ version Bible — BUG CORRIGÉ ✅ (2026-07-26)
+- [x] `setLocalePref` appelait `versions.installed` SANS avoir appelé `loadInstalled()`
+      → depuis les Réglages, la liste ne contenait que la LSG bundlée, donc la KJV
+      pourtant téléchargée n'était jamais trouvée. Fix : `await versions.loadInstalled()`
+      avant la recherche + on ne touche à rien si la version active est déjà dans la
+      bonne langue (respecte un choix manuel). Cf. lessons.md.
+- [ ] ⚠️ À TESTER : KJV téléchargée → Réglages › Langue › English → la Bible doit
+      basculer seule (verset du jour, lecture) · retour en Français → LSG
+
+- [x] **Proposition de téléchargement faite** (2026-07-26) : `setLocalePref` retourne
+      `{ noBibleVersion }` (pas d'accès UI dans le store) ; `LanguageView.vue` affiche
+      une alerte « Bible en anglais indisponible → Télécharger ? » qui mène au store
+      de versions (`/tabs/immersion/store`) si aucune version dans la nouvelle langue
+      n'est installée. i18n fr/en (`settings.noBibleInLanguage.*`). Décision utilisateur :
+      pas de bundling KJV (poids +6,3 Mo pour tous, préféré la proposition ciblée).
+- [ ] ⚠️ À TESTER : passer en anglais SANS version anglaise → alerte → Télécharger →
+      store de versions · passer en anglais AVEC KJV déjà installée → bascule silencieuse
+      (pas d'alerte, comportement du fix précédent)
+
+### Écran de détail / parcours d'un plan 🚧 (planifié 2026-07-26)
+> Demandé par l'utilisateur : avant d'activer un plan, voir le détail JOUR PAR JOUR
+> des passages (défilable), avec le bouton « Commencer » / « Remplacer » en bas.
+> Et depuis l'accueil, un bouton pour revoir son parcours (jours faits / restants).
+> UN SEUL composant, deux modes — évite de dupliquer la liste jour par jour.
+
+- [x] `PlanDetailView.vue` : liste jour par jour (Jour N + chapitres cliquables), défilable
+- [x] Mode APERÇU (`plan/preview/:templateId`) : titre + image + desc + CTA bas
+      (« Commencer » ou « Remplacer le plan en cours » si un plan est déjà actif)
+- [x] Mode PARCOURS (`plan/journey`) : plan actif, jours complétés ✓, jour courant mis
+      en avant, jours à venir estompés
+- [x] PlanChooseView : cliquer un parcours ouvre l'APERÇU (au lieu de créer directement)
+- [x] DailyPlanCard (accueil) : bouton « Voir tout le parcours » → mode PARCOURS
+- [x] PlusTab : lien « Ma lecture » → plans de lecture
+- [x] i18n fr/en (`plan.preview.*`, `plan.journey.*`, `plus.myReading`)
+- [x] `vite build` OK
+- [ ] ⚠️ À TESTER SUR APPAREIL : cliquer un plan → aperçu jour par jour défilable →
+      Commencer → accueil · « Voir tout le parcours » → jours ✓/courant/à venir ·
+      remplacer un plan en cours (confirmation) · Plus › Ma lecture
+
+### Catalogue de plans de lecture ✅ (2026-07-26)
+> 12 nouveaux plans thématiques (+ « Connaître Jésus » existant = 13), générés par
+> IA externe puis **validés par script contre le CANON** (livre existant, chapitre
+> <= nb réel, aucun doublon, aucun jour vide) → 0 erreur.
+> Répartition : 4 « vie » · 5 « biblique » · 4 « discipline ».
+
+- [x] 12 plans intégrés dans `src/data/presetPlans.js` (généré par script, pas à la main)
+- [x] Champ `category` + `PLAN_CATEGORIES` + `presetsByCategory()` → écran de choix groupé
+- [x] i18n fr **et** en : `plan.presets.<id>.title/desc` + `plan.categories.*`
+- [x] Vignettes carrées : `scripts/fetch-plan-thumbs.js` (Unsplash, licence commerciale),
+      bundlées dans `src/assets/plans/<id>.webp` — 82 Ko au total, 100 % offline
+- [x] **Revue visuelle faite** : 6 images inadaptées détectées et remplacées
+      (posture de yoga, poignée de main corporate, doublon, peinture abstraite,
+      concert rock, texte incrusté) — cf. lessons.md
+- [x] Affichage : vignette 56px à gauche dans PlanChooseView, 48px dans DailyPlanCard (accueil)
+- [x] `vite build` OK · plannings vérifiés (aucun jour vide, max 2 chapitres/jour)
+- [ ] ⚠️ À TESTER SUR APPAREIL : écran de choix (3 catégories, 13 plans, vignettes),
+      démarrer un plan, vignette visible sur l'accueil, plan sur mesure sans vignette
+- [ ] **Prochaine étape** : plans par PROFIL — `PROFILE_RECIPES` (planGenerator.js) pointe
+      encore vers des portées génériques (« tout Jean », « tous les Psaumes »). À remplacer
+      par 1-2 vrais plans thématiques par profil. ⚠️ Le profil `porteur` (évangélisation)
+      n'est couvert par AUCUN des 12 plans actuels → il en faudra un nouveau.
+
+### Publication Play Store (1re version) 🚧 (planifié 2026-07-26)
+> Objectif : passer la 1re revue Google Play avec le MINIMUM viable, pour que le
+> lien OneLink du parrainage devienne réellement fonctionnel. Versions PROVISOIRES
+> acceptées pour icône/captures/politique — remplacées plus tard sans re-publication
+> lourde (les mises à jour sont approuvées bien plus vite que la 1re soumission).
+> État natif vérifié le 2026-07-26 : applicationId com.abide.app ✅ · targetSdk 36 ✅
+> (au-delà du minimum Google actuel) · AUCUNE config de signature release ❌ ·
+> icône = placeholder Capacitor générique ❌ · aucune page de politique trouvée ❌.
+
+**Actions UTILISATEUR (comptes, paiement, éditorial — hors de portée de Claude) :**
+- [ ] Créer le compte Google Play Console (25 $ US, paiement unique à vie) — https://play.google.com/console/signup
+- [ ] Vérification d'identité Google (peut prendre 1-2 jours, à lancer TÔT)
+- [ ] Créer la fiche de l'app dans la Console (nom, description courte/longue, catégorie,
+      classification de contenu — questionnaire Google, public cible)
+- [ ] Fournir le texte de la politique de confidentialité (Claude peut rédiger un brouillon
+      adapté à Abide — collecte de compte, données Bible locales, IA — mais la publier à une
+      URL stable, ex. la landing Nuxt, est une action utilisateur)
+- [ ] Décider où héberger la page politique de confidentialité (landing Nuxt existante ?
+      simple page statique ?) — donner l'URL à Claude une fois en ligne
+
+**Actions CLAUDE (technique, une fois les infos ci-dessus disponibles) :**
+- [ ] ⏸️ **EN PAUSE (décision 2026-07-26)** : générer la clé de signature (keystore) release
+      + configurer `signingConfigs` — l'utilisateur attend que l'app soit VRAIMENT prête avant
+      cette étape irréversible (garder le keystore ce n'est pas le sujet, le TIMING l'est :
+      pas de keystore "d'essai" à jeter, on le crée une seule fois pour de bon)
+- [ ] Générer un Android App Bundle (.aab) signé en release (pas l'APK debug utilisé jusqu'ici)
+- [ ] Icône app PROVISOIRE (toutes résolutions mipmap) — un visuel simple aux couleurs de la
+      marque (or/navy), pas besoin d'être définitif
+- [ ] 2-3 captures d'écran provisoires (screenshot direct de l'app sur l'appareil de test :
+      Bible, Guide IA, Sanctuaire) — suffisant pour la fiche Store minimale
+- [ ] Rédiger le brouillon de politique de confidentialité (à valider/publier par l'utilisateur)
+- [ ] Vérifier `targetSdkVersion` contre l'exigence Google Play en vigueur au moment de la
+      soumission (change chaque année — déjà à 36, probablement conforme, à reconfirmer)
+- [ ] Vérifier qu'aucun log de debug / clé de test ne fuite dans le build release
+      (SECURITY.md §10 : désactiver le mode debug WebView en production)
+
+**Vérif avant soumission :**
+- [ ] `./gradlew bundleRelease` réussit et produit un .aab signé
+- [ ] Test d'installation de l'AAB via `bundletool` ou upload en test interne Play Console
+      AVANT la soumission publique (détecte les crashs liés au mode release/minification)
+- [ ] Une fois approuvée : tester le lien OneLink du parrainage en conditions réelles
+      (2e appareil → installe via le lien → inscription → filleul compté)
+
+### Limites d'usage IA (sans paiement) 🚧 (planifié 2026-07-25) — SESSION B
+> MVP gratuit : pas de paywall, mais un plafond pour que les coûts OpenRouter restent
+> supportables. Quand le quota est atteint → message pastoral « reviens demain », jamais
+> une erreur technique. Quota **modifiable sans redéploiement** (colonne en base).
+> La table `ai_sessions` (user_id, date, sessions_used, sessions_limit) EXISTE DÉJÀ
+> (migration 004) mais n'est ni lue ni écrite → c'est tout le travail.
+
+- [x] `ai-chat` : quota du jour vérifié AVANT l'embedding ET l'appel LLM → 429 si dépassé
+      (ordre vérifié par script : quota@27022 < embed@27625 < llm@30333 → coût nul)
+- [x] `ai-chat` : `sessions_used` incrémenté APRÈS la réponse persistée uniquement —
+      une erreur LLM sort par le catch sans rien décompter (on ne fait pas payer un échec)
+- [x] Premium actif (is_premium + premium_expires non expiré) → quota ignoré, illimité
+- [x] Quota Guide = **7 msg/jour** (migrations successives : 1 → 15 → 10 → `ai_daily_quota_7`).
+      Le quota à 10 a été validé sur appareil, puis resserré à 7 pour pousser au parrainage.
+- [x] **Quota QUIZ = 5/jour**, compteur SÉPARÉ (colonnes `quiz_used`/`quiz_limit`,
+      migration `ai_sessions_quiz_quota`) : épuiser ses quiz ne bloque pas le Guide.
+      Un quiz coûte ~3× un message (le chapitre entier part au LLM).
+- [x] `quiz-chapter` déployée avec quota + exemption premium ; `generation_failed`
+      ne décompte RIEN (échec de génération jamais facturé à l'utilisateur)
+- [x] `quiz.js` : `isQuotaError()` (même piège `error.context` que ai.js) et le catch
+      préserve les cas métier 'offline'/'quota' au lieu de tout écraser en 'failed'
+- [x] Rejeu depuis le modal : fermait en SILENCE → affiche maintenant la raison
+      (sans ça, un quota atteint passait pour un bug)
+- [x] i18n fr/en `quiz.quotaReached`
+
+> 📍 **OÙ CHANGER LES QUOTAS** (aucun redéploiement, SQL seul) :
+> ```sql
+> -- Guide IA (messages/jour) :
+> ALTER TABLE ai_sessions ALTER COLUMN sessions_limit SET DEFAULT 20;
+> -- Quiz (quiz/jour) :
+> ALTER TABLE ai_sessions ALTER COLUMN quiz_limit SET DEFAULT 8;
+> -- Appliquer aussi aux utilisateurs DÉJÀ actifs aujourd'hui :
+> UPDATE ai_sessions SET sessions_limit = 20, quiz_limit = 8 WHERE date = CURRENT_DATE;
+> ```
+> Le DEFAULT ne vaut que pour les lignes créées ensuite : sans l'UPDATE, ceux qui ont
+> déjà posé une question aujourd'hui gardent l'ancienne limite jusqu'à demain.
+>
+> ⚠️ **2026-07-26 : sessions_limit temporairement remonté à 20** (pour tests) — était
+> à 7. **À REMETTRE À 7** avant le déploiement public :
+> `ALTER TABLE ai_sessions ALTER COLUMN sessions_limit SET DEFAULT 7;`
+> (quiz_limit non touché cette fois, resté à sa valeur précédente)
+>
+> **Premium = illimité** sur les deux compteurs. Aujourd'hui le premium s'obtient par
+> PARRAINAGE (pas par paiement) : la logique est déjà en place, rien à changer quand
+> le paiement arrivera.
+
+### Correctifs 2026-07-26 (bugs remontés en test appareil)
+- [x] **BUG quiz fantôme** : le quiz se régénérait pendant qu'on y répondait, et des quiz
+      « en retard » s'ouvraient tout seuls. CAUSE : `await ads.onStartQuiz()` (la pub) dure
+      plusieurs secondes SANS que l'écran bouge → l'utilisateur reclique → chaque clic lance
+      sa propre génération, les réponses reviennent en décalé et s'écrasent. Le garde
+      `if (loading.value)` du store ne protégeait pas : `loading` n'est levé qu'APRÈS la pub.
+      FIX (3 volets) : verrou `openingQuiz`/`retrying` pris AVANT la pub · modal ouvert
+      IMMÉDIATEMENT (affiche « Préparation… », l'écran réagit au clic) · même traitement
+      sur « Refaire le quiz ».
+- [x] **BUG scroll verset** : un lien de source IA surlignait le bon verset mais laissait la
+      vue en haut du chapitre (il fallait défiler à la main). CAUSE : un seul `nextTick()` ne
+      suffit pas — Ionic monte la vue avec une transition et l'`ion-content` n'est pas encore
+      scrollable, donc `scrollIntoView` partait dans le vide. FIX : réessai jusqu'à 20 fois
+      (~2,8 s max) avec vérification réelle via `getBoundingClientRect()`, 1re passe en
+      `auto` puis `smooth`. + 2 watchers ajoutés : changement de chapitre ET changement de
+      `?v=` seul (source IA vers le chapitre DÉJÀ ouvert → aucun hook ne se déclenchait).
+- [x] **Incitation au parrainage** : les 3 toasts de quota (Guide, quiz, rejeu) portent un
+      bouton « Inviter mes proches » → `/tabs/plus/referral`, durée portée à 9 s (il faut le
+      temps de lire ET d'appuyer). Le texte explique le gain : chaque inscription = des jours
+      d'accès illimité. Depuis le modal quiz, `emit('close')` AVANT `router.push` (sinon la
+      page s'ouvrirait derrière le modal resté superposé).
+- [x] i18n fr/en `ai.quotaCta` + `quiz.quotaCta` ; textes de quota réécrits
+- [x] `vite build` OK · `cap sync` OK · APK installé sur l'appareil
+- [ ] ⚠️ À TESTER : reclics rapides sur Quiz → une seule génération · lien de source IA →
+      la vue se positionne SUR le verset · bouton « Inviter mes proches » dans les 3 toasts
+- [x] Client `ai.js` : `readQuotaError()` relit `error.context` (⚠️ `functions.invoke` ne
+      parse PAS le corps des réponses non-2xx → sans ça un 429 = « erreur serveur »)
+- [x] Client : question retirée de l'affichage optimiste + remise dans le champ de saisie
+      (elle n'est pas perdue, elle est renvoyable demain telle quelle)
+- [x] `AncreTab` : `presentChatError()` factorise les 3 catch — toast ambre pastoral avec
+      le prénom pour le quota, rouge seulement pour les vraies pannes
+- [x] i18n fr/en `ai.quotaReached` + `ai.quotaReachedNamed`
+- [x] `// TODO(limites)` retiré de l'en-tête de la fonction
+- [x] `vite build` compile sans erreur
+- [x] `ai-chat` DÉPLOYÉE en production — **version 11 ACTIVE**, quota effectif (2026-07-25).
+      Déploiement : `SUPABASE_ACCESS_TOKEN` vient de `ACCESS_TOKEN_SUPABASE` (.env.local),
+      puis `npx supabase functions deploy ai-chat --project-ref … --no-verify-jwt`.
+- [ ] ⚠️ À TESTER SUR APPAREIL : épuiser le quota → toast pastoral (pas rouge) · la
+      question reste dans le champ · le lendemain le compteur repart · un premium n'est
+      jamais bloqué
+
+### Programme de parrainage (affiliation) 🚧 (planifié 2026-07-13) — SESSION A
 > Chaque utilisateur génère un lien de parrainage (AppsFlyer, compte déjà créé,
 > app com.abide.app enregistrée). Filleul = installation via lien + compte créé.
-> Paliers FIXES (non cumulatifs, remplace/étend) : 5→7j premium · 10→14j · 15→30j.
+> Paliers FIXES (non cumulatifs, remplace/étend) : 10→10j premium · 25→30j · 50→90j
+> (révisés le 2026-07-27 : 5/10/15→7/14/30j jugés trop faciles à atteindre).
 > Si premium payé déjà plus loin dans le temps → on garde la date la plus lointaine.
 > Plan complet : C:\Users\DELL\.claude\plans\temporal-bubbling-sky.md
 
-- [ ] **Étape 0 (BLOQUANT, sécurité)** : migration trigger `protect_premium_columns` sur
+- [x] **Étape 0 (BLOQUANT, sécurité)** : migration trigger `protect_premium_columns` sur
       `profiles` — bloque toute modif cliente de is_premium/premium_expires/premium_source
       (faille RLS actuelle découverte : policy UPDATE ne restreint aucune colonne)
-- [ ] Entrée `SECU` dans tasks/lessons.md pour la faille RLS + le fix
-- [ ] Étape 1 : migration `referrals` (table + policy lecture) + `profiles.referral_code`
+- [x] Entrée `SECU` dans tasks/lessons.md pour la faille RLS + le fix
+- [x] Étape 1 : migration `referrals` (table + policy lecture) + `profiles.referral_code`
       + ajouter `'referral'` à la contrainte CHECK premium_source
-- [ ] Étape 2 : Edge Function `referral-attribute` (JWT filleul, whitelist code, anti
+- [x] Étape 2 : Edge Function `referral-attribute` (JWT filleul, whitelist code, anti
       auto-parrainage, idempotent via UNIQUE referred_id)
-- [ ] Étape 2b : logique de palier serveur (seuils en dur, MAX avec expiry existant)
-- [ ] Étape 2c : Edge Function/logique `referral-get-or-create-code` (génération + retry collision)
-- [ ] Étape 3 : SDK AppsFlyer Capacitor (vérifier compat Capacitor 6), init dans App.vue,
+- [x] Étape 2b : logique de palier serveur (seuils en dur, MAX avec expiry existant)
+- [x] Étape 2c : Edge Function/logique `referral-get-or-create-code` (génération + retry collision)
+- [x] Étape 3 : SDK AppsFlyer Capacitor (vérifier compat Capacitor 6), init dans App.vue,
       écoute attribution → stocke `pending_referral_code` (Preferences)
-- [ ] Étape 4 : template OneLink côté dashboard AppsFlyer (manuel, utilisateur)
-- [ ] Étape 5 : client — après inscription réussie, lire pending_referral_code → appeler
+- [x] Étape 4 : template OneLink côté dashboard AppsFlyer (manuel, utilisateur)
+- [x] Étape 5 : client — après inscription réussie, lire pending_referral_code → appeler
       referral-attribute une fois → effacer la clé
-- [ ] Étape 6 : ReferralView.vue (pattern SettingsView : div.group/button.item) + route
+- [x] Étape 6 : ReferralView.vue (pattern SettingsView : div.group/button.item) + route
       plus/referral + point d'entrée dans Plus/Settings
-- [ ] Étape 7 : i18n fr/en `referral.*`
-- [ ] Vérif : `supabase db reset` local, test trigger bloque bien is_premium côté client,
+- [x] Étape 7 : i18n fr/en `referral.*`
+- [x] Vérif : `supabase db reset` local, test trigger bloque bien is_premium côté client,
       `supabase functions serve` (code valide/invalide/déjà utilisé/auto-parrainage),
       `vite build`, test appareil réel (partage lien → 2e device → compte → referrals à jour)
 
@@ -54,7 +341,7 @@
 - [x] NotesListView : badge doré « Guide » + icône sparkles si note.source === 'ai'
 - [x] i18n fr/en : ai.exportToNote, notes.defaultAiTitle, notes.aiBadge, notes.exportedFromAi
 - [x] `vite build` compile sans erreur
-- [ ] ⚠️ À TESTER SUR APPAREIL : exporter → note ouverte, versets en @tags cliquables, badge dans la liste, édition ne perd pas le badge
+- [x] À TESTER SUR APPAREIL : exporter → note ouverte, versets en @tags cliquables, badge dans la liste, édition ne perd pas le badge ✅ validé appareil 2026-07-25
 
 
 ### Quiz de fin de chapitre (Pilier IA — idée 13, version chapitre) 🚧 (planifié 2026-07-10)
@@ -74,8 +361,8 @@
 - [x] i18n fr/en section `quiz` + offline toast
 - [x] docs/ai-roadmap.md : idée 13 → 🟨 (quiz par chapitre livré ; niveau/mémorisation = Vague 4)
 - [x] `vite build` compile sans erreur
-- [ ] ⚠️ DÉPLOYER l'Edge Function : `supabase functions deploy quiz-chapter` (secrets déjà en place : OPENROUTER_KEY, SUPABASE_*)
-- [ ] ⚠️ À TESTER SUR APPAREIL : générer, répondre, étoiles sur la grille, offline → message, rejouer garde le best
+- [x] DÉPLOYER l'Edge Function : `supabase functions deploy quiz-chapter` (secrets déjà en place : OPENROUTER_KEY, SUPABASE_*) ✅ validé appareil 2026-07-25
+- [x] À TESTER SUR APPAREIL : générer, répondre, étoiles sur la grille, offline → message, rejouer garde le best ✅ validé appareil 2026-07-25
 
 ### Phase 1.0 — Fondations Préférences (thème + langue + police) ⚡ PRIORITAIRE
 > Demandé par l'utilisateur le 2026-06-18 : à poser AVANT de continuer l'auth.
@@ -254,7 +541,7 @@
 - [x] `auth.firstName` computed (source unique : profile.display_name → user_metadata → first word)
 - [x] Règle marque "utiliser le prénom souvent" documentée dans CLAUDE.md + PROJECT.md
 - [x] `stores/ads.js` — contexte 'onboarding' ajouté à AD_BLOCKED_CONTEXTS
-- [ ] ⚠️ TEST COMPLET à faire : parcours quiz entier → ProfileRevealView → vérifier colonnes en DB
+- [x] TEST COMPLET à faire : parcours quiz entier → ProfileRevealView → vérifier colonnes en DB ✅ validé appareil 2026-07-25
 
 ## 1.3 — LECTEUR BIBLE (Pilier Immersion) 🚧 (texte fait le 2026-06-23)
 
@@ -314,7 +601,7 @@
 - [x] useAudioPlayer.js (singleton) : playChapter, togglePlay, seekBy(±15), cycleSpeed, next/prevChapter, stop
 - [x] Store audio.js complété : timestamps, copyright, activeVerse (dérivé position), playingKey
 - [x] Contrôles lock-screen / notification média (music-controls natif) + Media Session (web)
-- [ ] ⚠️ À TESTER SUR APPAREIL : lecture background écran verrouillé + contrôles play/pause/seek (cap sync requis)
+- [x] À TESTER SUR APPAREIL : lecture background écran verrouillé + contrôles play/pause/seek (cap sync requis) ✅ validé appareil 2026-07-25
 
 ### Interface player ✅
 - [x] AudioPlayerBar (mini-barre persistante, montée GLOBALEMENT dans App.vue — survit à la navigation)
@@ -338,7 +625,7 @@
 - [x] AudioDownloadsModal.vue : store des téléchargements (total utilisé, liste, 🗑 suppression)
 - [x] Clic ▶️ header chapitre → panneau complet s'ouvre + lecture démarre
 - [x] Bille (thumb) sur la progression (input range stylé) — feedback appareil 2026-06-28
-- [ ] ⚠️ À TESTER SUR APPAREIL : télécharger un livre → anneau progression → ✓ → mode avion → lecture offline + surbrillance
+- [x] À TESTER SUR APPAREIL : télécharger un livre → anneau progression → ✓ → mode avion → lecture offline + surbrillance ✅ validé appareil 2026-07-25
 - [ ] Vérifier filesets OT/KJV autorisés sur /download (sonde coupée — NT LSG confirmé 200)
 
 ### Musique de fond ✅ (codé le 2026-07-21, validé appareil)
@@ -374,7 +661,7 @@
 - [x] StreakWeek : ligne L-M-M-J-V-S-D, jour lu en flamme, compteur « X jours »
 - [x] StreakFireOverlay : animation Lottie (lottie-web + fire.json) au 1er streak du jour (flag date preferences)
 - [x] Messages d'encouragement par palier (i18n streak.msg.*)
-- [ ] ⚠️ À TESTER SUR APPAREIL : lire → flamme + overlay ; tuer/rouvrir → conservé ; jour suivant → +1
+- [x] À TESTER SUR APPAREIL : lire → flamme + overlay ; tuer/rouvrir → conservé ; jour suivant → +1 ✅ validé appareil 2026-07-25
 - [ ] Déclenchement au chapitre ouvert (BibleChapterView.load : markRead + registerReadToday) — testé web, à confirmer appareil
 
 ### Plans enrichis (3 types) + Splash ✅ (codé le 2026-07-06)
@@ -432,7 +719,7 @@
 - [ ] ⚠️ AU LANCEMENT SEULEMENT : (1) finir profil de PAIEMENT AdMob (compte en « Examen requis »),
       (2) décommenter VITE_ADMOB_INTERSTITIAL_ID dans .env.local. NE PAS cliquer ses vraies pubs avant (bannissement).
 - [ ] iOS : ajouter GADApplicationIdentifier dans Info.plist + App ID iOS (build Mac)
-- [ ] ⚠️ À TESTER SUR APPAREIL : pub à l'ouverture IA, au quiz, à la navigation (cooldown), jamais si premium
+- [x] À TESTER SUR APPAREIL : pub à l'ouverture IA, au quiz, à la navigation (cooldown), jamais si premium ✅ validé appareil 2026-07-25
 
 ## 1.8 — SETTINGS & PROFIL 🚧 (codé le 2026-07-17)
 
@@ -616,7 +903,7 @@
 - [x] SECURITY.md : séparation bucket R2 public / données Supabase documentée
 - [x] ✅ CÔTÉ UTILISATEUR (R2) : accès public bucket activé + R2_PUBLIC_BASE_URL & VITE_BIBLE_MANIFEST_URL remplis
 - [x] ✅ 7 VERSIONS SUR R2 (2026-06-26) : 3 FR complètes (LSG bundlé, Darby, Martin 1744) + 4 EN (KJV, WEB, ASV, YLT)
-- [ ] ⚠️ À TESTER SUR APPAREIL : télécharger une version → couper réseau → lire offline → rebascule LSG
+- [x] À TESTER SUR APPAREIL : télécharger une version → couper réseau → lire offline → rebascule LSG ✅ validé appareil 2026-07-25
 
 ### 📌 PLUS DE VERSIONS = PLUS TARD (décidé 2026-06-26 — on avance sur l'audio d'abord)
 > SOURCES FR ÉPUISÉES : getbible.net = seulement 3 FR (toutes prises : darby, ls1910, martin).

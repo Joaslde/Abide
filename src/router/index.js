@@ -1,7 +1,27 @@
 import { createRouter, createWebHashHistory } from '@ionic/vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
-import { isOnline } from '@/lib/network'
+import { isOnlineCached } from '@/lib/network'
+
+/**
+ * Navigation invité EN COURS (bouton « Passer » de Welcome). En mémoire seulement
+ * (variable de module) → se réinitialise à CHAQUE démarrage à froid de l'app.
+ * Ainsi : sans session, on montre Welcome au démarrage ; une fois « Passer »
+ * cliqué, l'invité navigue librement pendant sa session ; au prochain lancement,
+ * Welcome réapparaît. Activé par enterGuestBrowsing() depuis WelcomeView.
+ */
+let guestBrowsing = false
+export function enterGuestBrowsing() { guestBrowsing = true }
+
+/**
+ * Onboarding REPORTÉ pour cette session (bouton « Je le ferai plus tard »).
+ * En mémoire seulement, comme guestBrowsing → se réinitialise au démarrage à
+ * froid : la personne accède à l'accueil maintenant, et le quiz lui est
+ * reproposé au prochain lancement de l'app. Rien n'est écrit en base (à la
+ * différence de « Non merci » qui pose onboarding_snooze_until = +3 mois).
+ */
+let onboardingPostponed = false
+export function postponeOnboarding() { onboardingPostponed = true }
 
 /**
  * Accès invité (sans connexion) : lecture de la Bible + audio uniquement.
@@ -41,6 +61,14 @@ const routes = [
     // Salutation animée (entrée de l'onboarding).
     path: '/onboarding',
     component: () => import('@/views/auth/onboarding/OnboardingWelcomeView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    // Code de parrainage éventuel — AVANT le quiz. Contournement temporaire du
+    // lien OneLink (non fonctionnel tant que l'app n'est pas publiée) : la
+    // personne invitée peut saisir le code manuellement ici.
+    path: '/onboarding/referral',
+    component: () => import('@/views/auth/onboarding/OnboardingReferralView.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -101,6 +129,16 @@ const routes = [
         component: () => import('@/views/plan/PlanCustomView.vue')
       },
       {
+        // Parcours du plan ACTIF : jours faits / en cours / à venir.
+        path: 'immersion/plan/journey',
+        component: () => import('@/views/plan/PlanDetailView.vue')
+      },
+      {
+        // Aperçu d'un parcours préétabli AVANT de le lancer (détail jour par jour).
+        path: 'immersion/plan/preview/:templateId',
+        component: () => import('@/views/plan/PlanDetailView.vue')
+      },
+      {
         // Sanctuaire (prière + jeûne) — LOCAL-FIRST : accessible aux invités
         // et hors ligne (comme la Bible et Plus). Pas de requiresAuth.
         path: 'sanctuaire',
@@ -150,6 +188,12 @@ const routes = [
       {
         path: 'plus/highlights',
         component: () => import('@/views/plus/HighlightsView.vue')
+      },
+      {
+        // Programme de parrainage : nécessite un compte (le code est lié au profil).
+        path: 'plus/referral',
+        component: () => import('@/views/plus/ReferralView.vue'),
+        meta: { requiresAuth: true }
       }
     ]
   },
@@ -217,53 +261,62 @@ router.beforeEach(async (to) => {
   const authStore = useAuthStore()
   const prefs = usePreferencesStore()
 
-
-  // 1. Tout premier lancement (jamais ouvert l'app) → écran de bienvenue.
-  //    Les utilisateurs déjà connectés ne le revoient pas.
+  // Attendre que la session soit restaurée du storage natif (async) AVANT de
+  // décider. Sinon, au démarrage à froid, isAuthenticated est encore false et
+  // on redirigerait à tort. Borné à 3,5 s : la navigation ne doit jamais figer.
   //
-  //    OFFLINE-FIRST : la Welcome propose connexion Google/email, inutilisable
-  //    sans réseau. Si on est hors ligne au premier lancement, on envoie
-  //    directement l'utilisateur à la Bible (100% offline) SANS marquer
-  //    firstLaunchDone. Ainsi, dès que le réseau revient, la Welcome
-  //    réapparaît au lancement suivant pour proposer la connexion.
-  if (!prefs.firstLaunchDone && !authStore.isAuthenticated) {
-    const online = await isOnline()
-    if (!online) {
-      // Hors ligne : la Bible (et l'audio téléchargé) restent accessibles.
-      // On laisse passer les routes invité, on bloque le reste vers la Bible.
-      if (to.path.startsWith('/tabs/home') || to.path.startsWith('/tabs/immersion') || to.path.startsWith('/tabs/plus') || to.path.startsWith('/tabs/sanctuaire') || to.path.startsWith('/settings')) {
-        return // accès autorisé
-      }
-      return '/tabs/home'
-    }
-    // En ligne : parcours normal via l'écran de bienvenue.
-    if (to.path !== '/welcome' && !to.path.startsWith('/auth')) {
-      return '/welcome'
-    }
+  // ⚠️ On n'attend QUE tant que l'init n'est pas terminée. Une fois la session
+  // restaurée, ce guard doit être SYNCHRONE : un `await` (même déjà résolu)
+  // reporte la décision au microtask suivant, ce qui suffisait à désordonner
+  // deux clics d'onglet rapprochés (Ionic n'attend pas le guard pour animer).
+  if (!authStore.ready) {
+    await Promise.race([
+      authStore.init(),
+      new Promise((resolve) => setTimeout(resolve, 3500))
+    ])
   }
 
-  // 2. Routes protégées : rediriger les non-connectés vers la connexion.
+  // On laisse toujours passer les écrans d'auth/onboarding eux-mêmes (sinon boucle).
+  const onAuthFlow = to.path.startsWith('/auth') || to.path.startsWith('/onboarding') || to.path === '/welcome'
+
+  // ── HORS LIGNE : quoi qu'il arrive (session ou non), on va à l'Accueil ──
+  //    (rien de ce qui exige le réseau — Welcome, connexion, onboarding — n'est
+  //    utile sans internet ; la Bible et le reste local restent accessibles).
+  //
+  // ⚠️ Lecture SYNCHRONE du cache réseau (isOnlineCached), surtout pas `await
+  // isOnline()` : ce dernier appelle le pont natif à CHAQUE navigation. Ionic
+  // lance l'animation d'onglet sans attendre le guard, donc deux clics
+  // rapprochés mettaient deux guards en vol dont les délais natifs variaient :
+  // ils se résolvaient dans le désordre et on atterrissait sur le mauvais
+  // onglet (bug intermittent 2026-07-26). Le cache est alimenté par le listener
+  // natif démarré dans main.js (watchNetwork) → même fiabilité, coût nul.
+  if (!isOnlineCached()) {
+    return onAuthFlow ? '/tabs/home' : undefined
+  }
+
+  // ── EN LIGNE, PAS DE SESSION → écran Welcome (connexion) ──
+  //    C'est l'ABSENCE de session qui déclenche Welcome, pas firstLaunchDone :
+  //    tant qu'on n'est pas connecté, chaque OUVERTURE repropose la connexion.
+  //    Exception : si l'utilisateur a cliqué « Passer » (guestBrowsing), il
+  //    navigue librement pendant cette session d'usage (Welcome reviendra au
+  //    prochain démarrage à froid, guestBrowsing étant en mémoire).
+  if (!authStore.isAuthenticated) {
+    if (onAuthFlow || guestBrowsing) return undefined
+    return '/welcome'
+  }
+
+  // ── EN LIGNE, SESSION ACTIVE ──
+  // Routes explicitement protégées (rare : la plupart passent par la logique ci-dessus).
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return '/auth/login'
   }
 
-  // 3. Utilisateur connecté mais onboarding non terminé → forcer l'onboarding.
-  //    SAUF hors ligne : l'onboarding sauvegarde le profil (réseau requis).
-  //    On laisse donc accéder à la Bible offline ; l'onboarding sera proposé
-  //    au prochain lancement avec réseau.
-  if (
-    authStore.isAuthenticated &&
-    authStore.shouldOnboard &&
-    !to.path.startsWith('/onboarding') &&
-    !to.path.startsWith('/auth')
-  ) {
-    const online = await isOnline()
-    if (!online) {
-      if (to.path.startsWith('/tabs/home') || to.path.startsWith('/tabs/immersion') || to.path.startsWith('/tabs/plus') || to.path.startsWith('/tabs/sanctuaire')) {
-        return // accès Bible autorisé hors ligne
-      }
-      return '/tabs/home'
-    }
+  // Onboarding pas encore fait ET pas en sommeil (report « Non merci » < 3 mois)
+  // → on force l'onboarding. « Plus tard » ne pose aucun flag → reproposé ici.
+  // Refusé (snooze actif) OU rempli → shouldOnboard = false → on laisse passer (Accueil).
+  // « Plus tard » (onboardingPostponed) libère la navigation pour cette session
+  // uniquement — au prochain démarrage le flag est perdu et le quiz revient.
+  if (authStore.shouldOnboard && !onboardingPostponed && !to.path.startsWith('/onboarding')) {
     return '/onboarding'
   }
 })

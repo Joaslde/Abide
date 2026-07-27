@@ -31,6 +31,17 @@
         </div>
       </section>
 
+      <!-- Lecture : parcours / plans de lecture. -->
+      <section class="block">
+        <p class="block-label">{{ t('plus.myReading') }}</p>
+        <div class="grid">
+          <button class="card" @click="go('/tabs/immersion/plan')">
+            <ion-icon :icon="mapOutline" />
+            <span>{{ t('plan.choose.title') }}</span>
+          </button>
+        </div>
+      </section>
+
       <section class="block">
         <p class="block-label">{{ t('plus.myNotes') }}</p>
         <div class="grid">
@@ -61,7 +72,7 @@ import {
 } from '@ionic/vue'
 import {
   createOutline, bookmarkOutline, colorWandOutline,
-  heartOutline, bookOutline, flameOutline, settingsOutline
+  heartOutline, bookOutline, flameOutline, settingsOutline, mapOutline
 } from 'ionicons/icons'
 
 const { t } = useI18n()

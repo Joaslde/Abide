@@ -94,24 +94,29 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   IonModal, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-  IonIcon, IonContent, IonSpinner
+  IonIcon, IonContent, IonSpinner, toastController
 } from '@ionic/vue'
 import {
   closeOutline, closeCircle, checkmarkCircle, star, starOutline
 } from 'ionicons/icons'
+import { useRouter } from 'vue-router'
 import { useQuizStore } from '@/stores/quiz'
 import { useAdsStore } from '@/stores/ads'
 
 const { t } = useI18n()
 const quiz = useQuizStore()
 const ads = useAdsStore()
+const router = useRouter()
 
 defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
+
+// Verrou anti double-clic sur « Refaire le quiz » (couvre la durée de la pub).
+const retrying = ref(false)
 
 const chosen = computed(() => quiz.answers[quiz.currentIndex])
 const isChosenCorrect = computed(
@@ -134,10 +139,46 @@ function optionClass(i) {
 }
 
 async function onRetry() {
+  // Même verrou que le bouton Quiz : la pub est un long `await` pendant lequel
+  // l'écran ne bouge pas → sans ça, plusieurs rejeux partaient en parallèle.
+  if (retrying.value || quiz.loading) return
+  retrying.value = true
+  try {
+    await runRetry()
+  } finally {
+    retrying.value = false
+  }
+}
+
+async function runRetry() {
   // Pub vidéo avant de rejouer (à chaque fois, sauf premium), puis regénère un
-  // quiz sur le même chapitre. En cas d'échec (offline), on ferme.
+  // quiz sur le même chapitre. En cas d'échec on ferme EN EXPLIQUANT pourquoi :
+  // fermer en silence ferait passer un quota atteint pour un bug.
   await ads.onStartQuiz()
-  quiz.retry().catch(() => emit('close'))
+  try {
+    await quiz.retry()
+  } catch (e) {
+    const kind = e?.message === 'quota' ? 'quota' : e?.message === 'offline' ? 'offline' : 'error'
+    const tt = await toastController.create({
+      message: kind === 'quota' ? t('quiz.quotaReached')
+        : kind === 'offline' ? t('quiz.offline')
+        : t('quiz.error'),
+      duration: kind === 'quota' ? 9000 : 2500,
+      position: 'bottom',
+      color: kind === 'quota' ? 'warning' : kind === 'offline' ? undefined : 'danger',
+      // Quota → raccourci vers le parrainage (jours d'accès illimité offerts).
+      buttons: kind === 'quota'
+        ? [{
+            text: t('quiz.quotaCta'),
+            // Fermer le modal AVANT de naviguer : sinon la page de parrainage
+            // s'ouvrirait derrière le quiz resté superposé.
+            handler: () => { emit('close'); router.push('/tabs/plus/referral') }
+          }]
+        : []
+    })
+    await tt.present()
+    emit('close')
+  }
 }
 
 function onClose() {

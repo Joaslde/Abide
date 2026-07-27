@@ -39,6 +39,11 @@ export default {
     evening: 'Good evening',
     deleteConfirm: 'Delete this conversation? This cannot be undone.',
     error: 'Something went wrong. Please try again.',
+    // Daily quota reached: not an error — an invitation.
+    // We offer referral: inviting friends unlocks days of unlimited access.
+    quotaReached: 'We\'ve shared a lot today. Come back tomorrow — or invite your friends: every sign-up earns you days of unlimited access.',
+    quotaReachedNamed: '{name}, we\'ve shared a lot today. Come back tomorrow — or invite your friends: every sign-up earns you days of unlimited access.',
+    quotaCta: 'Invite friends',
     modes: {
       enseignement: 'Teaching',
       etude: 'Study',
@@ -54,6 +59,9 @@ export default {
     generating: 'Preparing your quiz…',
     offline: 'The quiz requires an internet connection.',
     error: 'Could not generate the quiz. Please try again.',
+    // Daily quota reached: not a failure — an invitation.
+    quotaReached: 'You\'ve done your quizzes for today. Come back tomorrow — or invite your friends: every sign-up earns you days of unlimited access.',
+    quotaCta: 'Invite friends',
     question: 'Question {current} / {total}',
     next: 'Next',
     seeResults: 'See my result',
@@ -68,6 +76,19 @@ export default {
     retry: 'Retry quiz',
     close: 'Close',
     star: 'star | star | stars'
+  },
+  referral: {
+    title: 'Referral',
+    heading: 'Invite your friends to Abide',
+    description: 'Share your link. When your friends install the app and create an account, you unlock premium — free of charge.',
+    share: 'Share my link',
+    shareMessage: 'Join me on Abide, an app for reading the Bible and praying daily 🙏 {link}',
+    linkCopied: 'Link copied to clipboard',
+    referralCount: '{count} referral | {count} referral | {count} referrals',
+    daysShort: '{days}d',
+    nextTierHint: '{remaining} more referral for {days} days of premium | {remaining} more referrals for {days} days of premium',
+    allTiersReached: 'All tiers reached!',
+    premiumActiveUntil: 'Premium active until {date} (referral)'
   },
   sanctuaire: {
     title: 'Sanctuary',
@@ -220,6 +241,17 @@ export default {
     startQuiz: 'Yes, I’d love to',
     laterButton: 'I’ll do it later',
     skipQuiz: 'No thanks, I don’t need an experience made for me',
+    referral: {
+      title: 'Were you invited by a friend?',
+      body: 'If someone shared Abide with you, you can enter their code here — otherwise, just skip this step.',
+      yes: 'Yes',
+      no: 'No, continue',
+      placeholder: 'Referral code',
+      confirm: 'Confirm',
+      offline: 'An internet connection is needed to validate this code.',
+      notFound: 'This code doesn’t match any referral. Check that it’s entered correctly.',
+      error: 'Something went wrong. You can try again or skip this step.'
+    },
     quiz: {
       next: 'Continue',
       finish: 'Finish',
@@ -384,6 +416,8 @@ export default {
   },
   bible: {
     title: 'The Bible',
+    // Short label for the tab bar only ("The Bible" wraps onto two lines).
+    tab: 'Bible',
     oldTestament: 'Old Testament',
     newTestament: 'New Testament',
     chapters: 'chapters',
@@ -517,10 +551,27 @@ export default {
       forYou: 'For you',
       profileCard: 'Plan for your profile',
       profileDesc: 'Abide suggests a reading tailored to your journey.',
+      // Spiritual profile not set yet: explain and offer the quiz rather than
+      // generating a "tailored" plan that would in fact be generic.
+      noProfileTitle: 'Your profile isn’t set yet',
+      noProfileMsg: 'To suggest a truly tailored reading, Abide needs to know you a little better. A few questions is all it takes.',
+      noProfileCta: 'Take the quiz',
       journeys: 'Journeys',
       own: 'Create your own',
       customCard: 'Custom plan',
       customDesc: 'Choose the content and duration.'
+    },
+    preview: {
+      title: 'Plan overview',
+      start: 'Start this journey',
+      replace: 'Replace current plan',
+      notFound: 'This journey could not be found.'
+    },
+    journey: {
+      title: 'My journey',
+      see: 'See the whole journey',
+      day: 'Day {n}',
+      dayProgress: 'day {day} of {total}'
     },
     profileTitles: {
       source: 'At the spring — the Gospel of John',
@@ -529,10 +580,67 @@ export default {
       veilleur: 'The Watchman — the Psalms',
       porteur: 'The Bearer — the Acts of the Apostles'
     },
+    categories: {
+      vie: 'For your life',
+      biblique: 'Bible journeys',
+      discipline: 'Growing spiritually'
+    },
     presets: {
       knowJesus: {
         title: 'Getting to know Jesus',
         desc: 'His life, from the manger to the resurrection.'
+      },
+      peaceOverAnxiety: {
+        title: 'Peace stronger than anxiety',
+        desc: 'Seven days to lay your worries before God and learn to breathe differently.'
+      },
+      griefAndComfort: {
+        title: 'Walking through grief',
+        desc: 'Ten days to walk the valley with texts that aren’t afraid of your pain.'
+      },
+      pathOfForgiveness: {
+        title: 'The path of forgiveness',
+        desc: 'Receive God’s forgiveness first, then let it flow toward others.'
+      },
+      identityInChrist: {
+        title: 'Who I am in Christ',
+        desc: 'Replace the labels you carry with what God truly says about you.'
+      },
+      lifeOfDavid: {
+        title: 'David, a heart after God',
+        desc: 'The shepherd who became king: victories, flight, failure, restoration.'
+      },
+      parablesOfJesus: {
+        title: 'The parables of Jesus',
+        desc: 'The stories Jesus told to turn hearts around.'
+      },
+      womenOfTheBible: {
+        title: 'Women of the Bible',
+        desc: 'Those God saw, called and honored, from Eve to Lydia.'
+      },
+      creationToCovenant: {
+        title: 'From Creation to Covenant',
+        desc: 'Journey through Genesis and watch God keep his promise against all odds.'
+      },
+      learnToPray: {
+        title: 'Learning to pray',
+        desc: 'Move past formulas and speak to God simply.'
+      },
+      cultivatingGratitude: {
+        title: 'Cultivating gratitude',
+        desc: 'Five days to open your eyes again to what you’ve already received.'
+      },
+      studyTheBible: {
+        title: 'Study the Bible yourself',
+        desc: 'Grow in confidence: why the Word matters, and how to approach it.'
+      },
+      hearingGodsVoice: {
+        title: 'Hearing God’s voice',
+        desc: 'Recognize the Shepherd’s voice above the noise, and dare to answer.'
+      },
+      sharingYourFaith: {
+        title: 'Sharing your faith',
+        desc: 'From the first witnesses to you: learning to speak of Jesus with boldness and gentleness.'
       }
     },
     custom: {
@@ -544,6 +652,7 @@ export default {
   plus: {
     tab: 'More',
     title: 'More',
+    myReading: 'My reading',
     myNotes: 'My notes',
     notes: 'Notes',
     bookmarks: 'Bookmarks',
@@ -582,7 +691,13 @@ export default {
     language: 'Language',
     french: 'French',
     english: 'English',
+    noBibleInLanguage: {
+      title: 'No English Bible available',
+      message: 'The interface is now in English, but no Bible in this language is downloaded — reading stays in French. Would you like to download an English Bible?',
+      download: 'Download'
+    },
     bibleReading: 'Bible reading',
+    referral: 'Referral',
     bibleFont: 'Font',
     bibleFontSize: 'Text size',
     account: 'Account',
@@ -608,6 +723,8 @@ export default {
     fieldName: 'Name',
     fieldEmail: 'Email',
     fieldProfile: 'Spiritual profile',
+    // Shown instead of the value when the quiz has never been taken.
+    discoverProfile: 'Discover my profile',
     fieldLevel: 'Bible level',
     fieldChurch: 'Church',
     fieldDenomination: 'Denomination',

@@ -26,6 +26,17 @@
             <span class="item-label">{{ row.label }}</span>
             <span class="item-value">{{ row.value }}</span>
           </div>
+
+          <!-- Profil spirituel jamais rempli (quiz refusé ou reporté) : au lieu
+               de masquer la ligne, on l'affiche COMME UNE INVITATION. Sans ça la
+               personne n'avait plus aucun moyen de retrouver le quiz. -->
+          <button v-if="!hasSpiritualProfile" class="item tappable" @click="startOnboarding">
+            <span class="item-label">{{ t('settings.fieldProfile') }}</span>
+            <span class="discover">
+              {{ t('settings.discoverProfile') }}
+              <ion-icon :icon="arrowForward" />
+            </span>
+          </button>
         </div>
 
         <!-- Actions de compte -->
@@ -61,7 +72,7 @@ import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonIcon,
   IonButtons, IonBackButton
 } from '@ionic/vue'
-import { chevronForward, logOutOutline, trashOutline } from 'ionicons/icons'
+import { chevronForward, logOutOutline, trashOutline, arrowForward } from 'ionicons/icons'
 import { useAuthStore } from '@/stores/auth'
 
 const { t, te } = useI18n()
@@ -97,6 +108,30 @@ const infoRows = computed(() => {
   push(t('settings.fieldLocation'), [p.city, p.country].filter(Boolean).join(', '))
   return rows
 })
+
+/**
+ * Le profil spirituel n'existe que si le quiz d'onboarding a été passé.
+ * `user_profile` est renseigné par le calcul de fin de quiz : c'est donc le
+ * marqueur fiable (bien plus que onboarding_done, qui peut être posé sans quiz).
+ */
+const hasSpiritualProfile = computed(() => !!auth.profile?.user_profile)
+
+/**
+ * Relance le quiz d'onboarding depuis les réglages. On lève le report de
+ * session (« Plus tard ») ET le sommeil de 3 mois (« Non merci ») : la personne
+ * vient de demander explicitement à le faire, ces garde-fous n'ont plus lieu d'être.
+ */
+async function startOnboarding() {
+  if (auth.profile?.onboarding_snooze_until) {
+    // Best-effort : si le réseau échoue, on ouvre quand même le quiz.
+    try {
+      await auth.updateProfile({ onboarding_snooze_until: null })
+    } catch (e) {
+      console.warn('[profil] levée du snooze impossible', e)
+    }
+  }
+  router.push('/onboarding/quiz')
+}
 
 function go(path) {
   router.push(path)
@@ -201,6 +236,19 @@ ion-content { --background: var(--navy); }
   color: var(--cream);
   text-align: right;
 }
+/* Invitation à passer le quiz : dorée et fléchée pour se lire comme une action,
+   pas comme une valeur vide. */
+.discover {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-app);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold);
+  text-align: right;
+}
+.discover ion-icon { font-size: 15px; }
 .action {
   font-family: var(--font-app);
   font-size: 15px;

@@ -105,10 +105,63 @@ export const usePreferencesStore = defineStore('preferences', () => {
     })
   }
 
+  /**
+   * Change la langue de l'INTERFACE. Si une version de Bible dans cette langue
+   * est DÉJÀ téléchargée localement, on bascule aussi la Bible active dessus —
+   * sans jamais déclencher de téléchargement (offline-first : pas de surprise
+   * de données mobiles). Sinon, la version Bible active ne change pas (LSG reste
+   * le seul contenu garanti disponible) et on le SIGNALE à l'appelant (voir
+   * `noBibleVersion` dans le retour) pour qu'il propose le téléchargement —
+   * cette fonction ne montre elle-même aucune UI (pas d'accès à alertController).
+   * Import dynamique : preferences.js ne dépend pas de bible.js au chargement
+   * (même pattern que auth.js → user-db pour deleteAccount).
+   * @returns {Promise<{ noBibleVersion: boolean }>}
+   */
   async function setLocalePref(value) {
     locale.value = value
     applyLocale()
     await persist()
+
+    let noBibleVersion = false
+    try {
+      const { useBibleVersionsStore } = await import('@/stores/bibleVersions')
+      const { useBibleStore } = await import('@/stores/bible')
+      const versions = useBibleVersionsStore()
+      const bible = useBibleStore()
+
+      // ⚠️ INDISPENSABLE : `installed` n'est peuplé que par loadInstalled(), qui
+      // n'était appelé que depuis les vues Bible. En venant des Réglages sans
+      // avoir ouvert un chapitre, la liste ne contenait que la LSG bundlée → la
+      // version anglaise pourtant téléchargée n'était jamais trouvée (bug 2026-07-26).
+      // loadInstalled() est idempotent (relit le storage + vérifie les .db).
+      await versions.loadInstalled()
+
+      // Si la version ACTIVE est déjà dans la bonne langue, on ne touche à rien
+      // (respecte un choix manuel : ex. un francophone qui lit la KJV).
+      const active = versions.installed.find((v) => v.id === bible.activeVersion)
+      if (active?.language === value) return { noBibleVersion: false }
+
+      const match = versions.installed.find((v) => v.language === value)
+      if (match) await bible.setVersion(match.id)
+      else noBibleVersion = true
+    } catch {
+      /* pas de version installée dans cette langue, ou bascule impossible → on
+         garde la version Bible actuelle, ce n'est jamais bloquant */
+      noBibleVersion = true
+    }
+
+    // Les notifications LOCALES déjà programmées (rappels de prière, jeûne) ont
+    // leur texte figé dans la langue au moment de la planification, pas à
+    // l'affichage. Sans ça, quelqu'un qui change de langue garderait des
+    // notifications futures dans l'ANCIENNE langue jusqu'au prochain démarrage.
+    try {
+      const { rescheduleFromStores } = await import('@/lib/notifications')
+      await rescheduleFromStores()
+    } catch {
+      /* non bloquant : au pire, re-planifié au prochain démarrage de l'app */
+    }
+
+    return { noBibleVersion }
   }
 
   async function setTheme(value) {

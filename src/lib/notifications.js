@@ -12,8 +12,9 @@
  * (contrainte OS : ~64 en attente max sur iOS, limite similaire selon Android).
  *
  * Plages d'ids :
- *   1..2        rappels quotidiens de prière (matin, soir)
  *   3..4        alerte streak en danger CE SOIR (3 = doux 19h, 4 = urgent 22h)
+ *   100..169    rappels de prière du MATIN  (7 jours × 10 ids/jour)
+ *   200..269    rappels de prière du SOIR   (7 jours × 10 ids/jour)
  *   10..15      relance série perdue, matin(10h) + soir(19h) × J+1/J+2/J+3
  *   1000..1999  notifications du jeûne PROCHAIN (annonce J-3/J-1/Jour J + rappels)
  *   2000..3999  notifications du jeûne ACTIF (encouragements 12h/16h + fin)
@@ -30,12 +31,25 @@ const isNative = Capacitor.isNativePlatform()
 
 // Rappels de prière : plusieurs créneaux par moment, ANNULÉS dès que la prière
 // du moment est faite. Ids réservés : matin 20..29, soir 30..39.
-const PRAYER_MORNING_BASE = 20
-const PRAYER_EVENING_BASE = 30
+const PRAYER_MORNING_BASE = 100
+const PRAYER_EVENING_BASE = 200
 const PRAYER_HOURS = {
   morning: [10, 12], // relances tant que la prière du matin n'est pas faite
   evening: [18, 20, 22] // idem pour le soir
 }
+// Horizon de planification : les rappels doivent continuer même si l'utilisateur
+// n'ouvre pas l'app pendant plusieurs jours (c'est justement leur rôle).
+// 7 jours × 3 créneaux max × 2 moments = 42 notifications, sous la limite OS (~64).
+const PRAYER_DAYS_AHEAD = 7
+const PRAYER_SLOTS_PER_DAY = 10 // pas d'ids : réserve large, évite toute collision
+
+// Jeûne — bases d'ids (conformes aux plages documentées en tête de fichier).
+// ⚠️ Ces deux constantes étaient UTILISÉES (7 fois) mais JAMAIS DÉCLARÉES :
+// `rescheduleAll` levait un ReferenceError à chaque démarrage, ce qui coupait
+// TOUTE la planification. Cause racine du « je ne reçois aucune notification »
+// (diagnostiqué le 2026-07-26 : 0 alarme Abide dans `dumpsys alarm`).
+const UPCOMING_BASE = 1000 // jeûne PROCHAIN  (1000..1999)
+const ACTIVE_BASE = 2000 // jeûne ACTIF     (2000..3999)
 
 const STREAK_SOFT_ID = 3
 const STREAK_URGENT_ID = 4
@@ -46,14 +60,48 @@ function t(key, params) {
   return i18n.global.t(key, params ?? {})
 }
 
+/**
+ * Canal de notification Android (obligatoire depuis Android 8).
+ * ⚠️ Sans canal EXPLICITE, le plugin en crée un par défaut dont l'importance est
+ * trop basse : pas de son, pas de vibration, et surtout la notification s'affiche
+ * REPLIÉE sans pouvoir être dépliée — c'est ce qui tronquait nos textes malgré
+ * `largeBody`. On prend importance 5 (MAX) : son + bandeau flottant + dépliable.
+ * L'importance d'un canal est FIGÉE à sa création : pour la changer il faut un
+ * nouvel id de canal (d'où le suffixe `-v2`), sinon Android ignore la mise à jour.
+ */
+export const CHANNEL_ID = 'abide-reminders-v2'
+
+async function ensureChannel() {
+  if (!isNative) return
+  try {
+    await LocalNotifications.createChannel({
+      id: CHANNEL_ID,
+      name: 'Rappels Abide',
+      description: 'Prière, lecture et jeûne',
+      importance: 5, // MAX : son + bandeau qui s'affiche par-dessus l'écran
+      visibility: 1, // public (visible sur écran verrouillé)
+      vibration: true,
+      lights: true
+    })
+  } catch (e) {
+    console.warn('[notif] createChannel a échoué', e)
+  }
+}
+
 /** Demande la permission (Android 13+ ; avant = accordée d'office). */
 export async function ensureNotificationPermission() {
   if (!isNative) return false
   try {
     const status = await LocalNotifications.checkPermissions()
-    if (status.display === 'granted') return true
-    const req = await LocalNotifications.requestPermissions()
-    return req.display === 'granted'
+    let granted = status.display === 'granted'
+    if (!granted) {
+      const req = await LocalNotifications.requestPermissions()
+      granted = req.display === 'granted'
+    }
+    // Le canal doit exister AVANT toute planification, sinon les notifications
+    // partent sur le canal par défaut (silencieux, non dépliable).
+    if (granted) await ensureChannel()
+    return granted
   } catch {
     return false
   }
@@ -84,10 +132,16 @@ function prayerBase(type) {
  * Appelé dès que la prière du moment est faite (bouton « Amen ») → l'utilisateur
  * n'est plus relancé pour ce moment-là aujourd'hui.
  */
-export async function cancelPrayerReminders(type) {
+export async function cancelPrayerReminders(type, todayOnly = false) {
   if (!isNative) return
   const base = prayerBase(type)
-  await cancelRange(base, base + 9)
+  // todayOnly : on n'annule QUE les créneaux du jour (ids base..base+9). Les
+  // rappels des jours suivants doivent survivre — prier ce matin ne doit pas
+  // supprimer le rappel de demain matin.
+  const to = todayOnly
+    ? base + PRAYER_SLOTS_PER_DAY - 1
+    : base + PRAYER_DAYS_AHEAD * PRAYER_SLOTS_PER_DAY
+  await cancelRange(base, to)
 }
 
 /**
@@ -104,38 +158,54 @@ export async function cancelPrayerReminders(type) {
  */
 export async function schedulePrayerMoment(type, done) {
   if (!isNative) return
-  await cancelPrayerReminders(type)
-  if (done) return
+  await cancelPrayerReminders(type) // purge complète, on replanifie tout l'horizon
   if (!(await ensureNotificationPermission())) return
+  // ⚠️ `done` ne fait PAS sortir de la fonction : il ne concerne qu'AUJOURD'HUI.
+  // Sortir ici annulerait aussi les 6 jours suivants (bug 2026-07-26).
 
   const locale = i18n.global.locale.value
   const now = new Date()
   const base = prayerBase(type)
   const list = []
 
-  PRAYER_HOURS[type].forEach((hour, slot) => {
-    const when = new Date()
-    when.setHours(hour, 0, 0, 0)
-    if (when <= now) return // créneau déjà passé aujourd'hui
+  // ⚠️ On planifie sur PRAYER_DAYS_AHEAD jours, pas seulement aujourd'hui.
+  // Avant, tout était planifié pour le jour même à l'ouverture de l'app : si
+  // l'utilisateur ne l'ouvrait pas un jour, il ne recevait plus AUCUN rappel les
+  // jours suivants — alors que le rappel de prière doit justement le ramener.
+  // (Bug constaté le 2026-07-26 : « ça a sonné une fois, puis plus rien ».)
+  // On garde des notifications DATÉES (et non répétitives) pour pouvoir annuler
+  // celles du jour dès que la prière est faite. rescheduleAll() au démarrage
+  // repousse l'horizon à chaque ouverture.
+  for (let day = 0; day < PRAYER_DAYS_AHEAD; day++) {
+    if (day === 0 && done) continue // prière du jour déjà faite → rien aujourd'hui
+    PRAYER_HOURS[type].forEach((hour, slot) => {
+      const when = new Date()
+      when.setDate(when.getDate() + day)
+      when.setHours(hour, 0, 0, 0)
+      if (when <= now) return // créneau déjà passé
 
-    const msg = prayerReminder(type, slot, locale, when)
-    list.push({
-      id: base + slot,
-      title: msg.title,
-      body: msg.body,
-      // largeBody → style « grand texte » Android : la notification devient
-      // DÉPLIABLE (sans lui, le texte long est tronqué sans bouton d'expansion).
-      largeBody: msg.largeBody,
-      summaryText: t('sanctuaire.title'),
-      schedule: { at: when, allowWhileIdle: true },
-      smallIcon: 'ic_stat_abide',
-      largeIcon: 'notif_banner',
-      iconColor: '#C9A84C',
-      extra: { route: `/tabs/sanctuaire/moment?type=${type}` }
+      const msg = prayerReminder(type, slot, locale, when)
+      list.push({
+        // id unique par (jour, créneau) : le jour 0 garde les ids historiques
+        // (base+slot) pour rester compatible avec cancelPrayerReminders.
+        id: base + day * PRAYER_SLOTS_PER_DAY + slot,
+        title: msg.title,
+        body: msg.body,
+        // largeBody → style « grand texte » Android : la notification devient
+        // DÉPLIABLE (sans lui, le texte long est tronqué sans bouton d'expansion).
+        largeBody: msg.largeBody,
+        summaryText: t('sanctuaire.title'),
+        schedule: { at: when, allowWhileIdle: true },
+        channelId: CHANNEL_ID,
+        smallIcon: 'ic_stat_abide',
+        largeIcon: 'notif_banner',
+        iconColor: '#C9A84C',
+        extra: { route: `/tabs/sanctuaire/moment?type=${type}` }
+      })
     })
-  })
+  }
 
-  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch(() => {})
+  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch((e) => console.warn('[notif] schedule a échoué', e))
 }
 
 /** Planifie les rappels des DEUX moments selon leur état d'accomplissement. */
@@ -179,6 +249,7 @@ export async function scheduleStreakWarning(readToday, streak) {
       body: msg.body,
       largeBody: msg.body, // rend la notif dépliable (style grand texte Android)
       schedule: { at: soft, allowWhileIdle: true },
+      channelId: CHANNEL_ID,
       smallIcon: 'ic_stat_abide',
       largeIcon: 'notif_banner',
       iconColor: '#C9A84C',
@@ -193,13 +264,14 @@ export async function scheduleStreakWarning(readToday, streak) {
       body: msg.body,
       largeBody: msg.body, // rend la notif dépliable (style grand texte Android)
       schedule: { at: urgent, allowWhileIdle: true },
+      channelId: CHANNEL_ID,
       smallIcon: 'ic_stat_abide',
       largeIcon: 'notif_banner',
       iconColor: '#C9A84C',
       extra: { route: '/tabs/immersion' }
     })
   }
-  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch(() => {})
+  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch((e) => console.warn('[notif] schedule a échoué', e))
 }
 
 /**
@@ -232,6 +304,7 @@ export async function scheduleStreakLostFollowUp(lostStreak) {
         body: msg.body,
         largeBody: msg.body, // rend la notif dépliable (style grand texte Android)
         schedule: { at: when, allowWhileIdle: true },
+      channelId: CHANNEL_ID,
         smallIcon: 'ic_stat_abide',
         largeIcon: 'notif_banner',
         iconColor: '#C9A84C',
@@ -240,7 +313,7 @@ export async function scheduleStreakLostFollowUp(lostStreak) {
     }
   }
 
-  await LocalNotifications.schedule({ notifications: list }).catch(() => {})
+  await LocalNotifications.schedule({ notifications: list }).catch((e) => console.warn('[notif] schedule a échoué', e))
 }
 
 /** Annule la relance « série perdue » (l'utilisateur a repris avant la fin des rappels). */
@@ -278,6 +351,7 @@ export async function scheduleUpcomingFast(fast) {
       title,
       body,
       schedule: { at: when, allowWhileIdle: true },
+      channelId: CHANNEL_ID,
       smallIcon: 'ic_stat_abide',
         largeIcon: 'notif_banner',
         iconColor: '#C9A84C',
@@ -301,7 +375,7 @@ export async function scheduleUpcomingFast(fast) {
     push(when, t('sanctuaire.notif.fastOngoingTitle', { fast: label }), t('sanctuaire.notif.fastOngoingBody'))
   }
 
-  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch(() => {})
+  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch((e) => console.warn('[notif] schedule a échoué', e))
 }
 
 /**
@@ -344,6 +418,7 @@ export async function scheduleActiveFast(fast) {
         largeBody: `« ${enc.text} »\n\n${enc.note}`,
         summaryText: enc.verse,
         schedule: { at: when, allowWhileIdle: true },
+      channelId: CHANNEL_ID,
         smallIcon: 'ic_stat_abide',
         largeIcon: 'notif_banner',
         iconColor: '#C9A84C',
@@ -360,6 +435,7 @@ export async function scheduleActiveFast(fast) {
           title: t('sanctuaire.notif.completedTitle'),
           body: t('sanctuaire.notif.completedBody'),
           schedule: { at: when, allowWhileIdle: true },
+      channelId: CHANNEL_ID,
           smallIcon: 'ic_stat_abide',
         largeIcon: 'notif_banner',
         iconColor: '#C9A84C',
@@ -369,7 +445,7 @@ export async function scheduleActiveFast(fast) {
     }
   }
 
-  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch(() => {})
+  if (list.length) await LocalNotifications.schedule({ notifications: list }).catch((e) => console.warn('[notif] schedule a échoué', e))
 }
 
 /** Annule l'accompagnement (quitter le jeûne). */
@@ -400,11 +476,45 @@ export async function rescheduleAll({
   activeFast = null, upcomingFast = null, morningDone = false, eveningDone = false
 } = {}) {
   if (!isNative) return
+  // Purge des ids de prière de l'ANCIEN schéma (20..39, avant le passage à un
+  // horizon de 7 jours le 2026-07-26). Sans ça, les appareils déjà installés
+  // gardent des notifications orphelines qu'on ne sait plus annuler.
+  await cancelRange(20, 39)
   await schedulePrayerReminders({ morningDone, eveningDone })
   if (activeFast) {
     await scheduleActiveFast(activeFast)
   } else {
     await cancelRange(ACTIVE_BASE, ACTIVE_BASE + 1999)
     if (upcomingFast) await scheduleUpcomingFast(upcomingFast)
+  }
+}
+
+/**
+ * Reconstruit l'état courant depuis les stores puis re-planifie TOUT
+ * (rescheduleAll). Toutes nos notifications sont générées via `t()` au moment
+ * de la planification (pas de la lecture) — si la personne change la langue de
+ * l'app, tout ce qui est déjà programmé reste dans l'ANCIENNE langue tant que
+ * ça n'est pas re-planifié. Appeler cette fonction à chaque changement de
+ * langue (cf. stores/preferences.js → setLocalePref) règle ce cas, en plus du
+ * rechargement habituel au démarrage (App.vue).
+ * Import dynamique des stores : notifications.js reste sans dépendance Pinia
+ * au chargement (même pattern que auth.js → user-db, preferences.js → bible).
+ */
+export async function rescheduleFromStores() {
+  if (!isNative) return
+  try {
+    const { useFastingStore } = await import('@/stores/fasting')
+    const { usePrayerStore } = await import('@/stores/prayer')
+    const fasting = useFastingStore()
+    const prayer = usePrayerStore()
+    await Promise.all([fasting.load(), prayer.load()])
+    await rescheduleAll({
+      activeFast: fasting.isParticipating ? fasting.participation : null,
+      upcomingFast: fasting.upcomingFast,
+      morningDone: prayer.morningDone,
+      eveningDone: prayer.eveningDone
+    })
+  } catch (e) {
+    console.error('[notif] rescheduleFromStores a échoué', e)
   }
 }

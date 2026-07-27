@@ -64,6 +64,17 @@
           </button>
         </div>
 
+        <!-- ── Bloc parrainage (nécessite un compte) ── -->
+        <div v-if="auth.isAuthenticated" class="group">
+          <button class="item tappable" @click="go('/tabs/plus/referral')">
+            <div class="item-lead">
+              <ion-icon :icon="giftOutline" />
+              <span>{{ t('settings.referral') }}</span>
+            </div>
+            <ion-icon class="chev" :icon="chevronForward" />
+          </button>
+        </div>
+
         <!-- ── Bloc infos / légal ── -->
         <div class="group">
           <button class="item tappable" @click="openLink('faq')">
@@ -105,7 +116,8 @@ import {
 } from '@ionic/vue'
 import {
   chevronForward, personOutline, moonOutline, languageOutline,
-  bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline
+  bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline,
+  giftOutline
 } from 'ionicons/icons'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useAuthStore } from '@/stores/auth'

@@ -56,6 +56,23 @@ export const useQuizStore = defineStore('quiz', () => {
    * Génère un quiz pour un chapitre. Lève une erreur ('offline' | 'failed') que
    * la vue traduit en message. Prépare la session en cas de succès.
    */
+  /**
+   * Le quota quotidien de quiz est-il atteint ? supabase.functions.invoke()
+   * renvoie un FunctionsHttpError pour tout statut non-2xx SANS parser le corps :
+   * il faut relire error.context (une Response) pour distinguer un 429 d'une panne.
+   */
+  async function isQuotaError(error, data) {
+    if (data?.error === 'quota_exceeded') return true
+    const res = error?.context
+    if (!res || res.status !== 429) return false
+    try {
+      const body = await res.json()
+      return body?.error === 'quota_exceeded'
+    } catch {
+      return true // 429 confirmé par le statut, corps illisible
+    }
+  }
+
   async function generateQuiz(context) {
     if (loading.value) return
     if (!(await isOnline())) throw new Error('offline')
@@ -67,6 +84,11 @@ export const useQuizStore = defineStore('quiz', () => {
       const { data, error } = await supabase.functions.invoke('quiz-chapter', {
         body: { bookId: context.bookId, chapter: context.chapter }
       })
+
+      // Quota de quiz du jour atteint (429). ⚠️ invoke() ne parse PAS le corps
+      // des réponses non-2xx : le détail est dans error.context (Response brute).
+      if (await isQuotaError(error, data)) throw new Error('quota')
+
       if (error || data?.error || !Array.isArray(data?.questions)) {
         throw new Error('failed')
       }
@@ -77,7 +99,10 @@ export const useQuizStore = defineStore('quiz', () => {
     } catch (e) {
       reset()
       // Une erreur réseau brute de invoke() = pas de connexion pendant l'appel.
-      throw new Error(e?.message === 'offline' ? 'offline' : 'failed')
+      // 'offline' et 'quota' sont des cas MÉTIER : on les préserve tels quels,
+      // sinon la vue afficherait « échec de génération » au lieu du bon message.
+      const known = e?.message === 'offline' || e?.message === 'quota'
+      throw new Error(known ? e.message : 'failed')
     } finally {
       loading.value = false
     }

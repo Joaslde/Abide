@@ -16,11 +16,10 @@ import { warmUpBible } from '@/lib/bible-db'
 import { initUserDb } from '@/lib/user-db'
 import { useStreakStore } from '@/stores/streak'
 import { usePlanStore } from '@/stores/plan'
-import { useFastingStore } from '@/stores/fasting'
-import { usePrayerStore } from '@/stores/prayer'
 import { useBackgroundMusicStore } from '@/stores/backgroundMusic'
-import { rescheduleAll, registerNotificationTapHandler } from '@/lib/notifications'
+import { rescheduleFromStores, registerNotificationTapHandler } from '@/lib/notifications'
 import { initAdMob } from '@/lib/admob'
+import { initAppsFlyer } from '@/lib/appsflyer'
 import AudioPlayerSheet from '@/components/bible/AudioPlayerSheet.vue'
 import SplashOverlay from '@/components/SplashOverlay.vue'
 import router from '@/router'
@@ -30,8 +29,6 @@ const showSplash = ref(true)
 
 const streak = useStreakStore()
 const plan = usePlanStore()
-const fasting = useFastingStore()
-const prayer = usePrayerStore()
 const bgMusic = useBackgroundMusicStore()
 
 // Préférences + session auth sont initialisées dans main.js (bootstrap),
@@ -48,6 +45,9 @@ onMounted(() => {
   registerNotificationTapHandler(router)
   // Initialise le SDK AdMob (interstitiels). No-op sur web / si non natif.
   initAdMob()
+  // Initialise AppsFlyer (attribution des installs via lien de parrainage).
+  // No-op sur web / si non natif / si aucune Dev Key configurée.
+  initAppsFlyer()
   // Charge la préférence « musique de fond » (esclave de l'audio Bible).
   bgMusic.init()
   // Prépare la base de données utilisateur (surlignages, signets, notes) puis
@@ -57,15 +57,9 @@ onMounted(() => {
     plan.loadActivePlan()
     // Sanctuaire : re-planifier les notifications locales (rappels de prière +
     // accompagnement du jeûne actif OU annonces du prochain). Idempotent.
-    // Les rappels de prière sont DATÉS du jour : on passe l'état des moments
-    // pour ne relancer que ce qui n'a pas encore été accompli aujourd'hui.
-    await Promise.all([fasting.load(), prayer.load()])
-    rescheduleAll({
-      activeFast: fasting.isParticipating ? fasting.participation : null,
-      upcomingFast: fasting.upcomingFast,
-      morningDone: prayer.morningDone,
-      eveningDone: prayer.eveningDone
-    })
-  })
+    // rescheduleFromStores() charge fasting/prayer et gère elle-même ses erreurs
+    // (une exception ici ne doit JAMAIS faire échouer tout le boot).
+    await rescheduleFromStores()
+  }).catch((e) => console.error('[boot] initUserDb a échoué', e))
 })
 </script>

@@ -4,7 +4,7 @@ import {
   getActivePlan, savePlan, setPlanDay, deactivatePlans,
   markChapterRead, readChaptersFor
 } from '@/lib/user-db'
-import { buildSchedule, PLAN_DURATIONS, recipeForProfile } from '@/data/planGenerator'
+import { buildSchedule, PLAN_DURATIONS, PROFILE_PRESET_IDS } from '@/data/planGenerator'
 import { getPreset, presetToPlan } from '@/data/presetPlans'
 import { useAuthStore } from '@/stores/auth'
 import { pushUserData } from '@/lib/sync'
@@ -41,10 +41,23 @@ export const usePlanStore = defineStore('plan', () => {
   }
 
   /**
+   * Le profil onboarding est-il connu ? (utilisateur ayant terminé le quiz).
+   * Sert à l'écran de choix pour proposer l'onboarding plutôt que d'échouer
+   * silencieusement quand on clique « Plan selon mon profil » sans profil.
+   */
+  function hasKnownProfile() {
+    const auth = useAuthStore()
+    return !!auth.profile?.user_profile && auth.profile.user_profile in PROFILE_PRESET_IDS
+  }
+
+  /**
    * Crée un plan (désactive l'ancien) selon un descripteur unifié :
    *  - { source:'custom', planType|days, scope, bookId? }
-   *  - { source:'profile' }                → recette selon le profil onboarding
+   *  - { source:'profile' }                → plan préétabli associé au profil onboarding
    *  - { source:'template', templateId }   → plan préétabli bundlé
+   * Lève 'no_profile' si source:'profile' est demandé sans profil connu — à
+   * vérifier via hasKnownProfile() AVANT d'appeler createPlan (l'écran doit
+   * rediriger vers l'onboarding plutôt que planter silencieusement).
    */
   async function createPlan(descriptor) {
     const built = buildPlanFromDescriptor(descriptor)
@@ -69,16 +82,11 @@ export const usePlanStore = defineStore('plan', () => {
       return presetToPlan(preset)
     }
     if (d.source === 'profile') {
+      if (!hasKnownProfile()) throw new Error('no_profile')
       const auth = useAuthStore()
-      const r = recipeForProfile(auth.profile?.user_profile)
-      return {
-        source: 'profile',
-        title: r.title,
-        plan_type: 'custom',
-        scope: r.scope,
-        total_days: r.days,
-        schedule: buildSchedule({ totalDays: r.days, scope: r.scope, bookId: r.bookId })
-      }
+      const presetId = PROFILE_PRESET_IDS[auth.profile.user_profile]
+      const preset = getPreset(presetId)
+      return { ...presetToPlan(preset), source: 'profile' }
     }
     // custom : planType prédéfini OU nombre de jours libre.
     const total = d.days ?? PLAN_DURATIONS[d.planType] ?? 30
@@ -126,6 +134,7 @@ export const usePlanStore = defineStore('plan', () => {
     isCompleted,
     loadActivePlan,
     createPlan,
+    hasKnownProfile,
     completeToday,
     markRead,
     readChapters

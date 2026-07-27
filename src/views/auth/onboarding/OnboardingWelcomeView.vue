@@ -43,6 +43,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { postponeOnboarding } from '@/router'
 import { useI18n } from 'vue-i18n'
 import { IonPage, IonContent } from '@ionic/vue'
 import { useAuthStore } from '@/stores/auth'
@@ -70,7 +71,7 @@ const bodyStartDelay = computed(() => {
 })
 
 function startQuiz() {
-  router.push('/onboarding/quiz')
+  router.push('/onboarding/referral')
 }
 
 /**
@@ -78,7 +79,8 @@ function startQuiz() {
  * → au prochain démarrage de l'app, le guard reproposera l'onboarding.
  */
 function doLater() {
-  router.replace('/tabs/immersion')
+  postponeOnboarding() // sinon le guard renvoie aussitôt sur /onboarding (rien n'est marqué)
+  router.replace('/tabs/home')
 }
 
 /**
@@ -95,7 +97,8 @@ async function skipOnboarding() {
   } catch (e) {
     console.error('skip onboarding:', e)
   } finally {
-    router.replace('/tabs/immersion')
+    postponeOnboarding() // le snooze en base peut tarder à se refléter : on libère la session
+    router.replace('/tabs/home')
   }
 }
 </script>

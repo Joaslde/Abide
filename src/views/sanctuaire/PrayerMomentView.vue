@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -101,8 +101,12 @@ const prayerText = computed(() => prayerOfDay(type.value, locale.value))
 /* ── Sujets cochés (état visuel de la session, non persisté) ── */
 const prayed = reactive({})
 
-onMounted(async () => {
-  await prayer.load()
+/**
+ * (Re)charge le verset dans la version ACTIVE. Rejoué à chaque changement de
+ * version (pas seulement au montage) : la Bible peut basculer de langue en
+ * cours de vie, cf. preferences.js → setLocalePref.
+ */
+async function loadVerseText() {
   bookName.value = (await getBookName(bible.activeVersion, vRef.book_id)) || vRef.book_id
   const verses = await getVerses(bible.activeVersion, vRef.book_id, vRef.chapter)
   const end = vRef.verse_end || vRef.verse_start
@@ -110,6 +114,11 @@ onMounted(async () => {
     .filter((x) => x.verse >= vRef.verse_start && x.verse <= end)
     .map((x) => x.text)
     .join(' ')
+}
+watch(() => bible.activeVersion, loadVerseText, { immediate: true })
+
+onMounted(async () => {
+  await prayer.load()
 })
 
 function openVerse() {

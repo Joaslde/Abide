@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { i18n } from '@/i18n'
 
 /**
  * Guide IA (L'Ancre) — conversations enregistrées + chat via Edge Function.
@@ -156,6 +157,24 @@ export const useAIStore = defineStore('ai', () => {
   }
 
   /**
+   * Détecte un dépassement de quota IA dans la réponse de l'Edge Function.
+   * supabase.functions.invoke() renvoie un FunctionsHttpError pour tout statut
+   * non-2xx SANS parser le corps : il faut relire error.context (une Response).
+   * Retourne { limit } si c'est bien un quota, sinon null.
+   */
+  async function readQuotaError(error, data) {
+    if (data?.error === 'quota_exceeded') return { limit: data.limit }
+    const res = error?.context
+    if (!res || res.status !== 429) return null
+    try {
+      const body = await res.json()
+      return body?.error === 'quota_exceeded' ? { limit: body.limit } : null
+    } catch {
+      return { limit: null } // 429 confirmé par le statut, détail illisible
+    }
+  }
+
+  /**
    * Envoie un message : l'affiche immédiatement (optimiste), appelle l'Edge
    * Function ai-chat, puis affiche la réponse. Le serveur persiste les 2
    * messages (on recharge donc depuis la base pour avoir les ids/verse_refs).
@@ -178,8 +197,28 @@ export const useAIStore = defineStore('ai', () => {
     loading.value = true
     try {
       const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: { conversationId: activeId.value, message: content, mode: mode.value }
+        // uiLocale = langue de l'interface (repli par défaut). Le Guide s'adapte
+        // ensuite à la langue du message si la personne écrit dans une autre langue.
+        body: {
+          conversationId: activeId.value, message: content, mode: mode.value,
+          uiLocale: i18n.global.locale.value
+        }
       })
+
+      // Quota du jour atteint (429). ⚠️ invoke() ne lit PAS le corps JSON des
+      // réponses d'erreur : le détail est dans error.context (la Response brute).
+      // Sans ça, un quota dépassé serait indistinguable d'une panne serveur.
+      const quota = await readQuotaError(error, data)
+      if (quota) {
+        // On retire la question affichée en optimiste : elle n'a pas été envoyée,
+        // la personne pourra la reposer demain telle quelle.
+        messages.value = messages.value.filter((m) => !String(m.id).startsWith('tmp-u-'))
+        const err = new Error('quota_exceeded')
+        err.code = 'quota_exceeded'
+        err.limit = quota.limit
+        throw err
+      }
+
       if (error || data?.error) throw error || new Error(data.error)
       messages.value.push({
         id: `tmp-a-${Date.now()}`,

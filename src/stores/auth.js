@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import { supabase } from '@/lib/supabase'
+import { getPendingReferralCode, clearPendingReferralCode } from '@/lib/appsflyer'
 
 // Cache local du profil : consultable hors ligne (vue Profil). Le profil vit
 // d'abord en ligne (source de vérité Supabase) ; on en garde une copie locale
@@ -13,6 +14,11 @@ export const useAuthStore = defineStore('auth', () => {
   const session = ref(null)
   const profile = ref(null)
   const loading = ref(true)
+  // Promesse d'initialisation : le guard du router l'attend pour ne JAMAIS
+  // décider (Welcome / onboarding) avant que la session soit restaurée du
+  // storage natif (async). Évite d'afficher la connexion alors qu'une session
+  // existe mais n'est pas encore chargée.
+  let initPromise = null
 
   const isAuthenticated = computed(() => !!session.value)
   const user = computed(() => session.value?.user ?? null)
@@ -56,7 +62,21 @@ export const useAuthStore = defineStore('auth', () => {
     return email ? email[0].toUpperCase() : ''
   })
 
-  async function init() {
+  /**
+   * L'init est-elle TERMINÉE ? Permet au guard du router de rester SYNCHRONE
+   * une fois la session restaurée : un `await` sur une promesse déjà résolue
+   * reporte quand même la décision au microtask suivant, ce qui désordonnait
+   * deux clics d'onglet rapprochés (bug de navigation 2026-07-26).
+   */
+  const ready = ref(false)
+
+  /** Init idempotente : renvoie toujours la même promesse (le guard l'attend). */
+  function init() {
+    if (!initPromise) initPromise = doInit().finally(() => { ready.value = true })
+    return initPromise
+  }
+
+  async function doInit() {
     loading.value = true
     try {
       // getSession() lit le token depuis le storage LOCAL (pas de réseau) :
@@ -125,6 +145,36 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Programme de parrainage : tente l'attribution d'un filleul à SON parrain,
+   * une seule fois, UNIQUEMENT si le compte vient d'être créé (jamais sur une
+   * reconnexion — sinon un compte existant pourrait être ré-attribué si un code
+   * traîne en local). Signal de « nouveau compte » : created_at === last_sign_in_at
+   * (identique à la première seconde près, standard Supabase Auth, valable aussi
+   * pour OAuth/Google). Non bloquant : un échec (offline, pas de code en attente)
+   * n'empêche jamais la connexion elle-même.
+   */
+  async function attributeReferralIfNewAccount(supaUser) {
+    try {
+      if (!supaUser?.created_at || !supaUser?.last_sign_in_at) return
+      const isNewAccount = supaUser.created_at === supaUser.last_sign_in_at
+      if (!isNewAccount) return
+
+      const referralCode = await getPendingReferralCode()
+      if (!referralCode) return
+
+      await supabase.functions.invoke('referral-attribute', { body: { referralCode } })
+    } catch {
+      // Échec réseau/serveur : on n'insiste pas (SECURITY.md — non bloquant pour
+      // une fonctionnalité non critique au parcours). Le code reste en attente
+      // en local si la tentative n'a même pas pu partir.
+      return
+    } finally {
+      // Tenté une seule fois par install, succès ou échec de l'appel serveur.
+      await clearPendingReferralCode()
+    }
+  }
+
+  /**
    * Connexion email + mot de passe.
    * SECURITY.md §1 : message d'erreur générique (anti-énumération de comptes).
    * On ne révèle jamais si l'email existe ou si c'est le mot de passe qui est faux.
@@ -172,6 +222,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (data.session) {
       session.value = data.session
       await fetchProfile()
+      await attributeReferralIfNewAccount(data.user)
     }
     return data
   }
@@ -227,6 +278,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (error) throw new Error(error.message)
       session.value = data.session
       await fetchProfile()
+      await attributeReferralIfNewAccount(data.user)
       return
     }
 
@@ -256,6 +308,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     session.value = data.session
     await fetchProfile()
+    await attributeReferralIfNewAccount(data.user)
     return true
   }
 
@@ -343,6 +396,7 @@ export const useAuthStore = defineStore('auth', () => {
     session,
     profile,
     loading,
+    ready, // init terminée → le guard du router peut rester synchrone
     isAuthenticated,
     user,
     isPremium,

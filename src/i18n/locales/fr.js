@@ -39,6 +39,11 @@ export default {
     evening: 'Bonsoir',
     deleteConfirm: 'Supprimer cette discussion ? Cette action est définitive.',
     error: 'Une erreur est survenue. Réessaie.',
+    // Quota quotidien atteint : ce n'est pas une erreur, c'est une invitation.
+    // On propose le parrainage — inviter des proches offre des jours d'accès illimité.
+    quotaReached: 'Nous avons beaucoup échangé aujourd\'hui. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
+    quotaReachedNamed: '{name}, nous avons beaucoup échangé aujourd\'hui. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
+    quotaCta: 'Inviter mes proches',
     modes: {
       enseignement: 'Enseignement',
       etude: 'Étude',
@@ -54,6 +59,9 @@ export default {
     generating: 'Préparation de ton quiz…',
     offline: 'Le quiz nécessite une connexion internet.',
     error: 'Impossible de générer le quiz. Réessaie.',
+    // Quota quotidien atteint : ce n'est pas une panne, c'est une invitation.
+    quotaReached: 'Tu as fait tes quiz du jour. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
+    quotaCta: 'Inviter mes proches',
     question: 'Question {current} / {total}',
     next: 'Suivant',
     seeResults: 'Voir mon résultat',
@@ -68,6 +76,19 @@ export default {
     retry: 'Refaire le quiz',
     close: 'Fermer',
     star: 'étoile | étoile | étoiles'
+  },
+  referral: {
+    title: 'Parrainage',
+    heading: 'Invite tes proches à Abide',
+    description: 'Partage ton lien. Quand tes proches installent l’app et créent un compte, tu débloques du premium — sans rien payer.',
+    share: 'Partager mon lien',
+    shareMessage: 'Rejoins-moi sur Abide, une app pour lire la Bible et prier au quotidien 🙏 {link}',
+    linkCopied: 'Lien copié dans le presse-papier',
+    referralCount: '{count} filleul | {count} filleul | {count} filleuls',
+    daysShort: '{days} j',
+    nextTierHint: 'Encore {remaining} filleul pour {days} jours de premium | Encore {remaining} filleuls pour {days} jours de premium',
+    allTiersReached: 'Tous les paliers sont atteints !',
+    premiumActiveUntil: 'Premium actif jusqu’au {date} (parrainage)'
   },
   sanctuaire: {
     title: 'Sanctuaire',
@@ -221,6 +242,17 @@ export default {
     startQuiz: 'Oui, avec plaisir',
     laterButton: 'Je le ferai plus tard',
     skipQuiz: 'Non merci, je n’ai pas besoin d’une expérience faite pour moi',
+    referral: {
+      title: 'As-tu été invité par un ami ?',
+      body: 'Si quelqu’un t’a partagé Abide, tu peux entrer son code ici — sinon, passe simplement cette étape.',
+      yes: 'Oui',
+      no: 'Non, continuer',
+      placeholder: 'Code de parrainage',
+      confirm: 'Valider',
+      offline: 'Une connexion internet est nécessaire pour valider ce code.',
+      notFound: 'Ce code ne correspond à aucun parrainage. Vérifie qu’il est bien saisi.',
+      error: 'Une erreur est survenue. Tu peux réessayer ou passer cette étape.'
+    },
     quiz: {
       next: 'Continuer',
       finish: 'Terminer',
@@ -385,6 +417,9 @@ export default {
   },
   bible: {
     title: 'La Bible',
+    // Libellé COURT réservé à la barre d'onglets : « La Bible » passe sur deux
+    // lignes dans un quart de barre et casse l'alignement des icônes.
+    tab: 'Bible',
     oldTestament: 'Ancien Testament',
     newTestament: 'Nouveau Testament',
     chapters: 'chapitres',
@@ -518,10 +553,27 @@ export default {
       forYou: 'Pour toi',
       profileCard: 'Plan selon ton profil',
       profileDesc: 'Abide te propose une lecture adaptée à ton cheminement.',
+      // Profil spirituel pas encore établi : on l'explique et on propose le quiz
+      // plutôt que de générer un plan « adapté » qui serait en réalité générique.
+      noProfileTitle: 'Ton profil n’est pas encore établi',
+      noProfileMsg: 'Pour te proposer une lecture vraiment adaptée, Abide a besoin de mieux te connaître. Quelques questions suffisent.',
+      noProfileCta: 'Faire le quiz',
       journeys: 'Parcours',
       own: 'Créer le mien',
       customCard: 'Plan sur mesure',
       customDesc: 'Choisis le contenu et la durée.'
+    },
+    preview: {
+      title: 'Aperçu du parcours',
+      start: 'Commencer ce parcours',
+      replace: 'Remplacer le plan en cours',
+      notFound: 'Ce parcours est introuvable.'
+    },
+    journey: {
+      title: 'Mon parcours',
+      see: 'Voir tout le parcours',
+      day: 'Jour {n}',
+      dayProgress: 'jour {day} sur {total}'
     },
     profileTitles: {
       source: 'À la source — l’Évangile de Jean',
@@ -530,10 +582,67 @@ export default {
       veilleur: 'Le Veilleur — les Psaumes',
       porteur: 'Le Porteur — les Actes des Apôtres'
     },
+    categories: {
+      vie: 'Pour ta vie',
+      biblique: 'Parcours bibliques',
+      discipline: 'Grandir spirituellement'
+    },
     presets: {
       knowJesus: {
         title: 'Connaître Jésus',
         desc: 'Sa vie, de la crèche à la résurrection.'
+      },
+      peaceOverAnxiety: {
+        title: 'La paix plus forte que l’anxiété',
+        desc: 'Sept jours pour déposer tes inquiétudes devant Dieu et apprendre à respirer autrement.'
+      },
+      griefAndComfort: {
+        title: 'Traverser le deuil sans être seul',
+        desc: 'Dix jours pour marcher dans la vallée avec des textes qui n’ont pas peur de ta douleur.'
+      },
+      pathOfForgiveness: {
+        title: 'Le chemin du pardon',
+        desc: 'Recevoir d’abord le pardon de Dieu, puis le laisser couler vers les autres.'
+      },
+      identityInChrist: {
+        title: 'Qui je suis en Christ',
+        desc: 'Remplacer les étiquettes que tu portes par ce que Dieu dit vraiment de toi.'
+      },
+      lifeOfDavid: {
+        title: 'David, un cœur selon Dieu',
+        desc: 'Le berger devenu roi : les victoires, les fuites, la chute, le relèvement.'
+      },
+      parablesOfJesus: {
+        title: 'Les paraboles de Jésus',
+        desc: 'Les histoires que Jésus racontait pour retourner les cœurs.'
+      },
+      womenOfTheBible: {
+        title: 'Les femmes de la Bible',
+        desc: 'Celles que Dieu a vues, appelées et honorées, d’Ève à Lydie.'
+      },
+      creationToCovenant: {
+        title: 'De la Création à l’Alliance',
+        desc: 'Traverser la Genèse et voir Dieu tenir sa promesse malgré tout.'
+      },
+      learnToPray: {
+        title: 'Apprendre à prier',
+        desc: 'Sortir des formules et parler à Dieu simplement.'
+      },
+      cultivatingGratitude: {
+        title: 'Cultiver la gratitude',
+        desc: 'Cinq jours pour rouvrir les yeux sur ce que tu as déjà reçu.'
+      },
+      studyTheBible: {
+        title: 'Étudier la Bible par toi-même',
+        desc: 'Gagner en autonomie : pourquoi la Parole compte, et comment l’aborder.'
+      },
+      hearingGodsVoice: {
+        title: 'Écouter la voix de Dieu',
+        desc: 'Reconnaître la voix du Berger au milieu du bruit, et oser répondre.'
+      },
+      sharingYourFaith: {
+        title: 'Partager sa foi',
+        desc: 'Des premiers témoins jusqu’à toi : apprendre à parler de Jésus avec assurance et douceur.'
       }
     },
     custom: {
@@ -545,6 +654,7 @@ export default {
   plus: {
     tab: 'Plus',
     title: 'Plus',
+    myReading: 'Ma lecture',
     myNotes: 'Mes notes',
     notes: 'Remarques',
     bookmarks: 'Signets',
@@ -583,7 +693,13 @@ export default {
     language: 'Langue',
     french: 'Français',
     english: 'Anglais',
+    noBibleInLanguage: {
+      title: 'Bible en anglais indisponible',
+      message: 'L’interface est maintenant en anglais, mais aucune Bible dans cette langue n’est téléchargée — la lecture reste en français. Veux-tu télécharger une Bible en anglais ?',
+      download: 'Télécharger'
+    },
     bibleReading: 'Lecture de la Bible',
+    referral: 'Parrainage',
     bibleFont: 'Police',
     bibleFontSize: 'Taille du texte',
     account: 'Compte',
@@ -609,6 +725,8 @@ export default {
     fieldName: 'Nom',
     fieldEmail: 'E-mail',
     fieldProfile: 'Profil spirituel',
+    // Affiché à la place de la valeur quand le quiz n'a jamais été passé.
+    discoverProfile: 'Découvrir mon profil',
     fieldLevel: 'Niveau biblique',
     fieldChurch: 'Église',
     fieldDenomination: 'Confession',

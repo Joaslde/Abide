@@ -7,9 +7,9 @@
 //   5. Chat : OpenRouter (modèle éco) avec prompt système + versets + historique récent
 //   6. Persistance des 2 messages (user + assistant) + maj conversation
 //
-// ⚠️ TODO(limites) : le compteur ai_sessions (quota gratuit/premium) N'EST PAS
-//    vérifié ici pour l'instant (lot « limites/paiement » à venir). À brancher
-//    AVANT tout déploiement public (cf. SECURITY.md §4).
+// QUOTA (2026-07-25) : le compteur ai_sessions est vérifié AVANT tout appel LLM
+//    (étape 2.5 ci-dessous). MVP gratuit sans paiement : au-delà du quota du jour
+//    on renvoie 429 + le message est invité à revenir demain. Voir SECURITY.md §4.
 //
 // Secrets requis (supabase secrets set) :
 //   OPENROUTER_KEY, HUGGINGFACE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -23,6 +23,9 @@ const CORS = {
 }
 
 const MAX_INPUT = 2000 // caractères max du message utilisateur (SECURITY.md §4)
+// Repli si la création de la ligne ai_sessions échoue : la VRAIE limite vit en base
+// (DEFAULT de ai_sessions.sessions_limit) et s'ajuste en SQL, sans redéploiement.
+const DEFAULT_DAILY_LIMIT = 15
 const RECENT_MESSAGES = 10 // nb de messages récents envoyés bruts au modèle
 const SUMMARIZE_THRESHOLD = 12 // au-delà, on résume l'historique ancien (mémoire compressée)
 const RAG_COUNT = 5 // nb de versets récupérés par le RAG
@@ -30,6 +33,9 @@ const RAG_COUNT = 5 // nb de versets récupérés par le RAG
 // LLM qui font les sources) → on peut être plus généreux : mieux vaut donner au
 // modèle un peu plus de contexte pour l'ancrer que de le laisser sans matière.
 const RAG_MIN_SIMILARITY = 0.42
+// Langues d'interface supportées (cf. src/i18n/index.js, SUPPORTED_LOCALES).
+const SUPPORTED_LOCALES = ['fr', 'en']
+const LOCALE_NAMES: Record<string, string> = { fr: 'français', en: 'anglais' }
 
 /**
  * Nom de livre (FR/EN, variantes courantes) → code canonique en base.
@@ -193,12 +199,23 @@ const MODE_MAX_TOKENS: Record<string, number> = {
 }
 
 /** Prompt système par mode — jamais exposé au client. */
-function systemPrompt(mode: string, verses: string, firstName = ''): string {
+function systemPrompt(mode: string, verses: string, firstName = '', uiLocale = 'fr'): string {
   const nameLine = firstName
     ? `\nLa personne à qui tu parles s'appelle ${firstName}. Utilise son prénom naturellement et assez souvent (salutations, encouragements, moments clés) pour une relation chaleureuse et personnelle — sans le répéter à chaque phrase.`
     : ''
 
-  const base = `Tu es le Guide d'Abide, un compagnon spirituel chrétien bienveillant et pastoral.
+  // LANGUE DE RÉPONSE : ces instructions sont volontairement en premier et en
+  // toutes lettres (pas de sous-entendu) — un prompt système rédigé en français
+  // pousse naturellement le modèle à répondre en français par défaut, y compris
+  // quand on le lui demande explicitement autrement. On neutralise ce biais.
+  const localeLine = `INSTRUCTION DE LANGUE (prioritaire sur tout le reste) :
+- Par défaut, réponds en ${LOCALE_NAMES[uiLocale] ?? 'français'} (c'est la langue de l'application de la personne).
+- MAIS si la personne t'écrit dans une AUTRE langue, réponds TOUJOURS dans la langue qu'elle vient d'utiliser, comme le ferait n'importe quel assistant multilingue moderne. Adapte-toi message par message si elle change de langue.
+- Cette règle prime sur la langue dans laquelle ces instructions sont rédigées : ignore totalement le fait que ce prompt système est écrit en français, cela n'a aucune influence sur la langue dans laquelle TU dois répondre.
+`
+
+  const base = `${localeLine}
+Tu es le Guide d'Abide, un compagnon spirituel chrétien bienveillant et pastoral.
 Tu accompagnes la personne dans sa lecture de la Bible avec chaleur, en la tutoyant.${nameLine}
 
 RÈGLES ABSOLUES :
@@ -395,6 +412,9 @@ Deno.serve(async (req) => {
     if (text.length > MAX_INPUT) return json({ error: 'too_long' }, 400)
     // Whitelist des modes : un mode inconnu choisirait un budget de tokens non prévu.
     const mode: string = VALID_MODES.includes(body.mode) ? body.mode : 'enseignement'
+    // Langue de l'interface (repli par défaut demandé au Guide) — whitelist stricte
+    // (SECURITY.md §6 : tout input client est hostile), jamais de valeur libre.
+    const uiLocale: string = SUPPORTED_LOCALES.includes(body.uiLocale) ? body.uiLocale : 'fr'
 
     // service_role : écritures serveur (bypasse RLS mais on filtre TOUJOURS par user).
     const admin = createClient(supabaseUrl, serviceKey)
@@ -408,13 +428,51 @@ Deno.serve(async (req) => {
       .single()
     if (!conv) return json({ error: 'not_found' }, 404)
 
-    // Prénom de l'utilisateur (1er mot de display_name) → le Guide l'appelle par son nom.
+    // Prénom (le Guide appelle la personne par son nom) + statut premium (quota).
     const { data: profile } = await admin
       .from('profiles')
-      .select('display_name')
+      .select('display_name, is_premium, premium_expires')
       .eq('id', user.id)
       .single()
     const firstName = (profile?.display_name ?? '').trim().split(/\s+/)[0] ?? ''
+
+    // — QUOTA QUOTIDIEN (avant TOUT appel payant : embedding puis LLM) —
+    // Premium actif → illimité. Sinon on lit/crée la ligne du jour et on refuse
+    // au-delà de sessions_limit. Le client transforme ce 429 en message pastoral.
+    const premiumActive =
+      profile?.is_premium === true &&
+      (!profile.premium_expires || new Date(profile.premium_expires) > new Date())
+
+    let quotaRow: { sessions_used: number; sessions_limit: number } | null = null
+    if (!premiumActive) {
+      const today = new Date().toISOString().slice(0, 10) // UTC, cohérent avec le DEFAULT CURRENT_DATE
+      const { data: existing } = await admin
+        .from('ai_sessions')
+        .select('sessions_used, sessions_limit')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle()
+
+      if (existing) {
+        quotaRow = existing
+      } else {
+        // Première question du jour : on crée la ligne (le DEFAULT fixe la limite).
+        const { data: created } = await admin
+          .from('ai_sessions')
+          .insert({ user_id: user.id, date: today })
+          .select('sessions_used, sessions_limit')
+          .single()
+        quotaRow = created ?? { sessions_used: 0, sessions_limit: DEFAULT_DAILY_LIMIT }
+      }
+
+      if (quotaRow.sessions_used >= quotaRow.sessions_limit) {
+        // 429 AVANT l'embedding et le LLM → coût strictement nul.
+        return json(
+          { error: 'quota_exceeded', limit: quotaRow.sessions_limit, used: quotaRow.sessions_used },
+          429
+        )
+      }
+    }
 
     // — RAG : embedding de la question → versets pertinents —
     // On SAUTE le RAG pour les messages purement conversationnels : le seuil de
@@ -458,7 +516,7 @@ Deno.serve(async (req) => {
       if (toSummarize.length) {
         const convo = toSummarize.map((m) => `${m.role === 'user' ? 'Personne' : 'Guide'}: ${m.content}`).join('\n')
         const sumPrompt = [
-          { role: 'system', content: 'Résume en français, de façon dense et fidèle, les points clés de cet échange spirituel (sujets abordés, versets évoqués, décisions/ressentis de la personne) en 4-6 phrases. Ce résumé sert de mémoire pour la suite de la conversation.' },
+          { role: 'system', content: `Résume, de façon dense et fidèle, les points clés de cet échange spirituel (sujets abordés, versets évoqués, décisions/ressentis de la personne) en 4-6 phrases. Rédige ce résumé en ${LOCALE_NAMES[uiLocale] ?? 'français'} PAR DÉFAUT, mais si l'échange ci-dessous est manifestement dans une autre langue, résume dans CETTE langue à la place (garde le résumé cohérent avec la langue de la conversation). Ce résumé sert de mémoire pour la suite de la conversation.` },
           { role: 'user', content: (summary ? `Résumé précédent:\n${summary}\n\nNouvel échange à intégrer:\n` : '') + convo }
         ]
         try {
@@ -473,7 +531,7 @@ Deno.serve(async (req) => {
 
     // — Construction du prompt final —
     const chatMessages: Array<{ role: string; content: string }> = [
-      { role: 'system', content: systemPrompt(mode, verseBlock, firstName) }
+      { role: 'system', content: systemPrompt(mode, verseBlock, firstName, uiLocale) }
     ]
     if (summary) {
       chatMessages.push({ role: 'system', content: `Mémoire de la conversation jusqu'ici : ${summary}` })
@@ -511,7 +569,21 @@ Deno.serve(async (req) => {
     }
     await admin.from('ai_conversations').update(patch).eq('id', conversationId)
 
-    return json({ answer, verseRefs: citedRefs })
+    // — Consommation du quota : SEULEMENT ici, une fois la réponse obtenue et
+    //   persistée. Une erreur LLM plus haut sort par le catch sans rien décompter :
+    //   on ne fait jamais payer un échec à l'utilisateur.
+    let remaining: number | null = null
+    if (!premiumActive && quotaRow) {
+      const used = quotaRow.sessions_used + 1
+      await admin
+        .from('ai_sessions')
+        .update({ sessions_used: used })
+        .eq('user_id', user.id)
+        .eq('date', new Date().toISOString().slice(0, 10))
+      remaining = Math.max(0, quotaRow.sessions_limit - used)
+    }
+
+    return json({ answer, verseRefs: citedRefs, remaining })
   } catch (e) {
     // On ne fuit pas de détails techniques au client (SECURITY.md §9).
     return json({ error: 'server_error' }, 500)

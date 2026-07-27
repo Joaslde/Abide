@@ -72,8 +72,10 @@ export const usePrayerStore = defineStore('prayer', () => {
     await markPrayerMoment(localDateStr(), type)
     if (type === 'morning') morningDone.value = true
     else eveningDone.value = true
-    // Le moment est accompli → plus aucune relance pour lui aujourd'hui.
-    cancelPrayerReminders(type)
+    // Le moment est accompli → plus aucune relance pour lui AUJOURD'HUI.
+    // `true` = ne toucher qu'aux créneaux du jour : les rappels des jours
+    // suivants restent planifiés (prier ce matin ne supprime pas demain matin).
+    cancelPrayerReminders(type, true)
   }
 
   return {

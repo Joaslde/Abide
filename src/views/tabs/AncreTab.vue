@@ -118,7 +118,7 @@
           </div>
         </transition>
 
-        <div class="composer" :class="{ disabled: !online }">
+        <div class="composer" :class="{ disabled: !online, typing: composerFocused }">
           <div class="composer-pill">
             <!-- Bouton de mode courant : icône + chevron seulement (compact).
                  Les libellés apparaissent dans le drop-up. -->
@@ -140,6 +140,8 @@
               :maxlength="2000"
               :disabled="!online || store.sending"
               :placeholder="t('ai.placeholder')"
+              @ionFocus="composerFocused = true"
+              @ionBlur="composerFocused = false"
             />
           </div>
           <button class="send-btn" :disabled="!canSend" :aria-label="t('ai.send')" @click="send">
@@ -183,6 +185,14 @@ const bible = useBibleStore()
 const ads = useAdsStore()
 
 const draft = ref('')
+/**
+ * Le champ a-t-il le focus (donc clavier ouvert) ?
+ * Le composer est TRANSPARENT au repos (posé sur la page). Mais quand le clavier
+ * le fait remonter, il passe par-dessus le texte d'accueil, qu'on voyait alors
+ * au travers. On l'opacifie le temps de la saisie plutôt que de masquer le
+ * contenu : rien ne disparaît, et le champ redevient transparent à la fermeture.
+ */
+const composerFocused = ref(false)
 const online = ref(true)
 
 /**
@@ -306,13 +316,38 @@ const lastAiId = computed(() => {
   return ai.length ? ai[ai.length - 1].id : null
 })
 
+/**
+ * Erreur d'un échange avec le Guide. Le quota atteint n'est PAS une panne :
+ * la personne n'a rien fait de mal, on l'accueille avec un message chaleureux
+ * (et son prénom) plutôt qu'un toast rouge d'erreur technique.
+ */
+async function presentChatError(e) {
+  const quota = e?.code === 'quota_exceeded'
+  const tt = await toastController.create({
+    message: quota
+      ? (auth.firstName
+          ? t('ai.quotaReachedNamed', { name: auth.firstName })
+          : t('ai.quotaReached'))
+      : t('ai.error'),
+    // Plus long quand il y a un bouton : il faut le temps de lire ET d'appuyer.
+    duration: quota ? 9000 : 2000,
+    position: 'bottom',
+    color: quota ? 'warning' : 'danger',
+    // Quota → raccourci vers le parrainage : inviter des proches débloque des
+    // jours d'accès illimité (seul moyen d'être premium tant qu'il n'y a pas de paiement).
+    buttons: quota
+      ? [{ text: t('ai.quotaCta'), handler: () => { router.push('/tabs/plus/referral') } }]
+      : []
+  })
+  await tt.present()
+}
+
 /** Modifier un message envoyé → remplace et relance la réponse de l'IA. */
 async function onEditMessage({ id, text }) {
   try {
     await store.editLastUserMessage(id, text)
-  } catch {
-    const tt = await toastController.create({ message: t('ai.error'), duration: 2000, color: 'danger' })
-    await tt.present()
+  } catch (e) {
+    await presentChatError(e)
   }
 }
 
@@ -320,9 +355,8 @@ async function onEditMessage({ id, text }) {
 async function onRegenerate() {
   try {
     await store.regenerateLast()
-  } catch {
-    const tt = await toastController.create({ message: t('ai.error'), duration: 2000, color: 'danger' })
-    await tt.present()
+  } catch (e) {
+    await presentChatError(e)
   }
 }
 
@@ -343,11 +377,11 @@ async function send() {
   draft.value = ''
   try {
     await store.sendMessage(text)
-  } catch {
-    const tt = await toastController.create({
-      message: t('ai.error'), duration: 2000, position: 'bottom', color: 'danger'
-    })
-    await tt.present()
+  } catch (e) {
+    // Quota atteint → on remet la question dans le champ : elle n'est pas perdue,
+    // la personne pourra la renvoyer telle quelle demain.
+    if (e?.code === 'quota_exceeded') draft.value = text
+    await presentChatError(e)
   }
   scrollToBottom()
 }
@@ -446,20 +480,43 @@ ion-menu { --width: 82%; --max-width: 340px; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
 
-ion-footer { --background: var(--navy2); }
+/* Footer TRANSPARENT : le composer doit sembler posé directement sur la page de
+   discussion. Un fond ici dessinait une bande visible (léger contraste) sous le
+   champ et sous le bouton d'envoi. Seules les bordures de la pilule et le bouton
+   rond doivent se détacher. */
+ion-footer { --background: transparent; background: transparent; }
+/* Pendant la saisie, le footer entier devient opaque : sinon le texte d'accueil
+   restait visible entre le composer et le bord de l'écran. */
+ion-footer:has(.composer.typing) { --background: var(--navy); background: var(--navy); }
 .offline-bar {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 6px var(--space-4);
+  /* Le footer étant transparent, une bande pleine largeur flotterait bizarrement :
+     on en fait une pastille arrondie, cohérente avec le cylindre du composer. */
+  margin: 0 var(--space-3) var(--space-2);
+  border-radius: var(--radius-full);
   background: var(--navy2); color: var(--muted);
   font-family: var(--font-app); font-size: 12px;
 }
 .offline-bar ion-icon { font-size: 15px; color: var(--gold); }
 .composer {
   display: flex; align-items: flex-end; gap: var(--space-2);
-  padding: var(--space-2) var(--space-3)
-           calc(env(safe-area-inset-bottom, 0px) + var(--space-2));
-  background: var(--navy2);
-  /* Pas de ligne dorée en haut : le champ est une pilule autonome. */
+  /* Plus de safe-area ici : c'est la marge basse du footer (TabsLayout) qui
+     positionne l'ensemble au-dessus de la barre flottante — sinon double marge. */
+  padding: var(--space-2) var(--space-3);
+  /* Aucun fond : la pilule flotte sur la page de discussion. */
+  background: transparent;
+  transition: background-color var(--duration-normal, 220ms) ease;
+}
+
+/* SAISIE EN COURS : le clavier fait remonter le composer par-dessus le contenu,
+   qu'on voyait alors « à travers » la transparence. On pose un fond le temps de
+   la frappe — il redevient transparent dès que le clavier se ferme. */
+.composer.typing {
+  background: var(--navy);
+}
+.composer.typing .composer-pill {
+  background: var(--card-bg);
 }
 .composer.disabled { opacity: 0.7; }
 
@@ -533,7 +590,10 @@ ion-title.renamable { cursor: pointer; }
   align-items: flex-end;
   gap: 2px;
   min-width: 0;
-  background: var(--card-bg);
+  /* Transparent : seule la BORDURE dessine le cylindre sur la page. Le contenu
+     ne défile pas derrière (ion-content s'arrête au footer), donc rien ne vient
+     parasiter la lisibilité. */
+  background: transparent;
   border: 1px solid var(--gold-border-md);
   border-radius: 22px;
   padding: 4px 6px 4px 4px;
@@ -561,7 +621,12 @@ ion-title.renamable { cursor: pointer; }
    n'a aucun effet. On cible sa classe interne `.native-textarea` via :deep(). */
 .composer-input :deep(.native-textarea),
 .composer-input :deep(textarea) {
-  min-height: 24px;
+  /* line-height ÉGAL à min-height : sur une seule ligne, le texte (et donc le
+     placeholder) occupe exactement la hauteur du champ et se retrouve centré
+     par les paddings symétriques (6px haut / 6px bas). Sans ça, la ligne était
+     calée en haut et le placeholder paraissait décollé. */
+  min-height: 26px;
+  line-height: 26px;
   max-height: 110px;      /* ~5 lignes, puis on défile */
   height: auto;
   overflow-y: auto !important;

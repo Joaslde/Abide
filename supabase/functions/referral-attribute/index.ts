@@ -27,10 +27,13 @@ const CORS = {
 
 // Paliers de récompense : [nombre de filleuls requis, jours de premium accordés].
 // Codés en dur côté serveur — jamais transmis ni décidés par le client.
+// Révisés le 2026-07-27 (les précédents : 5/10/15 → 7/14/30j étaient trop
+// faciles à atteindre pour un vrai effort de croissance).
+// ⚠️ Doivent rester alignés avec TIERS dans src/views/plus/ReferralView.vue.
 const TIERS: Array<[number, number]> = [
-  [5, 7],
-  [10, 14],
-  [15, 30]
+  [10, 10],
+  [25, 30],
+  [50, 90]
 ]
 
 const CODE_RE = /^[A-Z0-9]{6,10}$/

@@ -8,7 +8,10 @@
 //   4. OpenRouter renvoie un JSON strict : 5 questions × 4 options × 1 bonne réponse
 //   5. Validation STRICTE du JSON (tout output LLM est hostile — SECURITY.md §6)
 //
-// ⚠️ TODO(limites) : le compteur ai_sessions / rate limiting N'EST PAS branché ici
+// QUOTA (2026-07-25) : quota quotidien de quiz vérifié AVANT tout appel LLM
+//    (colonnes ai_sessions.quiz_used / quiz_limit, compteur SÉPARÉ du Guide).
+//    Premium (parrainage aujourd'hui, paiement plus tard) → illimité.
+// ⚠️ Ancien TODO(limites) levé.
 //    (phase de test illimitée, comme ai-chat). À brancher AVANT tout déploiement
 //    public (cf. SECURITY.md §4).
 //
@@ -26,6 +29,9 @@ const CHAT_MODEL = 'openai/gpt-4o-mini' // modèle éco (SECURITY.md §12)
 const QUESTION_COUNT = 5
 const OPTION_COUNT = 4
 const MAX_TOKENS = 1400 // 5 questions structurées
+// Repli si la création de la ligne ai_sessions échoue : la VRAIE limite vit en base
+// (DEFAULT de ai_sessions.quiz_limit) et s'ajuste en SQL, sans redéploiement.
+const DEFAULT_QUIZ_LIMIT = 5
 
 /** Codes de livres canoniques valides (les 66 livres). Whitelist de l'input. */
 const VALID_BOOKS = new Set([
@@ -121,6 +127,50 @@ Deno.serve(async (req) => {
     // service_role : lecture serveur (bible_embeddings = contenu public).
     const admin = createClient(supabaseUrl, serviceKey)
 
+    // — QUOTA QUIZ QUOTIDIEN (avant TOUT appel LLM → un refus coûte 0) —
+    // Compteur SÉPARÉ de celui du Guide (colonnes quiz_used/quiz_limit sur la
+    // même ligne du jour) : épuiser ses quiz ne bloque pas le Guide, et inversement.
+    // Premium actif (aujourd'hui obtenu par PARRAINAGE, demain par paiement) → illimité.
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('is_premium, premium_expires')
+      .eq('id', user.id)
+      .single()
+
+    const premiumActive =
+      profile?.is_premium === true &&
+      (!profile.premium_expires || new Date(profile.premium_expires) > new Date())
+
+    const today = new Date().toISOString().slice(0, 10)
+    let quotaRow: { quiz_used: number; quiz_limit: number } | null = null
+
+    if (!premiumActive) {
+      const { data: existing } = await admin
+        .from('ai_sessions')
+        .select('quiz_used, quiz_limit')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle()
+
+      if (existing) {
+        quotaRow = existing
+      } else {
+        const { data: created } = await admin
+          .from('ai_sessions')
+          .insert({ user_id: user.id, date: today })
+          .select('quiz_used, quiz_limit')
+          .single()
+        quotaRow = created ?? { quiz_used: 0, quiz_limit: DEFAULT_QUIZ_LIMIT }
+      }
+
+      if (quotaRow.quiz_used >= quotaRow.quiz_limit) {
+        return json(
+          { error: 'quota_exceeded', limit: quotaRow.quiz_limit, used: quotaRow.quiz_used },
+          429
+        )
+      }
+    }
+
     // — Texte réel du chapitre (source de vérité) —
     const { data: rows } = await admin
       .from('bible_embeddings')
@@ -182,7 +232,21 @@ FORMAT DE SORTIE — un objet JSON STRICT, rien d'autre :
     const questions = validateQuiz(parsed)
     if (!questions) return json({ error: 'generation_failed' }, 502)
 
-    return json({ questions })
+    // — Consommation du quota : SEULEMENT ici, quiz valide en main. Les sorties
+    //   `generation_failed` ci-dessus partent sans rien décompter : on ne fait
+    //   jamais payer un échec de génération à l'utilisateur.
+    let remaining: number | null = null
+    if (!premiumActive && quotaRow) {
+      const used = quotaRow.quiz_used + 1
+      await admin
+        .from('ai_sessions')
+        .update({ quiz_used: used })
+        .eq('user_id', user.id)
+        .eq('date', today)
+      remaining = Math.max(0, quotaRow.quiz_limit - used)
+    }
+
+    return json({ questions, remaining })
   } catch (_e) {
     // On ne fuit pas de détails techniques au client (SECURITY.md §9).
     return json({ error: 'server_error' }, 500)

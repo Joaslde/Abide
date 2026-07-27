@@ -17,12 +17,21 @@
     <!-- Plan actif -->
     <template v-else>
       <div class="pc-head">
+        <!-- Vignette du parcours en cours (préétablis uniquement : un plan
+             sur mesure n'a pas d'image dédiée). -->
+        <img v-if="activeThumb" :src="activeThumb" class="pc-thumb" alt="" />
         <div class="pc-titles">
           <p class="pc-name">{{ activeTitle }}</p>
           <p class="pc-label">{{ t('plan.dayOf', { day: plan.currentDay, total: plan.totalDays }) }}</p>
         </div>
         <button class="pc-change" @click="goSetup">{{ t('plan.change') }}</button>
       </div>
+
+      <!-- Voir tout le parcours : jours faits, jour en cours, jours à venir. -->
+      <button class="pc-journey" @click="goJourney">
+        <ion-icon :icon="listOutline" />
+        <span>{{ t('plan.journey.see') }}</span>
+      </button>
 
       <div class="pc-items">
         <button
@@ -45,12 +54,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { toastController } from '@ionic/vue'
+import { IonIcon, toastController } from '@ionic/vue'
+import { listOutline } from 'ionicons/icons'
 import { useI18n } from 'vue-i18n'
 import { usePlanStore } from '@/stores/plan'
 import { useBibleStore } from '@/stores/bible'
 import { getBooks } from '@/lib/bible-db'
 import { scopeLabelKey } from '@/data/planLabels'
+import { planThumb } from '@/data/presetPlans'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -64,6 +75,13 @@ const activeTitle = computed(() => {
   return p.title ? t(p.title) : t(scopeLabelKey(p.scope))
 })
 
+// Vignette du parcours : seuls les préétablis en ont une (template_id).
+// Un plan sur mesure ou « selon mon profil » n'affiche rien (repli silencieux).
+const activeThumb = computed(() => {
+  const id = plan.activePlan?.template_id
+  return id ? planThumb(id) : ''
+})
+
 // Nom lisible des livres (pour l'affichage des chapitres du jour).
 const bookLabels = ref({})
 onMounted(async () => {
@@ -73,6 +91,10 @@ onMounted(async () => {
 
 function goSetup() {
   router.push('/tabs/immersion/plan')
+}
+
+function goJourney() {
+  router.push('/tabs/immersion/plan/journey')
 }
 
 function openChapter(it) {
@@ -96,8 +118,17 @@ async function markDone() {
   border-radius: var(--radius-md);
   padding: var(--space-4);
 }
-.pc-head { display: flex; align-items: flex-start; justify-content: space-between; }
-.pc-titles { min-width: 0; }
+.pc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+/* Vignette du parcours en cours (même langage visuel que l'écran de choix). */
+.pc-thumb {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-border);
+}
+.pc-titles { min-width: 0; flex: 1; }
 .pc-name {
   font-family: var(--font-app);
   font-size: 16px;
@@ -123,6 +154,22 @@ async function markDone() {
   color: var(--cream);
   margin: 0 0 var(--space-4);
 }
+
+/* Lien discret vers le parcours complet (sous le titre, avant les chapitres). */
+.pc-journey {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+  color: var(--gold);
+  font-family: var(--font-app);
+  font-size: 12px;
+  cursor: pointer;
+}
+.pc-journey ion-icon { font-size: 15px; }
 
 .pc-items { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
 .pc-item {

@@ -53,33 +53,10 @@
           @longpress="onLongPress"
           @tap="onVerseTap"
         />
-      </div>
-
-      <!-- Barre d'actions sur la sélection (copier, surligner, IA, partager…) -->
-      <verse-action-bar />
-
-      <!-- Bulles flottantes préc./suiv. (façon YouVersion) : ne prennent pas de
-           place dans le texte. Masquées quand une sélection est en cours. -->
-      <button
-        v-show="chapter > 1 && !selection.hasSelection"
-        class="nav-bubble left"
-        :aria-label="t('bible.previousChapter')"
-        @click="goChapter(chapter - 1)"
-      >
-        <ion-icon :icon="chevronBack" />
-      </button>
-      <button
-        v-show="chapter < chapterCount && !selection.hasSelection"
-        class="nav-bubble right"
-        :aria-label="t('bible.nextChapter')"
-        @click="goChapter(chapter + 1)"
-      >
-        <ion-icon :icon="chevronForward" />
-      </button>
-    </ion-content>
-
-    <!-- Barre d'actions du chapitre (signet…). -->
-    <ion-footer class="ion-no-border">
+      <!-- Actions du chapitre : POSÉES EN FIN DE TEXTE, pas dans une barre fixe.
+           Elles se découvrent quand on a fini de lire — c'est le moment naturel
+           où l'on marque comme lu, met un signet ou lance le quiz. Une banderole
+           collée en bas mangeait de la hauteur de lecture en permanence. -->
       <div class="chap-actions">
         <button
           class="action-btn"
@@ -113,7 +90,30 @@
           <span>{{ t('quiz.button') }}</span>
         </button>
       </div>
-    </ion-footer>
+      </div>
+
+      <!-- Barre d'actions sur la sélection (copier, surligner, IA, partager…) -->
+      <verse-action-bar />
+
+      <!-- Bulles flottantes préc./suiv. (façon YouVersion) : ne prennent pas de
+           place dans le texte. Masquées quand une sélection est en cours. -->
+      <button
+        v-show="chapter > 1 && !selection.hasSelection"
+        class="nav-bubble left"
+        :aria-label="t('bible.previousChapter')"
+        @click="goChapter(chapter - 1)"
+      >
+        <ion-icon :icon="chevronBack" />
+      </button>
+      <button
+        v-show="chapter < chapterCount && !selection.hasSelection"
+        class="nav-bubble right"
+        :aria-label="t('bible.nextChapter')"
+        @click="goChapter(chapter + 1)"
+      >
+        <ion-icon :icon="chevronForward" />
+      </button>
+    </ion-content>
 
     <!-- Panneau réglages lecture : taille + police + thème -->
     <reader-settings :open="showSettings" @close="showSettings = false" />
@@ -194,6 +194,8 @@ const flashVerse = ref(null)
 const isRead = ref(false)
 // Quiz : modal ouvert ? + nb d'étoiles obtenues sur ce chapitre (pour l'icône).
 const showQuiz = ref(false)
+// Verrou anti double-clic sur le bouton Quiz (couvre AUSSI la durée de la pub).
+const openingQuiz = ref(false)
 const chapterStars = ref(0)
 
 // Libellé court de la version active (ex : "LSG 1910" → "LSG").
@@ -265,6 +267,21 @@ async function load() {
  * l'Edge Function). Hors ligne → toast informatif, on n'ouvre pas le modal.
  */
 async function onOpenQuiz() {
+  // ⚠️ Verrou pris AVANT la pub. La pub est un `await` de plusieurs secondes
+  // pendant lequel l'écran semble figé → l'utilisateur reclique, et chaque clic
+  // lançait sa propre génération. Les réponses revenaient en décalé et un quiz
+  // s'écrasait sur celui déjà en cours. Le garde de generateQuiz() ne suffit pas :
+  // `loading` n'est levé qu'APRÈS la pub, donc trop tard.
+  if (openingQuiz.value || quiz.loading) return
+  openingQuiz.value = true
+  try {
+    await runOpenQuiz()
+  } finally {
+    openingQuiz.value = false
+  }
+}
+
+async function runOpenQuiz() {
   if (!(await isOnline())) {
     const tt = await toastController.create({
       message: t('quiz.offline'), duration: 2500, position: 'bottom'
@@ -272,19 +289,32 @@ async function onOpenQuiz() {
     await tt.present()
     return
   }
-  // Pub vidéo avant le quiz (à chaque fois, sauf premium). Attend sa fermeture
-  // puis ouvre le quiz — l'échec de la pub ne bloque jamais l'accès.
-  await ads.onStartQuiz()
+  // Modal ouvert TOUT DE SUITE (il affiche « Préparation de ton quiz… ») : sans ça
+  // rien ne bouge pendant la pub et l'utilisateur croit que son clic n'a pas pris.
   showQuiz.value = true
+  // Pub vidéo avant le quiz (à chaque fois, sauf premium). Attend sa fermeture
+  // puis génère — l'échec de la pub ne bloque jamais l'accès.
+  await ads.onStartQuiz()
   try {
     await quiz.generateQuiz({
       versionId: store.activeVersion, bookId, bookName: bookName.value, chapter: chapter.value
     })
   } catch (e) {
     showQuiz.value = false
+    // Quota atteint et hors-ligne ne sont pas des pannes : ton neutre/chaleureux,
+    // rouge réservé aux vraies erreurs de génération.
+    const kind = e?.message === 'quota' ? 'quota' : e?.message === 'offline' ? 'offline' : 'error'
     const tt = await toastController.create({
-      message: e?.message === 'offline' ? t('quiz.offline') : t('quiz.error'),
-      duration: 2500, position: 'bottom', color: e?.message === 'offline' ? undefined : 'danger'
+      message: kind === 'quota' ? t('quiz.quotaReached')
+        : kind === 'offline' ? t('quiz.offline')
+        : t('quiz.error'),
+      duration: kind === 'quota' ? 9000 : 2500,
+      position: 'bottom',
+      color: kind === 'quota' ? 'warning' : kind === 'offline' ? undefined : 'danger',
+      // Quota → raccourci vers le parrainage (jours d'accès illimité offerts).
+      buttons: kind === 'quota'
+        ? [{ text: t('quiz.quotaCta'), handler: () => { router.push('/tabs/plus/referral') } }]
+        : []
     })
     await tt.present()
   }
@@ -367,11 +397,34 @@ function onVerseTap({ verse, text }) {
 async function flashTargetVerse() {
   const n = Number(route.query.v)
   if (!n) return
-  await nextTick()
-  const el = document.getElementById(`verse-${n}`)
-  if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+
+  // Surbrillance tout de suite (réactif, ne dépend pas du DOM).
   flashVerse.value = n
   setTimeout(() => { flashVerse.value = null }, 2500)
+
+  // ⚠️ Un seul nextTick() ne suffit PAS : Ionic monte la vue avec une transition,
+  // et pendant ce temps l'ion-content n'est pas encore scrollable. scrollIntoView
+  // partait dans le vide → le verset était bien surligné mais restait hors écran,
+  // obligeant à défiler à la main. On réessaie jusqu'à ce que le scroll prenne.
+  await nextTick()
+  for (let i = 0; i < 20; i++) {
+    const el = document.getElementById(`verse-${n}`)
+    if (el) {
+      // 1re tentative en 'auto' (instantané) : si la vue est prête, c'est réglé
+      // sans animation inutile. Les suivantes en 'smooth' pour rester agréable.
+      el.scrollIntoView({ block: 'center', behavior: i === 0 ? 'auto' : 'smooth' })
+      await new Promise((r) => setTimeout(r, 140))
+      if (isInViewport(el)) return // verset réellement à l'écran → terminé
+    } else {
+      await new Promise((r) => setTimeout(r, 120))
+    }
+  }
+}
+
+/** L'élément est-il réellement visible dans la fenêtre ? */
+function isInViewport(el) {
+  const r = el.getBoundingClientRect()
+  return r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight)
 }
 
 onMounted(async () => {
@@ -382,12 +435,19 @@ onMounted(async () => {
 })
 
 // Réagir au changement de chapitre dans l'URL (prev/next, swipe).
-watch(() => route.params.chapter, (c) => {
+watch(() => route.params.chapter, async (c) => {
   const n = Number(c)
   if (n && n !== chapter.value) {
     chapter.value = n
-    load()
+    await load()
+    flashTargetVerse() // source IA vers un AUTRE chapitre : onMounted ne rejoue pas
   }
+})
+
+// Source IA vers un autre verset du chapitre DÉJÀ ouvert : seul ?v= change,
+// donc ni onMounted ni le watch du chapitre ne se déclenchent.
+watch(() => route.query.v, (v) => {
+  if (v) flashTargetVerse()
 })
 
 // Auto-scroll vers le verset en cours de lecture audio (sync timestamps).
@@ -501,14 +561,25 @@ ion-content { --background: var(--navy); }
 .nav-bubble ion-icon { font-size: 22px; }
 .nav-bubble:active { background: var(--card-bg); }
 
-/* Barre d'actions du chapitre (signet, etc.). */
-ion-footer .chap-actions {
+/* Actions du chapitre — posées EN FIN DE TEXTE (plus de barre fixe en bas).
+   Aucun fond ni bordure pleine largeur : elles reposent sur le fond du chapitre.
+   Un simple filet court les sépare du dernier verset. */
+.chap-actions {
   display: flex;
   justify-content: center;
   gap: var(--space-6);
-  padding: var(--space-2) var(--space-4) calc(env(safe-area-inset-bottom, 0px) + var(--space-2));
-  background: var(--navy2);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  /* Filet discret et centré (30 % de la largeur) plutôt qu'une ligne d'un bord
+     à l'autre : marque la fin du texte sans découper la page. */
   border-top: 1px solid var(--gold-border);
+  border-image: linear-gradient(
+      to right,
+      transparent 0%,
+      var(--gold-border) 35%,
+      var(--gold-border) 65%,
+      transparent 100%
+    ) 1;
 }
 .action-btn {
   display: flex;

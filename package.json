@@ -33,6 +33,7 @@
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
     "@supabase/supabase-js": "^2.45.0",
+    "appsflyer-capacitor-plugin": "^6.16.2",
     "capacitor-music-controls-plugin": "^6.1.0",
     "dompurify": "^3.4.11",
     "ionicons": "^7.4.0",
