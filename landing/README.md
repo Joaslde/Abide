@@ -47,6 +47,6 @@ le DNS propagé.
       soumission Google Play — sinon utiliser temporairement l'URL Vercel provisoire
       dans la fiche Play Console et dans l'app
 - [ ] Mettre à jour le lien Google Play dans `index.html` une fois l'app publiée
-      (actuellement pointe vers `com.abide.app`, correct si l'app est publiée sous cet id)
+      (actuellement pointe vers `com.toabide.app`, correct si l'app est publiée sous cet id)
 - [ ] Donner l'URL de confidentialité finale à la fiche Google Play Console
       (champ "Politique de confidentialité")

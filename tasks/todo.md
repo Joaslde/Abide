@@ -11,6 +11,178 @@
 
 ---
 
+## 🔴 EN COURS — Changement de package Android (2026-09-10)
+
+> `com.abide.app` refusé par Play Console (déjà pris par un tiers). Remplacé par
+> **`com.toabide.app`** dans tout le code (voir `tasks/lessons.md` 2026-09-10 pour le détail).
+> Build Gradle vérifié OK. Reste à faire côté SERVICES EXTERNES (hors repo) :
+>
+> - [x] Google Cloud Console : nouveau Client OAuth **Android** créé avec `com.toabide.app`
+>       + SHA-1 debug `D8:1D:64:09:F4:C8:72:28:3B:71:20:B0:EA:7C:A1:C7:7C:F3:05:CD`
+>       → `34894391883-bemreedn3dq8htpuuv7viqeqp4o2d0v2.apps.googleusercontent.com`
+>       (2026-09-10). Le Client ID **Web** (`serverClientId`) n'a pas changé.
+> - [x] `capacitor.config.json` (androidClientId) + `.env.local` mis à jour avec le
+>       nouveau Client ID Android, rebuild + resync + reinstall faits (2026-09-10)
+> - [x] Supabase Dashboard → Auth → Providers → Google → "Authorized Client IDs" :
+>       nouveau Client ID Android ajouté à la liste (2026-09-10)
+> - [x] **Google Sign-In testé sur appareil réel avec le nouveau package : fonctionne** (2026-09-10)
+> - [ ] AppsFlyer : **reporté après publication** (2026-09-10, décision utilisateur) — pas
+>       de compte AppsFlyer créé pour l'instant (l'ancien test utilisait `com.abide.app`
+>       + un email pro intérimaire). OneLink a de toute façon besoin que l'app soit déjà
+>       publiée pour fonctionner (deferred deep linking) → recréer un compte DÉFINITIF au
+>       moment de la publication, avec une adresse `@toabide.online` plutôt qu'un email
+>       personnel (à créer : `contact@toabide.online` ou via Google Workspace).
+> - [x] AdMob : magasin d'applications Google Play lié à `com.toabide.app` le 2026-09-11
+>       (déclenché par l'existence de l'app sur Play Console, même en Test interne — pas
+>       besoin d'attendre la production). Lien "Verify app to lift limit" cliqué, examen
+>       AdMob en cours (délai variable, non bloquant pour la suite — continuer la fiche
+>       Play Store pendant ce temps).
+
+---
+
+## 🎉 ÉTAT AU 2026-10-11 : ABIDE EST EN PRODUCTION
+
+> - [x] Accès production accordé, release Abide 1.2 (versionCode 4) publiée à 100 %
+>       (monde entier), visible via https://play.google.com/store/apps/details?id=com.toabide.app
+> - [x] Classification IARC reçue le 2026-10-08 (réponse « Non » aux achats numériques :
+>       À REFAIRE le jour où Abide Plus devient payant)
+> - [x] Premiers chiffres (2026-10-11) : 4 installations, 16 appareils actifs
+> - [ ] Vérifier les vraies pubs sur le téléphone (AdGuard désactivé), SANS cliquer
+> - [ ] Mise à jour 16 Ko (versionCode 5) : voir bloc DETTE TECHNIQUE plus bas
+> - [ ] AppsFlyer définitif + OneLink (adresse @toabide.online)
+> - [ ] Suivi des coûts : OpenRouter (recharge auto), Supabase, R2
+> - [ ] Ajouter le lien Play Store sur toabide.online si besoin
+
+---
+
+## 🚀 ÉTAT AU 2026-10-02 : demande d'accès Production envoyée
+
+> - [x] Test fermé : 12+ testeurs, 14 jours validés (3 cases cochées sur le tableau de bord)
+> - [x] Vraies pubs AdMob activées dans `.env.local` (`VITE_ADMOB_INTERSTITIAL_ID`)
+> - [x] AAB prêt : versionCode 4, versionName 1.2, signé, avec vraies pubs
+>       (`android/app/build/outputs/bundle/release/app-release.aab`)
+> - [x] Formulaire « Demander à publier en production » envoyé le 2026-10-02 à 21:44
+> - [ ] **EN ATTENTE** : réponse de Google (7 jours ou moins, e-mail à ldejoas@gmail.com)
+> - [ ] Dès accès accordé : Production → Créer une release → importer l'AAB v4 (import de
+>       fichier) → notes de version → envoyer pour examen
+> - [ ] Après publication : désactiver AdGuard sur le téléphone de test pour vérifier les
+>       interstitiels. NE JAMAIS cliquer ses propres pubs.
+> - [ ] Après publication : compte AppsFlyer définitif + OneLink (adresse @toabide.online)
+> - [ ] Ne pas modifier fiche/testeurs pendant l'examen (risque de relancer une review)
+
+---
+
+## ⚠️ DETTE TECHNIQUE : pages mémoire 16 Ko (relevée le 2026-10-06)
+
+> Play Console affiche une ERREUR sur la release de production (versionCode 4) :
+> « Votre appli ne prend pas en charge les tailles de page de mémoire de 16 ko ».
+> - Cause : `libsqlcipher.so` (4 variantes ABI) alignée sur 4 Ko (0x1000), mesuré sur l'AAB.
+>   Elle vient de `net.zetetic:android-database-sqlcipher:4.5.3`, embarquée par
+>   `@capacitor-community/sqlite@6.0.2` (dernière version de la lignée Capacitor 6).
+> - Seule bibliothèque native de l'app. AGP 8.13 gère déjà l'alignement de l'archive.
+> - Correctif connu : SQLCipher 4.10.0 (`net.zetetic:sqlcipher-android`) est aligné 16 Ko
+>   (0x4000, vérifié). Embarqué par le plugin 7.0.3 (4.10.0) et 8.1.1 (4.17.0), qui exigent
+>   Capacitor 7 ou 8 (projet actuel : Capacitor 6.2.1).
+> - Voie retenue pour la correction : rétroporter le code Android du plugin 7.0.3 sur
+>   Capacitor 6 via `patch-package`. L'API JS (definitions.d.ts) est identique entre 6.0.2
+>   et 7.0.3. L'app n'utilise aucune base chiffrée (`'no-encryption'` partout), donc pas de
+>   migration de clé. 10 fichiers Java diffèrent : risque principal = incompatibilité
+>   d'API avec Capacitor 6, à détecter à la compilation.
+> - DÉCISION (utilisateur, 2026-10-06) : publier d'abord tel quel via « Continuer quand
+>   même », corriger après publication par une mise à jour (versionCode 5).
+> - [ ] Après publication : appliquer la voie B, recontrôler l'alignement de TOUTES les
+>       `.so` de l'AAB, tester sur téléphone avec les données existantes (Bible, notes,
+>       plans), puis publier versionCode 5.
+> - [ ] Si Google rejette la release à cause de cette erreur : faire la correction avant
+>       de renvoyer.
+
+---
+
+## 📋 SUIVI — Formulaire de publication Google Play Console (2026-09-10)
+
+> Progression détaillée du formulaire de création/soumission de l'app sur Play Console,
+> écran par écran, pour reprendre exactement où on s'est arrêté d'une session à l'autre.
+
+### Écran 1 — "Créer une application" (infos de base)
+- [x] Nom de l'app : `Abide — Bible & Guide IA` (24/30 caractères)
+- [x] Nom du package : `com.toabide.app` (validé disponible, cf. section changement de
+      package ci-dessus)
+- [x] Langue par défaut : Anglais (États-Unis) — en-US
+- [x] Type : Appli (pas Jeu)
+- [x] Gratuite ou payante : **Sans frais** (cohérent avec le modèle freemium — le premium
+      se gère via IAP/KKiaPay dans l'app, pas via un prix Play Store)
+- [x] Protection automatique de l'app (anti-sideloading) : laissée activée
+- [x] Déclaration "Règlement du programme pour les développeurs" : cochée
+- [x] Bouton "Créer une application" cliqué — app créée avec succès (2026-09-10)
+
+### Écran 2 — Tableau de bord de l'app
+- [x] App visible dans Play Console, tableau de bord affiché avec le parcours en 3 blocs :
+      Tests internes / Terminer la configuration / Tests fermés
+- [ ] **PROCHAINE ACTION** : cliquer "Afficher les tâches" sous "Terminer la configuration
+      de votre appli" → c'est le bloc obligatoire avant tout envoi de build (fiche Play
+      Store + formulaires de conformité, cf. liste détaillée ci-dessous)
+
+### Écrans suivants (à venir, pas encore atteints)
+- [ ] Fiche Play Store (Store Listing) : description courte/complète, icône 512×512,
+      feature graphic 1024×500, **captures d'écran (min. 2, obligatoire)**, catégorie
+- [ ] ⚠️ Langue par défaut du compte = Anglais (en-US), choisie à la création (2026-09-10).
+      Décidé : garder en-US par défaut MAIS **ajouter le français comme langue
+      supplémentaire de la fiche Play Store** (Présence sur le Store → Fiche principale →
+      sélecteur de langue → Ajouter le français) et le remplir en PRIORITÉ/plus complet
+      que l'anglais — cohérent avec le marché cible (Afrique francophone + diaspora).
+- [ ] Coordonnées de contact (email public — décider : email perso actuel ou attendre
+      l'email `@toabide.online` à créer)
+- [ ] URL politique de confidentialité → `https://toabide.online/privacy.html` (déjà prêt)
+- [ ] Data Safety Form (déclaration des données collectées)
+- [ ] Classification du contenu (questionnaire IARC)
+- [ ] Public cible & contenu (âge, présence de pubs → cocher oui, AdMob)
+- [x] Signature d'application Play (Play App Signing — Google gère la clé finale, recommandé)
+- [x] Clé d'upload générée le 2026-09-10 : `keystore/abide-upload-key.keystore`, alias
+      `abide-upload`. SHA-1 upload : `AE:B0:08:D1:23:1F:D1:12:08:D0:F4:0A:51:68:12:71:64:37:14:E9`
+      (⚠️ PAS le SHA-1 à enregistrer pour OAuth — voir plus bas)
+- [x] Build AAB signé release réussi (`./gradlew bundleRelease`), uploadé sur Play Console
+      en Test interne le 2026-09-10 ("Abide - 1 (1.0)")
+- [x] Testeur ajouté (toi-même) dans "Test Interne liste", app installée avec succès depuis
+      le vrai Play Store après un délai de propagation du scan Google (~qq heures)
+- [x] **Google Sign-In cassé puis RÉSOLU (2026-09-11)** : le SHA-1 réellement utilisé par
+      Google pour signer l'APK distribué (Play App Signing re-signe avec SA PROPRE clé,
+      différente de la clé d'upload) a été extrait directement de l'APK installé via
+      `apksigner verify --print-certs` → `CA:BE:68:D5:BD:F2:83:AA:46:F4:F3:B5:F1:0A:2E:C9:91:2A:2F:72`
+      (les SHA-1 copiés depuis le dashboard Play Console — colonnes "classique" et
+      "post-quantique" — ne correspondaient à AUCUNE clé réelle, piège documenté en détail
+      dans `tasks/lessons.md` 2026-09-11). 3e Client OAuth Android créé avec ce SHA-1
+      (`34894391883-fr1hf8mtvqd90np7l65920uncc48buac.apps.googleusercontent.com`), ajouté
+      dans Supabase Authorized Client IDs → **connexion testée et fonctionnelle depuis le
+      Play Store**.
+- [x] Liste finale des 3 Client IDs dans Supabase (Web + Android debug + Android release) :
+      `34894391883-sn5akdqig9b66jun8t3bgb0h36hdlpmq.apps.googleusercontent.com,`
+      `34894391883-bemreedn3dq8htpuuv7viqeqp4o2d0v2.apps.googleusercontent.com,`
+      `34894391883-fr1hf8mtvqd90np7l65920uncc48buac.apps.googleusercontent.com`
+
+### ⚠️ CONTRAINTE CRITIQUE DE PLANNING — exigence Google de test fermé (2026-09-10)
+> Source : https://support.google.com/googleplay/android-developer/answer/14151465
+> (lien donné par Google Play Console lui-même dans le parcours de publication).
+>
+> Pour un NOUVEAU compte développeur, la production publique (accessible à tout le monde)
+> n'est PAS accessible directement. Étapes obligatoires dans l'ordre :
+> 1. Test interne (optionnel, rapide — quelques minutes, petit groupe de confiance)
+> 2. **Test fermé OBLIGATOIRE : 12 testeurs minimum, inscrits en continu pendant AU MOINS
+>    14 JOURS CONSÉCUTIFS** avant de pouvoir candidater à la production
+> 3. Formulaire de candidature à l'accès production (3 parties : engagement des testeurs,
+>    description de l'app, préparation au lancement)
+> 4. Review Google : jusqu'à 7 jours (parfois plus)
+>
+> **Donc compter ~3 SEMAINES MINIMUM** entre "build prêt à soumettre" et "publié en
+> production publique". À anticiper dès maintenant :
+> - [ ] Recruter 12 testeurs réels (amis, famille, communauté) qui acceptent de garder
+>       l'app installée et active pendant 14 jours (un testeur qui désinstalle ou n'active
+>       jamais son compte de test ne compte pas dans les 12)
+> - [ ] Une fois en test fermé (fiche Play Store publiée, même non publique) : vérifier si
+>       AdMob réel et AppsFlyer OneLink deviennent utilisables à ce stade (probable mais
+>       à confirmer) — pourrait débloquer ces deux chantiers sans attendre la production
+
+---
+
 ## ⚠️ COORDINATION — 2 SESSIONS EN PARALLÈLE (2026-07-25)
 
 > Deux sessions Claude travaillent en même temps sur ce projet. Règles de non-collision :
@@ -66,9 +238,10 @@ combler ce profil**, vignette vérifiée visuellement, 0 erreur de validation ca
 1. **Publication Play Store** — voir section dédiée ci-dessous. C'est le seul gros morceau restant.
 2. **SMTP Resend** — compte + domaine en cours côté utilisateur ; clé à fournir, puis
    configuration du template OTP dans Supabase → débloque le mot de passe oublié.
-3. **Mini-site — DÉPLOYÉ (2026-07-27)** sur Vercel via toabide.online (DNS en cours
-   de propagation ; URL provisoire déjà fonctionnelle : abide-ivory-three.vercel.app).
-   4 pages : index, faq (nouveau), privacy, terms. Bug Vercel "SPA fallback" corrigé
+3. **Mini-site — DÉPLOYÉ ET DNS PROPAGÉ (2026-07-27)** sur Vercel via toabide.online
+   (résolu : le blocage était un cache DNS local sur la machine de l'utilisateur, pas
+   une mauvaise config — nameservers Vercel corrects et validés dès le départ).
+   4 pages : index, faq, privacy, terms. Bug Vercel "SPA fallback" corrigé
    (`landing/vercel.json`, cf. lessons.md). Email de contact : ldejoas@gmail.com
    (mis à jour partout : landing + app).
    - [x] Câblé dans `SettingsView.vue` (FAQ/CGU/Confidentialité) via `@capacitor/browser`
@@ -115,6 +288,29 @@ mise à jour ultérieure (rapide à approuver). Voir section « Publication Play
 ---
 
 ## En Cours
+
+### 🔴 BLOQUANT MISE EN LIGNE — Survie des notifications au kill du processus
+
+Android efface TOUTES les alarmes d'une app quand son processus est tué :
+balayage depuis les applis récentes, force-stop, nettoyeur de RAM (systématique
+sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
+**57 alarmes avant `am force-stop`, 0 après.**
+
+- [x] Replanification forcée au démarrage à froid du processus (`freshProcess`),
+      sans consulter `getPending()` qui renvoie un cache mensonger — bridée à
+      1×/heure pour ne pas réalimenter le filtre anti-spam Android. (2026-09-08)
+- [ ] **Receiver `BOOT_COMPLETED`** : replanifier au redémarrage du téléphone.
+      La permission est déjà dans le manifest, le receiver n'existe pas.
+- [ ] **WorkManager périodique** (~6h) : replanifier même sans ouverture de l'app.
+      SEULE façon de couvrir quelqu'un qui balaie l'app et ne la rouvre pas —
+      sinon il ne reçoit plus AUCUN rappel, indéfiniment.
+- [ ] Tester le cycle complet : balayer l'app → attendre un créneau → vérifier
+      `dumpsys notification | grep post_frequency` (count doit incrémenter).
+
+> ⚠️ Sans ces deux points, un utilisateur qui ferme l'app depuis les récents
+> cesse définitivement de recevoir ses rappels. C'est le scénario le plus
+> courant sur Android d'entrée de gamme.
+
 
 ### Bascule langue ↔ version Bible — BUG CORRIGÉ ✅ (2026-07-26)
 - [x] `setLocalePref` appelait `versions.installed` SANS avoir appelé `loadInstalled()`
@@ -725,10 +921,33 @@ mise à jour ultérieure (rapide à approuver). Voir section « Publication Play
 - [x] App ID réel dans AndroidManifest : ca-app-pub-4844051778459996~4079944831
 - [x] Ad Unit interstitiel créé : ca-app-pub-4844051778459996/6546326075 (stocké commenté dans .env.local)
 - [x] IDs de TEST toujours actifs en dev (VITE_ADMOB_INTERSTITIAL_ID commenté → isTesting auto)
-- [ ] ⚠️ AU LANCEMENT SEULEMENT : (1) finir profil de PAIEMENT AdMob (compte en « Examen requis »),
-      (2) décommenter VITE_ADMOB_INTERSTITIAL_ID dans .env.local. NE PAS cliquer ses vraies pubs avant (bannissement).
+- [x] Compte AdMob **approuvé** (vérifié 2026-09-10) + profil de paiement **complet**
+      (compte AdSense Bénin lié) + bloc d'annonces configuré
+- [x] ✅ RÉSOLU (2026-09-12) : app AdMob passée en **« Prêt » / « Diffusion d'annonces
+      activée »**. Le blocage « Examen requis / diffusion limitée » venait de deux
+      manques, corrigés le 2026-09-11 : (1) l'app AdMob n'était liée à aucune plate-forme
+      de téléchargement → bouton **"Ajouter un magasin d'applications"** dans AdMob, une
+      fois l'app existante sur Play Console (le Test interne suffit, pas besoin de
+      production) ; (2) fichier `app-ads.txt` absent du site développeur → créé dans
+      `landing/app-ads.txt` (ligne `google.com, pub-4844051778459996, DIRECT,
+      f08c47fec0942fa0`) et déployé sur `https://toabide.online/app-ads.txt` via Vercel.
+      Le crawler AdMob l'a validé en ~24 h.
+- [ ] ⚠️ ACTIVATION DES VRAIES PUBS — **à faire UNIQUEMENT juste avant la Production
+      publique**, PAS pendant le test fermé : décommenter `VITE_ADMOB_INTERSTITIAL_ID`
+      dans `.env.local`, puis rebuild + resync + nouvel AAB. Raison de ne pas le faire
+      maintenant : pendant les 14 jours de test fermé, 12 testeurs utilisent l'app
+      intensivement — un seul clic (même accidentel) sur une vraie pub peut déclencher
+      une suspension du compte AdMob pour trafic invalide, pour zéro revenu réel.
+      Rester sur les IDs de TEST jusque-là. **NE JAMAIS cliquer ses propres vraies pubs.**
+- [ ] ⚠️ Le téléphone de test principal utilise un DNS bloqueur de pubs (AdGuard) — les
+      requêtes AdMob n'arrivent jamais, donc AUCUNE pub ne s'affiche tant qu'il est actif
+      (comportement confirmé par l'utilisateur, pas un bug de l'app). Il avait été
+      désactivé pour le test du 2026-07-25 (résultats fiables). **Refaire ce même geste
+      (désactiver AdGuard) avant toute vérification finale du comportement publicitaire
+      précédant la Production**, sinon les tests donneraient l'illusion que les pubs ne
+      s'affichent jamais alors que c'est juste le DNS qui les bloque sur cet appareil précis.
 - [ ] iOS : ajouter GADApplicationIdentifier dans Info.plist + App ID iOS (build Mac)
-- [x] À TESTER SUR APPAREIL : pub à l'ouverture IA, au quiz, à la navigation (cooldown), jamais si premium ✅ validé appareil 2026-07-25
+- [x] À TESTER SUR APPAREIL : pub à l'ouverture IA, au quiz, à la navigation (cooldown), jamais si premium ✅ validé appareil 2026-07-25 (AdGuard désactivé pour ce test)
 
 ## 1.8 — SETTINGS & PROFIL 🚧 (codé le 2026-07-17)
 
@@ -970,3 +1189,26 @@ mise à jour ultérieure (rapide à approuver). Voir section « Publication Play
 ---
 
 *Dernière mise à jour : Juin 2026 | Prochaine tâche : Phase 0.1*
+
+### Synchronisation complète des données utilisateur 🚧 (planifié 2026-09-07)
+> Promesse produit énoncée dès le départ, JAMAIS tenue : seules 3 tables sur 11
+> remontent au cloud. Révélé brutalement par une perte de données locale.
+> Plan détaillé : docs/sync-plan.md
+
+- [x] Migrations `sync_user_data_tables` : 7 tables créées (highlights, bookmarks,
+      notes, quiz_results, prayer_moments, fasting, activity_days) — RLS active +
+      4 policies chacune, UNIQUE(user_id, local_id), CASCADE sur profiles
+- [x] Migration `reading_plans_sync_columns` : + scope, title, template_id, source,
+      local_id, updated_at. Index UNIQUE PARTIEL (WHERE local_id IS NOT NULL) car
+      les 1069 lignes héritées ont local_id NULL
+- [x] ⚠️ BUG CORRIGÉ : reading_plans passait par `insert` → 1069 lignes pour
+      2 utilisateurs. Désormais `upsert` sur (user_id, local_id)
+- [x] ⚠️ BUG CORRIGÉ : reading_progress est maintenant alimentée (upsert sur
+      user_id,version,book_id,chapter)
+- [x] pushUserData() étendu aux 11 tables, par lots de 200
+- [x] pullUserData() créé + branché sur SIGNED_IN (stores/auth.js)
+- [x] Streak au pull : on garde le MAX local/cloud (ne jamais écraser une série)
+- [x] Vérif automatique : les 11 tables validées champ par champ contre le schéma réel
+- [ ] ⚠️ À TESTER SUR APPAREIL : lire un chapitre → ligne dans Supabase ;
+      effacer les données → se reconnecter → tout revient ; sync 2× → 0 doublon
+- [ ] Purger les 740 doublons de reading_plans (APRÈS validation du non-doublonnage)
