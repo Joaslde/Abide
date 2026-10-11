@@ -25,6 +25,12 @@ Thumbs.db
 # Google OAuth secrets (ne jamais commiter)
 client_secret_*.json
 
+# Clé de signature Android (upload key Play App Signing) — CRITIQUE, ne jamais commiter,
+# ne jamais perdre. Backup manuel obligatoire hors du repo (cf. tasks/lessons.md).
+*.keystore
+*.jks
+keystore.properties
+
 # Bibles téléchargeables générées (régénérables via scripts/generate-version.js)
 dist-bibles/
 CLAUDE.md

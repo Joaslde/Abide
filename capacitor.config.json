@@ -1,11 +1,11 @@
 {
-  "appId": "com.abide.app",
+  "appId": "com.toabide.app",
   "appName": "Abide",
   "webDir": "dist",
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000,
-      "backgroundColor": "#1a1a2e",
+      "backgroundColor": "#0B1624",
       "showSpinner": false
     },
     "PushNotifications": {
@@ -22,7 +22,7 @@
     "GoogleAuth": {
       "scopes": ["profile", "email"],
       "serverClientId": "34894391883-sn5akdqig9b66jun8t3bgb0h36hdlpmq.apps.googleusercontent.com",
-      "androidClientId": "34894391883-eehn8sdl9gpq45ek25cnl097gfv9a84s.apps.googleusercontent.com"
+      "androidClientId": "34894391883-bemreedn3dq8htpuuv7viqeqp4o2d0v2.apps.googleusercontent.com"
     }
   },
   "android": {
