@@ -3,7 +3,16 @@
     <ion-page>
       <ion-header class="ion-no-border">
         <ion-toolbar>
-          <ion-title>{{ t('quiz.title') }}</ion-title>
+          <ion-title>
+            {{ t('quiz.title') }}
+            <!-- Badge : ces questions sont GÉNÉRÉES par l'IA, pas tirées
+                 d'une banque pré-écrite. Le dire explicitement évite de faire
+                 passer une erreur de génération pour une erreur de contenu. -->
+            <span class="ai-badge">
+              <ion-icon :icon="sparklesOutline" aria-hidden="true" />
+              {{ t('quiz.aiBadge') }}
+            </span>
+          </ion-title>
           <ion-buttons slot="end">
             <ion-button :aria-label="t('quiz.close')" @click="onClose">
               <ion-icon slot="icon-only" :icon="closeOutline" />
@@ -26,6 +35,7 @@
         <div v-if="quiz.loading" class="center-state">
           <ion-spinner name="crescent" />
           <p>{{ t('quiz.generating') }}</p>
+          <p class="ai-hint">{{ t('quiz.aiHint') }}</p>
         </div>
 
         <!-- Écran de résultat -->
@@ -101,7 +111,7 @@ import {
   IonIcon, IonContent, IonSpinner, toastController
 } from '@ionic/vue'
 import {
-  closeOutline, closeCircle, checkmarkCircle, star, starOutline
+  closeOutline, closeCircle, checkmarkCircle, star, starOutline, sparklesOutline
 } from 'ionicons/icons'
 import { useRouter } from 'vue-router'
 import { useQuizStore } from '@/stores/quiz'
@@ -188,6 +198,41 @@ function onClose() {
 </script>
 
 <style scoped>
+/* Badge « IA » — signale que les questions sont GÉNÉRÉES à la volée à partir
+   du chapitre, et non tirées d’une banque relue à l’avance. Discret (le quiz
+   reste le sujet), mais toujours visible pendant la génération. */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.16);
+  border: 1px solid rgba(201, 168, 76, 0.32);
+  color: var(--gold);
+  font-family: var(--font-app);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* Le titre Ionic est en gros : le badge ne doit pas suivre sa taille. */
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+.ai-badge ion-icon { font-size: 11px; }
+
+/* Sous le spinner : explique l’attente (une génération prend quelques
+   secondes) autant qu’elle nomme la source des questions. */
+.ai-hint {
+  margin-top: 4px;
+  max-width: 30ch;
+  color: var(--text-muted, rgba(245, 240, 230, 0.6));
+  font-family: var(--font-app);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
 ion-toolbar { --background: var(--navy2); }
 ion-title { font-family: var(--font-app); font-weight: 600; font-size: 15px; }
 ion-content { --background: var(--navy); }

@@ -25,21 +25,12 @@
               <span>{{ loading ? t('common.loading') : (referralCode || '—') }}</span>
             </div>
           </div>
-          <!-- ⚠️ Partage du LIEN désactivé temporairement (2026-07-27) : le lien
-               OneLink AppsFlyer redirige vers la fiche Play Store, INEXISTANTE
-               tant que l'app n'est pas publiée — le lien ne mène nulle part.
-               En attendant, le code s'affiche ci-dessus et se transmet à l'oral
-               ou par message ; la personne invitée le saisit manuellement à
-               l'onboarding (OnboardingReferralView.vue). Réactiver ce bouton
-               une fois l'app publiée et le lien vérifié fonctionnel. -->
-          <!--
           <button class="item tappable" :disabled="!shareLink" @click="onShare">
             <div class="item-lead">
               <ion-icon :icon="shareSocialOutline" />
               <span>{{ t('referral.share') }}</span>
             </div>
           </button>
-          -->
         </div>
 
         <!-- ── Progression vers le prochain palier ── -->
@@ -107,13 +98,15 @@ const loading = ref(true)
 const referralCode = ref('')
 const referralCount = ref(0)
 
-// OneLink créé dans le dashboard AppsFlyer (Engagement & Deep Linking). Le code
-// du parrain est un paramètre custom : le SDK AppsFlyer côté filleul le lira
-// depuis les données de conversion (af_referral_code) — cf. src/lib/appsflyer.js.
+// OneLink créé dans le dashboard AppsFlyer (compte définitif, 2026-10-11). Le code du
+// parrain voyage dans af_sub1 (paramètre standard renvoyé au SDK du filleul dans les
+// données de conversion) : un paramètre au préfixe af_ non standard est supprimé par
+// AppsFlyer (vérifié). pid + c sont nécessaires pour que le clic soit attribué.
+// Côté filleul : cf. src/lib/appsflyer.js.
 const ONELINK_BASE = import.meta.env.VITE_APPSFLYER_ONELINK_URL || ''
 const shareLink = computed(() =>
   referralCode.value && ONELINK_BASE
-    ? `${ONELINK_BASE}?af_referral_code=${referralCode.value}`
+    ? `${ONELINK_BASE}?pid=referral&c=parrainage&af_sub1=${encodeURIComponent(referralCode.value)}`
     : ''
 )
 

@@ -301,7 +301,21 @@ router.beforeEach(async (to) => {
   //    navigue librement pendant cette session d'usage (Welcome reviendra au
   //    prochain démarrage à froid, guestBrowsing étant en mémoire).
   if (!authStore.isAuthenticated) {
-    if (onAuthFlow || guestBrowsing) return undefined
+    if (onAuthFlow) return undefined
+    if (guestBrowsing) {
+      // ⚠️ L'invité navigue librement, MAIS les routes protégées restent
+      // protégées. Sans ce contrôle, `return undefined` laissait passer TOUTES
+      // les routes requiresAuth : l'invité atteignait le Guide IA et ne
+      // découvrait le problème qu'à l'envoi de son 1er message, sous forme
+      // d'erreur technique (bug 2026-07-30).
+      // L'Ancre est l'exception assumée : on LAISSE voir l'écran, et c'est le
+      // composer qui explique qu'un compte est nécessaire (invitation claire
+      // plutôt que porte fermée). Les autres routes protégées redirigent.
+      if (to.meta.requiresAuth && !to.path.startsWith('/tabs/ancre')) {
+        return '/auth/login'
+      }
+      return undefined
+    }
     return '/welcome'
   }
 

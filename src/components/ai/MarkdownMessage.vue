@@ -69,7 +69,7 @@ function linkifyRefs() {
         btn.textContent = seg.value
         btn.dataset.code = seg.code
         btn.dataset.chapter = String(seg.chapter)
-        btn.dataset.verse = String(seg.verse)
+        if (seg.verse != null) btn.dataset.verse = String(seg.verse)
         frag.appendChild(btn)
       }
     }
@@ -84,7 +84,7 @@ function onClick(e) {
   emit('openRef', {
     code: btn.dataset.code,
     chapter: Number(btn.dataset.chapter),
-    verse: Number(btn.dataset.verse)
+    verse: btn.dataset.verse ? Number(btn.dataset.verse) : null
   })
 }
 

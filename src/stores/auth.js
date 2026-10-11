@@ -106,6 +106,17 @@ export const useAuthStore = defineStore('auth', () => {
           } catch {
             /* hors ligne : on ignore, profil rechargé plus tard */
           }
+          // RESTAURATION : à la connexion, on redescend les données du cloud
+          // vers SQLite. C'est ce qui permet de retrouver ses surlignages,
+          // notes, progression et quiz sur un nouvel appareil (ou après un
+          // effacement des données). Import dynamique : évite un cycle
+          // auth ↔ sync au chargement du module. Best-effort, jamais bloquant.
+          if (event === 'SIGNED_IN') {
+            import('@/lib/sync')
+              .then(({ pullUserData }) => pullUserData())
+              .then((counts) => { if (counts) console.info('[sync] restauré :', counts) })
+              .catch((e) => console.warn('[sync] pull au login impossible', e))
+          }
         } else {
           profile.value = null
         }

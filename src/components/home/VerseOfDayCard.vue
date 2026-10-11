@@ -14,12 +14,33 @@
         <ion-icon :icon="arrowForward" />
       </button>
       <!-- Méditer ce verset avec le Guide IA (mode méditation, verset prérempli). -->
-      <button class="vod-meditate" @click="meditate">
-        <ion-icon :icon="sparklesOutline" />
-        <span>{{ t('home.meditateWithGuide') }}</span>
-      </button>
+      <div class="vod-btns">
+        <button class="vod-meditate" @click="meditate">
+          <ion-icon :icon="sparklesOutline" />
+          <span>{{ t('home.meditateWithGuide') }}</span>
+        </button>
+        <!-- Partage : génère une image du verset sur le paysage DU JOUR.
+             Icône seule — l'action est secondaire et un libellé mangerait la
+             place de « Méditer », qui reste l'action principale de la carte. -->
+        <button
+          class="vod-share"
+          :aria-label="t('home.share.action')"
+          @click="showShare = true"
+        >
+          <ion-icon :icon="shareSocialOutline" />
+        </button>
+      </div>
     </div>
     </div>
+
+    <!-- Feuille de partage : aperçu de l'image + envoi / téléchargement. -->
+    <verse-share-sheet
+      :open="showShare"
+      :text="text"
+      :reference="reference"
+      :background="background"
+      @close="showShare = false"
+    />
   </div>
 </template>
 
@@ -27,7 +48,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
-import { arrowForward, sparklesOutline } from 'ionicons/icons'
+import { arrowForward, sparklesOutline, shareSocialOutline } from 'ionicons/icons'
+import VerseShareSheet from '@/components/home/VerseShareSheet.vue'
 import { useI18n } from 'vue-i18n'
 import { useBibleStore } from '@/stores/bible'
 import { getVerses, getBookName } from '@/lib/bible-db'
@@ -52,6 +74,7 @@ const BACKGROUNDS = Object.entries(
   .map(([, url]) => url)
 
 const ref_ = todayRef()
+const showShare = ref(false)
 const text = ref('')
 const bookName = ref(ref_.book_id)
 
@@ -206,6 +229,35 @@ function meditate() {
   cursor: pointer;
   transition: background var(--duration-fast);
 }
+/* Les deux actions restent solidaires : sur un écran étroit elles passent
+   à la ligne ensemble plutôt que de se retrouver aux deux extrémités. */
+.vod-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Bouton icône : même matière que « Méditer » mais carré-rond et compact,
+   pour rester visiblement secondaire. */
+.vod-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: rgba(245, 240, 230, 0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 201, 107, 0.34);
+  border-radius: var(--radius-full);
+  color: #E8C96B;
+  cursor: pointer;
+  transition: transform var(--duration-fast, 140ms) ease, background 160ms ease;
+}
+.vod-share ion-icon { font-size: 16px; }
+.vod-share:active { background: var(--gold-border-md); transform: scale(0.94); }
+
 .vod-meditate:active { background: var(--gold-border-md); }
 .vod-meditate ion-icon { font-size: 15px; }
 </style>

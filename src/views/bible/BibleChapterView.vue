@@ -5,7 +5,11 @@
         <ion-buttons slot="start">
           <ion-back-button :default-href="`/tabs/immersion/book/${bookId}`" :text="''" />
         </ion-buttons>
-        <ion-title>{{ bookName }} {{ chapter }}</ion-title>
+        <ion-title>
+          <!-- Span dédié : le texte d'ion-title vit dans son shadow DOM, on ne
+               peut donc pas y mesurer le débordement. Ce span est à nous. -->
+          <span ref="titleEl" class="chap-title">{{ shortBookName }} {{ chapter }}</span>
+        </ion-title>
         <ion-buttons slot="end">
           <!-- Écouter le chapitre (streaming audio + surbrillance versets). -->
           <ion-button :aria-label="t('bible.audio.listen')" @click="onToggleAudio">
@@ -135,6 +139,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { useFitText } from '@/composables/useFitText'
+import { displayBookName } from '@/lib/book-display-name'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -165,7 +171,7 @@ import ReaderSettings from '@/components/bible/ReaderSettings.vue'
 import VersionSelector from '@/components/bible/VersionSelector.vue'
 import ChapterQuizModal from '@/components/bible/ChapterQuizModal.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useBibleStore()
@@ -184,6 +190,26 @@ const bookId = route.params.bookId
 const chapter = ref(Number(route.params.chapter) || 1)
 const bookName = ref('')
 const chapterCount = ref(0)
+
+/**
+ * Titre du chapitre : la taille s'adapte à la LONGUEUR du nom, pas à la largeur
+ * d'écran. Sans ça, « Deutéronome 21 » était tronqué là où « Job 3 » tenait
+ * largement — une taille unique ne peut pas convenir aux deux.
+ * Re-mesuré quand le livre ou le chapitre change (on peut naviguer de chapitre
+ * en chapitre sans quitter la vue).
+ */
+const titleEl = ref(null)
+
+/**
+ * Nom abrégé pour la BARRE uniquement (« Cantiques » au lieu de « Cantique des
+ * Cantiques »). L'en-tête dans le corps du texte garde le nom complet : la
+ * place n'y manque pas.
+ */
+const shortBookName = computed(() =>
+  displayBookName(bookId, bookName.value, locale.value)
+)
+
+useFitText(titleEl, { max: 16, min: 11, watch: [shortBookName, chapter] })
 const verses = ref([])
 const loading = ref(true)
 const showSettings = ref(false)
@@ -486,7 +512,41 @@ function onTouchEnd(e) {
 
 <style scoped>
 ion-toolbar { --background: var(--navy2); }
-ion-title { font-family: var(--font-app); font-weight: 600; font-size: 16px; }
+/* Titre du chapitre — DOIT tenir en entier.
+   Ionic réserve par défaut ~90px de marge de chaque côté d'un ion-title pour
+   ses boutons, ce qui tronquait « Proverbes 21 » en « Proverb… » alors que la
+   place existait. On reprend la main : le titre part juste après la flèche de
+   retour et s'étend jusqu'aux boutons de droite.
+   `clamp()` réduit la police proportionnellement à la largeur d'écran plutôt
+   que de couper le texte — un nom long reste lisible en entier. */
+ion-title {
+  font-family: var(--font-app);
+  font-weight: 600;
+  /* padding-inline plutôt que padding : respecte le sens de lecture (RTL). */
+  padding-inline: 0;
+  text-align: start;
+}
+
+/* La taille est calculée en JS (useFitText) : elle dépend de la LONGUEUR du nom,
+   pas de la largeur d'écran. « Deutéronome 21 » rétrécit, « Job 3 » non. */
+.chap-title {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px; /* valeur de départ, ajustée au montage */
+  line-height: 1.25;
+}
+
+/* La marge par défaut d'Ionic vit dans le shadow DOM : seul ::part y accède. */
+ion-title::part(container) {
+  padding-inline: 0;
+}
+
+/* Le back-button garde une zone tactile confortable mais ne pousse plus le
+   titre : on ne retire que la marge décorative à sa droite. */
+ion-buttons[slot='start'] { margin-inline-end: 0; }
+ion-back-button { --padding-end: 2px; }
 ion-content { --background: var(--navy); }
 
 /* top | right (réduite) | bottom | left */

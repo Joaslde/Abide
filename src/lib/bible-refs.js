@@ -62,13 +62,31 @@ export const REF_REGEX_VERBOSE =
   /\b((?:[123]\s*)?[A-Za-zÀ-ÿ]{3,20}(?:\s+des\s+[A-Za-zÀ-ÿ]+)?)\s+chapitre\s+(\d{1,3})[,\s]+versets?\s+(\d{1,3})/gi
 
 /**
+ * Regex CHAPITRE SEUL : « Matthieu 6 », « 1 Corinthiens 13 », « Psaume 23 ».
+ *
+ * Sans elle, l'IA qui renvoie vers un chapitre entier (et non un verset précis)
+ * produisait un texte NON cliquable — alors que c'est justement le cas où la
+ * personne veut lire tout le passage.
+ *
+ * ⚠️ Deux garde-fous indispensables contre les faux positifs :
+ *  - `(?![\s]*[.:]\s*\d)` : si un verset suit (« Jean 3.16 »), on laisse la
+ *    regex compacte gérer — sinon on capturerait « Jean 3 » et casserait le lien.
+ *  - `(?!\s*\d)` : évite d'avaler un second nombre (« Jean 3 16 »).
+ * Le filtrage final par BOOK_CODES écarte de toute façon « page 5 », « article 3 ».
+ */
+export const REF_REGEX_CHAPTER =
+  /(?<![A-Za-zÀ-ÿ\d.])((?:[123]\s+)?[A-Za-zÀ-ÿ]{3,20}(?:\s+des\s+[A-Za-zÀ-ÿ]+)?)\s+(\d{1,3})\b(?!\s*[.:]\s*\d)(?!\s*\d)/g
+
+/**
  * Analyse une référence détectée. Retourne null si le nom n'est pas un livre
  * connu (évite les faux positifs : « 3.16 euros », « il est 14:30 »).
+ * `verse` peut être absent → référence de CHAPITRE (verse = null).
  */
 export function parseRef(bookName, chapter, verse) {
   const code = BOOK_CODES[normalizeBook(bookName)]
   if (!code) return null
-  return { code, chapter: Number(chapter), verse: Number(verse) }
+  const v = verse === undefined || verse === null || verse === '' ? null : Number(verse)
+  return { code, chapter: Number(chapter), verse: v }
 }
 
 /**
@@ -79,18 +97,42 @@ export function splitByRefs(text) {
   // On collecte les correspondances des DEUX formats (compact + verbose), puis
   // on les trie par position pour découper le texte proprement.
   const matches = []
-  for (const src of [REF_REGEX, REF_REGEX_VERBOSE]) {
+  // ORDRE IMPORTANT : les formats AVEC verset d'abord. La regex chapitre seul
+  // vient en dernier et sera écartée par le test de chevauchement si elle
+  // recouvre une référence déjà captée plus précisément.
+  for (const src of [REF_REGEX, REF_REGEX_VERBOSE, REF_REGEX_CHAPTER]) {
     const re = new RegExp(src.source, src.flags)
     let m
     while ((m = re.exec(text)) !== null) {
-      const parsed = parseRef(m[1], m[2], m[3])
+      let parsed = parseRef(m[1], m[2], m[3])
+      let start = m.index
+      let matched = m[0]
+
+      // Livres numérotés (1 Jean, 2 Timothée, 1 Corinthiens…) : le mot qui
+      // précède peut avoir absorbé le chiffre au tour précédent (« Lire 1 »),
+      // si bien que ce match démarre sur « Jean » sans son « 1 ». On regarde
+      // donc le TEXTE SOURCE juste avant le match — la capture, elle, ne
+      // contient plus le chiffre. Sans ça « Lire 1 Jean 4 » donnait JHN 4.
+      const before = /([123])\s+$/.exec(text.slice(0, m.index))
+      if (before) {
+        const numbered = parseRef(before[1] + m[1], m[2], m[3])
+        if (numbered) {
+          parsed = numbered
+          start = m.index - before[0].length
+          matched = text.slice(start, m.index + m[0].length)
+        }
+      }
+
       if (!parsed) continue // pas un livre connu → on ignore
-      matches.push({ start: m.index, end: m.index + m[0].length, text: m[0], ...parsed })
+      matches.push({ start, end: start + matched.length, text: matched, ...parsed })
     }
   }
   if (!matches.length) return [{ type: 'text', value: text }]
 
-  matches.sort((a, b) => a.start - b.start)
+  // Tri par position, puis par longueur DÉCROISSANTE à position égale : si
+  // « Jean 3.16 » et « Jean 3 » démarrent au même index, on garde le plus long
+  // (celui avec le verset). Sans ce second critère, l'ordre était indéterminé.
+  matches.sort((a, b) => (a.start - b.start) || (b.end - a.end))
 
   const segments = []
   let lastIndex = 0

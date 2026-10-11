@@ -3,7 +3,12 @@
     <ion-tabs @ionTabsWillChange="onTabChange">
       <ion-router-outlet />
 
-      <ion-tab-bar slot="bottom" class="floating-bar">
+      <ion-tab-bar slot="bottom" class="floating-bar" ref="barEl">
+        <!-- Pastille GLISSANTE : un seul élément pour toute la barre, dont on
+             anime la position. Chaque onglet animait auparavant son propre
+             fond, ce qui donnait un fondu (disparition/apparition) au lieu
+             d'un déplacement. Ici la pastille se DÉPLACE d'un onglet à l'autre. -->
+        <span class="pill-indicator" :class="{ 'no-anim': firstPaint }" :style="indicatorStyle" aria-hidden="true" />
         <ion-tab-button tab="home" href="/tabs/home">
           <span class="pill">
             <nav-icon name="home" :active="active === 'home'" />
@@ -40,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import {
   IonPage, IonTabs, IonRouterOutlet, IonTabBar,
   IonTabButton, IonLabel
@@ -72,6 +77,82 @@ function syncActive(path) {
 
 syncActive(route.path)
 watch(() => route.path, syncActive)
+
+/**
+ * PASTILLE GLISSANTE.
+ * On mesure la position réelle du bouton actif et on déplace un unique
+ * élément. Mesurer plutôt que calculer `index * largeur` : les onglets n'ont
+ * pas tous la même largeur (les labels diffèrent, « L'Ancre » est plus large
+ * que « Plus »), et une pastille de largeur fixe déborderait.
+ */
+const barEl = ref(null)
+const indicatorStyle = ref({})
+const firstPaint = ref(true)
+
+function moveIndicator() {
+  // `barEl` est un composant Ionic : $el donne l'élément hôte réel.
+  const host = barEl.value?.$el ?? barEl.value
+  if (!host) return
+  const btn = host.querySelector('ion-tab-button.tab-selected')
+  const pill = btn?.querySelector('.pill')
+  if (!pill) return
+
+  const hostBox = host.getBoundingClientRect()
+  const pillBox = pill.getBoundingClientRect()
+  if (!pillBox.width) return // barre pas encore mise en page
+
+  indicatorStyle.value = {
+    '--pill-x': `${pillBox.left - hostBox.left}px`,
+    '--pill-w': `${pillBox.width}px`
+  }
+}
+
+/** Repositionne après le rendu (la classe tab-selected arrive après le tick). */
+async function syncIndicator() {
+  await nextTick()
+  moveIndicator()
+  // Second passage : Ionic ajuste parfois la largeur du label juste après
+  // (police chargée, transition d'onglet), ce qui décalait la pastille.
+  requestAnimationFrame(moveIndicator)
+}
+
+onMounted(async () => {
+  await syncIndicator()
+  // L'animation n'est activée qu'APRÈS le placement initial, sinon la pastille
+  // traverse la barre depuis la gauche à chaque ouverture de l'app.
+  requestAnimationFrame(() => { firstPaint.value = false })
+  window.addEventListener('resize', moveIndicator)
+  observeTabClasses()
+})
+
+/**
+ * Ionic pose/retire `tab-selected` de façon asynchrone, parfois sans que ni
+ * `active` ni la route ne changent au même instant. On observe donc
+ * directement l'attribut class des boutons : c'est ce que l'œil voit.
+ */
+let classObserver = null
+
+function observeTabClasses() {
+  const host = barEl.value?.$el ?? barEl.value
+  if (!host || classObserver) return
+  classObserver = new MutationObserver(() => moveIndicator())
+  host.querySelectorAll('ion-tab-button').forEach((b) => {
+    classObserver.observe(b, { attributes: true, attributeFilter: ['class'] })
+  })
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', moveIndicator)
+  classObserver?.disconnect()
+  classObserver = null
+})
+
+// La pastille suit `tab-selected` — la SEULE source de vérité. `active` ne
+// suffit pas : sur les sous-routes (un chapitre ouvert depuis l'onglet Bible)
+// il reste volontairement inchangé alors qu'Ionic, lui, déplace la classe.
+// D'où une pastille qui restait sur l'onglet précédent.
+watch(active, syncIndicator)
+watch(() => route.path, syncIndicator)
 
 function onTabChange(e) {
   if (e?.detail?.tab) active.value = e.detail.tab
@@ -179,14 +260,44 @@ ion-tab-button {
   max-height: 52px;
   border-radius: 999px;
   transition:
-    background-color var(--duration-normal, 220ms) ease,
     color var(--duration-normal, 220ms) ease,
     transform var(--duration-fast, 140ms) ease;
 }
 
+/* Seule la COULEUR change ici : le fond est porté par .pill-indicator, qui
+   glisse. Un fond par pastille rendrait le déplacement invisible. */
 ion-tab-button.tab-selected .pill {
-  background: var(--nav-active-bg);
   color: var(--nav-active-fg);
+}
+
+/* Pastille glissante — se déplace et s'étire vers l'onglet actif.
+   Courbe légèrement élastique (léger dépassement) pour un mouvement vivant
+   plutôt qu'un glissement mécanique. */
+.pill-indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 52px;
+  border-radius: 999px;
+  background: var(--nav-active-bg);
+  pointer-events: none;
+  z-index: 0;
+  transform: translate3d(var(--pill-x, 0px), -50%, 0);
+  width: var(--pill-w, 0px);
+  transition:
+    transform 420ms cubic-bezier(0.34, 1.4, 0.5, 1),
+    width 420ms cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+/* Premier rendu : la pastille se place sans animer (sinon elle traverse la
+   barre depuis la gauche à chaque ouverture de l'app). */
+.pill-indicator.no-anim { transition: none; }
+
+/* Le contenu de l'onglet passe AU-DESSUS de la pastille. */
+.pill { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-indicator { transition: none; }
 }
 
 /* Retour tactile : la pastille s'enfonce légèrement. */
@@ -215,6 +326,17 @@ ion-label {
    DERRIÈRE la gélule. 62px de hauteur + 12px de marge + une respiration. */
 ion-tabs ion-content {
   --padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+}
+
+/* Lecteur audio à l'écran (classe posée sur <html> par App.vue) : il flotte
+   AU-DESSUS de la barre d'onglets, donc il faut creuser d'autant plus. Sinon,
+   arrivé en bas d'une page, le dernier contenu se retrouvait masqué par le
+   lecteur. +72px = hauteur de la mini-barre repliée + son écart. */
+html.player-visible ion-tabs ion-content {
+  --padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 156px);
+}
+html.player-visible ion-tabs ion-footer {
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 146px);
 }
 
 /* Pages À FOOTER (composer du Guide, navigation de chapitre) : le footer est

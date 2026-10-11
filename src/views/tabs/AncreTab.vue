@@ -373,6 +373,29 @@ async function openChat(id) {
 
 async function send() {
   if (!canSend.value) return
+
+  // INVITÉ : on bloque AVANT l'appel réseau. Sans ça, l'Edge Function renvoyait
+  // un 401 et la personne ne voyait qu'une erreur technique sans comprendre
+  // qu'il lui fallait simplement un compte (bug 2026-07-30).
+  if (!auth.isAuthenticated) {
+    const alert = await alertController.create({
+      header: t('ai.authRequiredTitle'),
+      message: t('ai.authRequiredMsg'),
+      buttons: [
+        { text: t('settings.batteryLater'), role: 'cancel' },
+        {
+          text: t('ai.authRequiredCta'),
+          role: 'confirm',
+          // Le message est CONSERVÉ dans le champ : au retour, la personne
+          // retrouve sa question intacte et n'a plus qu'à l'envoyer.
+          handler: () => { router.push('/auth/login') }
+        }
+      ]
+    })
+    await alert.present()
+    return
+  }
+
   const text = draft.value
   draft.value = ''
   try {
@@ -407,11 +430,29 @@ async function confirmDelete(c) {
 
 /** Tap sur un verset cité → ouvre le chapitre + surbrillance douce du verset. */
 function openRef(r) {
-  const m = r.ref.match(/^(\S+)\s+(\d+)\.(\d+)/)
-  if (!m) return
-  bible.setBook(m[1])
+  // Deux formes possibles :
+  //  - depuis les SOURCES (puces sous la réponse) : { ref: 'JHN 3.16' }
+  //  - depuis une référence INLINE : { code, chapter, verse } — verse peut
+  //    être null quand l'IA renvoie vers un CHAPITRE entier (« Matthieu 6 »).
+  let code = r.code
+  let chapter = r.chapter
+  let verse = r.verse
+
+  if (r.ref) {
+    // Verset OPTIONNEL : « JHN 3.16 » comme « JHN 3 ».
+    const m = r.ref.match(/^(\S+)\s+(\d+)(?:\.(\d+))?/)
+    if (!m) return
+    code = m[1]
+    chapter = Number(m[2])
+    verse = m[3] ? Number(m[3]) : null
+  }
+
+  if (!code || !chapter) return
+  bible.setBook(code)
   // ?v=N : le lecteur scrolle vers ce verset et le met en surbrillance ~2,5 s.
-  router.push(`/tabs/immersion/book/${m[1]}/${m[2]}?v=${m[3]}`)
+  // Sans verset (chapitre entier), on ouvre simplement en haut du chapitre.
+  const query = verse ? `?v=${verse}` : ''
+  router.push(`/tabs/immersion/book/${code}/${chapter}${query}`)
 }
 </script>
 

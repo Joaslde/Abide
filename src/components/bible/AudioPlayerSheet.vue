@@ -35,7 +35,7 @@
           </button>
 
           <!-- Titre + source -->
-          <h2 class="title">{{ audio.currentBookName }} {{ audio.currentChapter }}</h2>
+          <h2 ref="fullTitleEl" class="title">{{ shortBookName }} {{ audio.currentChapter }}</h2>
           <p class="copyright">{{ audio.copyright }}</p>
 
           <!-- Cercle téléchargement (livre entier, offline) + musique de fond côte à côte -->
@@ -132,7 +132,7 @@
 
             <!-- Tap sur le nom du livre = agrandir le panneau (comme le bouton). -->
             <button class="track-info" @click="audio.expanded = true">
-              <span class="track-title">{{ audio.currentBookName }} {{ audio.currentChapter }}</span>
+              <span ref="miniTitleEl" class="track-title">{{ shortBookName }} {{ audio.currentChapter }}</span>
               <span class="track-copyright">{{ audio.copyright }}</span>
             </button>
 
@@ -166,7 +166,9 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useFitText } from '@/composables/useFitText'
+import { displayBookName } from '@/lib/book-display-name'
 import { useRoute } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
 import {
@@ -181,9 +183,30 @@ import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import DownloadCircle from '@/components/bible/DownloadCircle.vue'
 import AudioDownloadsModal from '@/components/bible/AudioDownloadsModal.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const audio = useAudioStore()
+
+/**
+ * Titres du lecteur : la taille suit la LONGUEUR du nom, pas la largeur d'écran.
+ * La mini-barre partage sa ligne avec six contrôles — « Proverbes 21 » y était
+ * tronqué en « Proverbe… ». Re-mesuré à chaque changement de chapitre.
+ */
+const fullTitleEl = ref(null)
+const miniTitleEl = ref(null)
+
+/**
+ * Nom abrégé : « Cantique des Cantiques 8 » (24 caractères) ne tient dans
+ * aucune des deux barres, même réduit au plancher de lisibilité. On l'abrège
+ * en « Cantiques 8 », comme le font les Bibles papier.
+ */
+const shortBookName = computed(() =>
+  displayBookName(null, audio.currentBookName, locale.value)
+)
+
+const titleSources = [shortBookName, () => audio.currentChapter]
+useFitText(fullTitleEl, { max: 24, min: 15, watch: titleSources })
+useFitText(miniTitleEl, { max: 13, min: 9.5, step: 0.25, watch: titleSources })
 const bgMusic = useBackgroundMusicStore()
 const player = useAudioPlayer()
 
@@ -235,7 +258,7 @@ function onSeekInput(e) {
   left: 0;
   right: 0;
   /* S'arrête au-dessus de la barre d'onglets → elle reste cliquable. */
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
   z-index: 37;
   background: rgba(0, 0, 0, 0.4);
 }
@@ -246,16 +269,22 @@ function onSeekInput(e) {
 
 .player-sheet {
   position: fixed;
-  left: 0;
-  right: 0;
-  /* Repose AU-DESSUS de la barre d'onglets (~56px) : le lecteur peut recouvrir
-     le footer du chapitre mais la barre de navigation reste visible/cliquable. */
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  /* Aligné sur la gélule de navigation (mêmes marges latérales) : les deux
+     éléments flottants forment une pile cohérente. */
+  left: max(env(safe-area-inset-left, 0px), var(--space-4, 16px));
+  right: max(env(safe-area-inset-right, 0px), var(--space-4, 16px));
+  /* ⚠️ DISJOINT de la barre d'onglets, pas collé : 62px (hauteur de la gélule)
+     + 12px (sa marge basse) + 10px d'écart visible. L'ancienne valeur (56px)
+     datait de la barre pleine largeur et provoquait un chevauchement. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
   z-index: 38;
   background: var(--navy2);
-  border-top: 1px solid var(--gold-border-md);
-  border-radius: 22px 22px 0 0;
-  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--gold-border-md);
+  /* Arrondi sur les QUATRE coins : le lecteur flotte, il n'est plus ancré au
+     bas de l'écran — des angles droits en bas trahissaient l'ancien collage. */
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   /* Retour élastique quand on relâche le glissement (dragging = pas de transition). */
   transition: transform var(--duration-normal) cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -291,11 +320,22 @@ function onSeekInput(e) {
 
 .title {
   font-family: var(--font-app);
+  /* Taille pilotée par useFitText : elle dépend de la longueur du nom
+     (« Ecclésiaste 12 » rétrécit, « Job 3 » garde 24px). */
   font-size: 24px;
   font-weight: 700;
   color: var(--cream);
   margin: var(--space-2) 0 2px;
   text-align: center;
+  /* 94 % plutôt que 88 : le titre est centré et n'a rien à ses côtés, autant
+     lui laisser la largeur du panneau. Mesuré : « 1 Thessaloniciens 1 » réclame
+     286px là où 88 % n'en offraient que 252. */
+  max-width: 94%;
+  margin-inline: auto;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .copyright {
   font-family: var(--font-app);
@@ -513,16 +553,21 @@ function onSeekInput(e) {
 .mini-body {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3) var(--space-2);
+  /* Espacement resserré : chaque pixel gagné ici va au titre, qui était
+     tronqué en « Proverbe… » alors que six contrôles se partageaient la barre. */
+  gap: 4px;
+  padding: var(--space-1) var(--space-2) var(--space-2);
 }
 
 .expand-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
+  /* 26px au lieu de 32 : la zone tactile reste confortable (le bouton est
+     entouré de vide) et on rend 6px au titre. */
+  width: 26px;
   height: 32px;
+  flex-shrink: 0;
   background: none;
   border: none;
   color: var(--gold);
@@ -535,6 +580,10 @@ function onSeekInput(e) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  /* min-width: 0 (et pas un plancher en px) : c'est ce qui autorise l'élément
+     flex à se rétrécir. useFitText réduit ensuite la police jusqu'à ce que le
+     nom tienne dans la largeur réellement disponible. Un min-width en dur
+     empêchait au contraire le calcul d'aboutir. */
   min-width: 0;
   background: none;
   border: none;
@@ -544,6 +593,7 @@ function onSeekInput(e) {
 }
 .track-title {
   font-family: var(--font-app);
+  /* Taille de départ, réduite par useFitText si le nom déborde. */
   font-size: 13px;
   font-weight: 600;
   color: var(--cream);
@@ -569,7 +619,9 @@ function onSeekInput(e) {
   flex-shrink: 0;
 }
 .mini-controls .ctrl {
-  width: 36px;
+  /* 30px au lieu de 36 : cinq contrôles, soit 30px rendus au titre, sans
+     descendre sous le seuil de confort tactile (la hauteur reste à 36). */
+  width: 30px;
   height: 36px;
 }
 .mini-controls .ctrl ion-icon { font-size: 20px; }

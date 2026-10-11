@@ -252,4 +252,10 @@ ion-segment-button {
   border-radius: 50%;
 }
 .search-fab ion-icon { font-size: 20px; }
+
+/* La barre d'onglets flotte au-dessus du contenu (position: absolute,
+   cf. TabsLayout.vue) : sans ce décalage, le FAB se retrouve sous la gélule. */
+ion-fab {
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 140px);
+}
 </style>

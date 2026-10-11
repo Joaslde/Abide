@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useVerseSelectionStore } from '@/stores/verseSelection'
 import { useUserDataStore } from '@/stores/userData'
+import { checkVerseImageLimits, buildImageText, MAX_VERSES } from '@/lib/verse-image-limits'
 
 /**
  * Actions applicables à la sélection de versets : copier, surligner (persisté),
@@ -70,7 +71,11 @@ export function useVerseActions() {
   }
 
   /** Partage la sélection via la feuille de partage native (WhatsApp, etc.). */
-  async function share() {
+  /**
+   * Partage TEXTE brut (feuille système). Sert de repli quand la sélection ne
+   * peut pas devenir une image, et de second temps après l'aperçu image.
+   */
+  async function shareAsText() {
     if (!selection.hasSelection) return
     const text = buildCopyText()
     const title = selection.reference
@@ -87,6 +92,45 @@ export function useVerseActions() {
       }
     } catch {
       /* l'utilisateur a annulé le partage — rien à signaler */
+    }
+  }
+
+  /**
+   * Point d'entrée du bouton « Partager ».
+   *
+   * Renvoie de quoi la BARRE D'ACTIONS a besoin pour décider quoi afficher :
+   * le composable n'ouvre pas de modale lui-même (il n'a pas d'UI), il dit
+   * seulement ce qui est possible. Deux issues :
+   *   - { mode: 'image', … } → ouvrir l'aperçu (choix du fond, puis partage)
+   *   - { mode: 'text' }     → sélection trop longue : partage texte direct,
+   *                            après avoir expliqué pourquoi.
+   */
+  function prepareShare() {
+    if (!selection.hasSelection) return { mode: 'none' }
+
+    const verses = selection.sortedVerses.map((n) => ({
+      verse: n,
+      text: selection.selected.get(n)
+    }))
+
+    const limits = checkVerseImageLimits(verses)
+    if (!limits.ok) {
+      return {
+        mode: 'text',
+        reason: limits.reason,
+        count: limits.count,
+        // Message prêt à afficher : la barre n'a pas à connaître les seuils.
+        message:
+          limits.reason === 'too-many-verses'
+            ? t('bible.shareImage.tooManyVerses', { max: MAX_VERSES })
+            : t('bible.shareImage.tooLong')
+      }
+    }
+
+    return {
+      mode: 'image',
+      text: buildImageText(verses),
+      reference: selection.reference
     }
   }
 
@@ -112,7 +156,7 @@ export function useVerseActions() {
     router.push({ path: '/tabs/ancre', query: { prefill: text } })
   }
 
-  return { copy, highlight, save, discussAI, share }
+  return { copy, highlight, save, discussAI, prepareShare, shareAsText }
 }
 
 /**

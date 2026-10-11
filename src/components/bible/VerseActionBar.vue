@@ -43,7 +43,7 @@
             <ion-icon :icon="sparklesOutline" />
             <span>{{ t('bible.actions.ai') }}</span>
           </button>
-          <button class="act" @click="actions.share()">
+          <button class="act" @click="onShare">
             <ion-icon :icon="shareOutline" />
             <span>{{ t('bible.actions.share') }}</span>
           </button>
@@ -54,17 +54,49 @@
 </template>
 
 <script setup>
-import { IonIcon } from '@ionic/vue'
+import { IonIcon, toastController } from '@ionic/vue'
 import {
   closeOutline, copyOutline, bookmarkOutline, sparklesOutline, shareOutline
 } from 'ionicons/icons'
 import { useI18n } from 'vue-i18n'
 import { useVerseSelectionStore } from '@/stores/verseSelection'
 import { useVerseActions, HIGHLIGHT_COLORS } from '@/composables/useVerseActions'
+import { useVerseImageShareStore } from '@/stores/verseImageShare'
 
 const { t } = useI18n()
 const selection = useVerseSelectionStore()
 const actions = useVerseActions()
+// La feuille elle-même est montée UNE SEULE FOIS dans App.vue : Ionic garde
+// plusieurs BibleChapterView en cache, donc plusieurs VerseActionBar — chacune
+// aurait monté sa propre feuille (constaté : 2 feuilles, 76 vignettes).
+const imageShare = useVerseImageShareStore()
+
+/**
+ * Partage : on passe par une IMAGE quand la sélection s'y prête (≤ 3 versets
+ * et pas trop longue), sinon on explique pourquoi et on retombe sur le
+ * partage texte — plutôt que de produire une image illisible.
+ */
+async function onShare() {
+  const plan = actions.prepareShare()
+  if (plan.mode === 'none') return
+
+  if (plan.mode === 'image') {
+    imageShare.show({ text: plan.text, reference: plan.reference })
+    return
+  }
+
+  // mode 'text' : on dit POURQUOI avant de partager, sinon la personne
+  // croirait que la fonctionnalité image est cassée.
+  const tt = await toastController.create({
+    message: plan.message,
+    duration: 3200,
+    position: 'bottom',
+    color: 'dark'
+  })
+  await tt.present()
+  await actions.shareAsText()
+}
+
 </script>
 
 <style scoped>

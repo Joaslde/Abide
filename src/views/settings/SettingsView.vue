@@ -98,10 +98,21 @@
             </div>
             <ion-icon class="chev" :icon="chevronForward" />
           </button>
+          <!-- Signaler un bug : ouvert aux INVITÉS aussi (le message compte
+               plus que l'identité de son auteur). -->
+          <button class="item tappable" @click="showBugReport = true">
+            <div class="item-lead">
+              <ion-icon :icon="bugOutline" />
+              <span>{{ t('settings.reportBug') }}</span>
+            </div>
+            <ion-icon class="chev" :icon="chevronForward" />
+          </button>
         </div>
 
         <p class="version">{{ t('settings.version') }} {{ appVersion }}</p>
       </div>
+
+      <bug-report-modal :open="showBugReport" @close="showBugReport = false" />
     </ion-content>
   </ion-page>
 </template>
@@ -116,12 +127,13 @@ import {
 } from '@ionic/vue'
 import {
   chevronForward, personOutline, moonOutline, languageOutline,
-  bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline,
+  bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline, bugOutline,
   giftOutline
 } from 'ionicons/icons'
 import { Browser } from '@capacitor/browser'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useAuthStore } from '@/stores/auth'
+import BugReportModal from '@/components/settings/BugReportModal.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -129,6 +141,7 @@ const prefs = usePreferencesStore()
 const auth = useAuthStore()
 
 const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0'
+const showBugReport = ref(false)
 const dark = ref(prefs.isDarkNow())
 
 function go(path) {

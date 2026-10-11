@@ -140,4 +140,10 @@ ion-list { background: transparent; }
   --color: var(--navy);
   --box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
+
+/* La barre d'onglets flotte au-dessus du contenu (position: absolute,
+   cf. TabsLayout.vue) : sans ce décalage, le FAB se retrouve sous la gélule. */
+ion-fab {
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 140px);
+}
 </style>

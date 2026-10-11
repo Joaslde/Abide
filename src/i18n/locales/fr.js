@@ -1,5 +1,12 @@
 /* Traductions françaises — Abide */
 export default {
+  // Signature apposée en bas des images partagées (verset du jour ET partage
+  // d'un verset choisi). Le nom doit être IDENTIQUE au nom Play Store pour
+  // qu'une recherche depuis l'image aboutisse.
+  imageSignature: {
+    appName: 'Abide : Bible & Guide IA',
+    store: 'Sur Google Play'
+  },
   common: {
     appName: 'Abide',
     continue: 'Continuer',
@@ -44,6 +51,10 @@ export default {
     quotaReached: 'Nous avons beaucoup échangé aujourd\'hui. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
     quotaReachedNamed: '{name}, nous avons beaucoup échangé aujourd\'hui. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
     quotaCta: 'Inviter mes proches',
+    // Invité qui tente d'écrire au Guide : invitation claire, pas d'erreur technique.
+    authRequiredTitle: 'Un compte est nécessaire',
+    authRequiredMsg: 'Le Guide a besoin de savoir à qui il parle pour t’accompagner et garder le fil de vos échanges. Crée ton compte en quelques secondes — ta question reste là, tu n’auras plus qu’à l’envoyer.',
+    authRequiredCta: 'Créer mon compte',
     modes: {
       enseignement: 'Enseignement',
       etude: 'Étude',
@@ -53,8 +64,11 @@ export default {
     }
   },
   quiz: {
-    button: 'Quiz',
+    button: 'Quiz IA',
     title: 'Quiz du chapitre',
+    // Mention explicite : les questions sont générées, pas pré-écrites.
+    aiBadge: 'IA',
+    aiHint: 'Questions générées par l’IA à partir du texte de ce chapitre.',
     intro: 'Cinq questions sur {book} {chapter} pour vérifier ce que tu retiens.',
     generating: 'Préparation de ton quiz…',
     offline: 'Le quiz nécessite une connexion internet.',
@@ -183,6 +197,9 @@ export default {
     registerTitle: 'Bienvenue',
     registerSubtitle: 'Crée ton compte pour commencer',
     googleSignIn: 'Se connecter avec Google',
+    // Affiché pendant que le widget Google a disparu et que l'échange de jeton
+    // se poursuit : sans ce retour, l'écran semblait figé.
+    googleSigningIn: 'Connexion en cours…',
     googleSignUp: 'S’inscrire avec Google',
     noAccountQuestion: 'Je n’ai pas de compte',
     haveAccountQuestion: 'J’ai déjà un compte',
@@ -463,6 +480,21 @@ export default {
       clearHighlight: 'Retirer le surlignage',
       comingSoon: 'Bientôt disponible'
     },
+    // Partage du verset sous forme d'IMAGE (choix d'un paysage bundlé).
+    shareImage: {
+      title: 'Partager en image',
+      chooseBackground: 'Choisir un fond',
+      background: 'Fond',
+      share: 'Partager',
+      download: 'Enregistrer',
+      downloaded: 'Image enregistrée dans ta galerie.',
+      // Explique POURQUOI on retombe sur le partage texte, sinon la personne
+      // croit que la fonction image est cassée.
+      tooManyVerses: 'Une image ne peut porter que {max} versets. Ta sélection est partagée en texte.',
+      tooLong: 'Ce passage est trop long pour tenir sur une image. Il est partagé en texte.',
+      unavailable: 'Le partage n’est pas disponible ici.',
+      error: 'Impossible de préparer l’image. Réessaie.'
+    },
     audio: {
       listen: 'Écouter ce chapitre',
       play: 'Lecture',
@@ -512,7 +544,20 @@ export default {
     greeting: 'Bonjour {name}',
     greetingNoName: 'Bonjour',
     verseOfDay: 'Verset du jour',
-    meditateWithGuide: 'Méditer avec le Guide'
+    meditateWithGuide: 'Méditer avec le Guide',
+    share: {
+      action: 'Partager ce verset',
+      title: 'Partager le verset',
+      building: 'Création de l’image…',
+      shareTo: 'Partager',
+      download: 'Enregistrer',
+      downloaded: 'Image enregistrée dans ta galerie.',
+      // On explique pourquoi il n'y a pas de bouton WhatsApp/Instagram dédié :
+      // ces apps n'acceptent pas qu'on leur impose une image de l'extérieur.
+      hint: 'Choisis WhatsApp, Instagram, Facebook ou une autre application dans la liste qui s’ouvre.',
+      unavailable: 'Le partage n’est pas disponible ici.',
+      error: 'Impossible de préparer l’image. Réessaie.'
+    }
   },
   streak: {
     days: '{n} jour | {n} jour | {n} jours',
@@ -715,6 +760,19 @@ export default {
     faq: 'Questions fréquentes',
     terms: 'Conditions d’utilisation',
     privacy: 'Politique de confidentialité',
+    // Signalement de bug (modale depuis les Réglages)
+    // Exemption batterie — sans elle, les ROM constructeur tuent les rappels.
+    batteryTitle: 'Pour recevoir tes rappels',
+    batteryMsg: 'Ton téléphone met Abide en veille quand l’app est fermée, ce qui empêche les rappels de prière et de lecture d’arriver. Autorise Abide à rester active en arrière-plan pour les recevoir à l’heure.',
+    batteryAllow: 'Autoriser',
+    batteryLater: 'Plus tard',
+    reportBug: 'Signaler un problème',
+    reportBugIntro: 'Quelque chose ne fonctionne pas comme prévu ? Décris ce que tu as fait et ce qui s’est passé — plus c’est précis, plus vite on pourra corriger.',
+    reportBugPlaceholder: 'Ce que j’essayais de faire, et ce qui s’est passé…',
+    reportBugGuestHint: 'Tu n’es pas connecté : ton message nous parviendra bien, mais nous ne pourrons pas te répondre directement.',
+    reportBugSend: 'Envoyer',
+    reportBugSent: 'Merci ! Ton signalement nous est bien parvenu.',
+    reportBugError: 'L’envoi a échoué. Vérifie ta connexion et réessaie.',
     version: 'Version',
     cancel: 'Annuler',
     darkMode: 'Mode sombre',

@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { Preferences } from '@capacitor/preferences'
 import { getBooks } from '@/lib/bible-db'
 import { useBibleVersionsStore } from '@/stores/bibleVersions'
+
+/** Clé de persistance de la version Bible active (stockage natif). */
+const VERSION_KEY = 'abide.bible.activeVersion'
 
 /**
  * Store de navigation du lecteur Bible.
@@ -48,7 +52,34 @@ export const useBibleStore = defineStore('bible', () => {
     await versions.activate(versionId) // ouvre la bonne base (.db)
     activeVersion.value = versionId
     booksLoaded.value = false
+    // ⚠️ PERSISTER : sans ça, activeVersion repartait à 'LSG1910' en dur à chaque
+    // démarrage. Résultat : l'app passée en anglais rouvrait avec la Bible et le
+    // verset du jour en français, alors que la locale, elle, était bien restaurée
+    // (bug 2026-07-26).
+    await Preferences.set({ key: VERSION_KEY, value: versionId })
     await loadBooks(true)
+  }
+
+  /**
+   * Restaure la version active depuis le stockage natif. Appelée au démarrage,
+   * AVANT le premier rendu qui dépend de la Bible (verset du jour, lecteur).
+   * Silencieuse : toute erreur laisse simplement la LSG bundlée par défaut.
+   */
+  async function restoreVersion() {
+    try {
+      const { value } = await Preferences.get({ key: VERSION_KEY })
+      if (!value || value === activeVersion.value) return
+      const versions = useBibleVersionsStore()
+      await versions.loadInstalled()
+      // La version a pu être désinstallée entre deux lancements → on ne bascule
+      // que si son .db est réellement présent, sinon on reste sur la LSG.
+      if (!versions.installedIds.includes(value)) return
+      await versions.activate(value)
+      activeVersion.value = value
+      booksLoaded.value = false
+    } catch (e) {
+      console.warn('[bible] restauration de la version impossible', e)
+    }
   }
 
   function setBook(bookId) {
@@ -73,6 +104,7 @@ export const useBibleStore = defineStore('bible', () => {
     currentChapterCount,
     loadBooks,
     setVersion,
+    restoreVersion,
     setBook,
     setChapter
   }

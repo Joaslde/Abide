@@ -865,3 +865,71 @@ export async function clearAllLocalData() {
     localStorage.removeItem(LS_PREFIX + table)
   }
 }
+
+
+/* ─────────────── LECTEURS « TOUT » (synchronisation cloud) ───────────────
+ * Ces fonctions servent au push complet vers Supabase (src/lib/sync.js).
+ * Elles lisent une table entière, sans filtre : c'est volontaire, la sync
+ * pousse l'intégralité de l'état local puis s'appuie sur l'upsert par
+ * (user_id, local_id) pour rester idempotente.
+ */
+
+/** Tous les chapitres marqués lus (progression complète). */
+export async function listAllReadChapters() {
+  await initUserDb()
+  if (isNative) {
+    const res = await conn.query('SELECT * FROM reading_progress')
+    return res.values ?? []
+  }
+  return lsRead('reading_progress')
+}
+
+/** Tous les résultats de quiz (meilleur score par chapitre). */
+export async function listAllQuizResults() {
+  await initUserDb()
+  if (isNative) {
+    const res = await conn.query('SELECT * FROM quiz_results')
+    return res.values ?? []
+  }
+  return lsRead('quiz_results')
+}
+
+/** Tous les moments de prière accomplis (matin/soir, par date). */
+export async function listAllPrayerMoments() {
+  await initUserDb()
+  if (isNative) {
+    const res = await conn.query('SELECT * FROM prayer_moments')
+    return res.values ?? []
+  }
+  return lsRead('prayer_moments')
+}
+
+/** Tous les jeûnes (rejoints, terminés, abandonnés). */
+export async function listAllFasting() {
+  await initUserDb()
+  if (isNative) {
+    const res = await conn.query('SELECT * FROM fasting')
+    return res.values ?? []
+  }
+  return lsRead('fasting')
+}
+
+/** Tous les jours d'activité (première ouverture quotidienne). */
+export async function listAllActivityDays() {
+  await initUserDb()
+  if (isNative) {
+    const res = await conn.query('SELECT * FROM activity_days')
+    return res.values ?? []
+  }
+  return lsRead('activity_days')
+}
+
+/** Tous les plans (actifs et passés) — le cloud garde l'historique. */
+export async function listAllPlans() {
+  await initUserDb()
+  if (isNative) {
+    const res = await conn.query('SELECT * FROM reading_plans')
+    return res.values ?? []
+  }
+  return lsRead('reading_plans')
+}

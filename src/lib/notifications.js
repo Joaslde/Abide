@@ -69,7 +69,14 @@ function t(key, params) {
  * L'importance d'un canal est FIGÉE à sa création : pour la changer il faut un
  * nouvel id de canal (d'où le suffixe `-v2`), sinon Android ignore la mise à jour.
  */
-export const CHANNEL_ID = 'abide-reminders-v2'
+// ⚠️ Le son d'un canal est FIGÉ à sa création : Android ignore toute
+// modification ultérieure (c'est volontaire, pour qu'une app ne puisse pas
+// écraser le choix de l'utilisateur). Ajouter un son impose donc un NOUVEAU
+// canal — d'où le passage en v3. L'ancien est supprimé au démarrage.
+export const CHANNEL_ID = 'abide-reminders-v3'
+
+/** Canaux des versions précédentes, à supprimer pour ne pas polluer les réglages. */
+const LEGACY_CHANNEL_IDS = ['abide-reminders', 'abide-reminders-v2']
 
 async function ensureChannel() {
   if (!isNative) return
@@ -81,30 +88,66 @@ async function ensureChannel() {
       importance: 5, // MAX : son + bandeau qui s'affiche par-dessus l'écran
       visibility: 1, // public (visible sur écran verrouillé)
       vibration: true,
-      lights: true
+      lights: true,
+      // Fichier dans android/app/src/main/res/raw/ — SANS extension ici.
+      // res/raw n'accepte que [a-z0-9_], d'où le renommage du fichier source.
+      sound: 'abide_notification'
     })
   } catch (e) {
     console.warn('[notif] createChannel a échoué', e)
   }
+
+  // Purge des canaux obsolètes : sans ça, l'utilisateur voit plusieurs
+  // « Rappels Abide » empilés dans les réglages Android, sans savoir lequel agit.
+  for (const id of LEGACY_CHANNEL_IDS) {
+    await LocalNotifications.deleteChannel({ id }).catch(() => {})
+  }
 }
 
-/** Demande la permission (Android 13+ ; avant = accordée d'office). */
+/**
+ * Demande la permission (Android 13+ ; avant = accordée d'office).
+ *
+ * ⚠️ NE JAMAIS renvoyer `false` sur une simple erreur ou un statut inconnu.
+ * Cette fonction garde l'appel à `schedule()` : un `false` abusif annulait les
+ * notifications existantes SANS jamais en reprogrammer (cancel + getPending
+ * observés dans logcat, aucun schedule). C'était la cause du bug « je ne reçois
+ * rien sauf si l'app est ouverte » sur Android 11, où POST_NOTIFICATIONS
+ * N'EXISTE PAS (introduite en API 33) : checkPermissions ne renvoie alors pas
+ * forcément 'granted', et on bloquait tout pour une permission non requise.
+ * On ne renvoie donc `false` que sur un refus EXPLICITE de l'utilisateur.
+ */
 export async function ensureNotificationPermission() {
   if (!isNative) return false
+
+  let granted = true
   try {
     const status = await LocalNotifications.checkPermissions()
-    let granted = status.display === 'granted'
-    if (!granted) {
+    if (status?.display === 'granted') {
+      granted = true
+    } else if (status?.display === 'denied') {
+      // Refus explicite : on retente une demande (l'utilisateur peut accepter).
       const req = await LocalNotifications.requestPermissions()
-      granted = req.display === 'granted'
+      granted = req?.display === 'granted'
+    } else {
+      // 'prompt' / 'prompt-with-rationale' / valeur inconnue (Android < 13) :
+      // on demande, mais un échec ne doit PAS bloquer la planification.
+      try {
+        const req = await LocalNotifications.requestPermissions()
+        granted = req?.display !== 'denied'
+      } catch {
+        granted = true // API absente sur cette version d'Android → implicite
+      }
     }
-    // Le canal doit exister AVANT toute planification, sinon les notifications
-    // partent sur le canal par défaut (silencieux, non dépliable).
-    if (granted) await ensureChannel()
-    return granted
-  } catch {
-    return false
+  } catch (e) {
+    // checkPermissions indisponible → on suppose accordé (cas Android < 13).
+    console.warn('[notif] checkPermissions indisponible, on continue', e)
+    granted = true
   }
+
+  // Le canal doit exister AVANT toute planification, sinon les notifications
+  // partent sur le canal par défaut (silencieux, non dépliable).
+  if (granted) await ensureChannel()
+  return granted
 }
 
 /** Annule une plage d'ids (silencieux si rien à annuler). */
@@ -227,7 +270,25 @@ export async function schedulePrayerReminders({ morningDone = false, eveningDone
  * @param {boolean} readToday  un chapitre a-t-il déjà été lu aujourd'hui ?
  * @param {number} streak      streak actuel (0 = pas de série à perdre → pas d'alerte)
  */
+/**
+ * Verrou de concurrence : streak.load() et l'enregistrement d'activité
+ * appellent tous deux cette fonction, parfois en parallèle au démarrage.
+ * Sans verrou, les rappels 19h/22h sont planifiés en double (constaté dans
+ * logcat le 2026-09-08) — ce qui alimente le filtre anti-spam Android.
+ */
+let streakWarningPromise = null
+
 export async function scheduleStreakWarning(readToday, streak) {
+  if (streakWarningPromise) await streakWarningPromise.catch(() => {})
+  streakWarningPromise = doScheduleStreakWarning(readToday, streak)
+  try {
+    return await streakWarningPromise
+  } finally {
+    streakWarningPromise = null
+  }
+}
+
+async function doScheduleStreakWarning(readToday, streak) {
   if (!isNative) return
   await LocalNotifications.cancel({
     notifications: [{ id: STREAK_SOFT_ID }, { id: STREAK_URGENT_ID }]
@@ -367,8 +428,12 @@ export async function scheduleUpcomingFast(fast) {
   // Jour J (7h30) : invitation à participer
   push(atDate(fast.start, 7, 30), t('sanctuaire.notif.fastStartTitle', { fast: label }), t('sanctuaire.notif.fastStartBody'))
 
-  // Rappels discrets quotidiens pendant la période (9h), bornés à 45 jours.
-  const days = Math.min(fastDays(fast), 45)
+  // Rappels discrets quotidiens pendant la période (9h).
+  // ⚠️ Borné à 7 jours (et non 45) : chaque replanification RE-POSTE toutes ces
+  // notifications, et Android mute une app qui en poste trop (7752 en un jour →
+  // 7751 muted, 2026-09-08). L'horizon glisse à chaque ouverture de l'app, donc
+  // 7 jours suffisent largement à couvrir un usage normal.
+  const days = Math.min(fastDays(fast), 7)
   for (let d = 1; d < days; d++) {
     const when = atDate(fast.start, 9)
     when.setDate(when.getDate() + d)
@@ -392,7 +457,10 @@ export async function scheduleActiveFast(fast) {
 
   const locale = i18n.global.locale.value
   const total = fastDays(fast)
-  const days = Math.min(total, 60)
+  // ⚠️ Borné à 7 jours (et non 60) : 60 jours × 2 créneaux = 120 notifications
+  // RE-POSTÉES à chaque replanification. C'est ce volume qui a fait muter l'app
+  // par Android (voir rescheduleFromStores). L'horizon glisse à chaque ouverture.
+  const days = Math.min(total, 7)
   const now = new Date()
   const list = []
   let id = ACTIVE_BASE
@@ -500,7 +568,27 @@ export async function rescheduleAll({
  * Import dynamique des stores : notifications.js reste sans dépendance Pinia
  * au chargement (même pattern que auth.js → user-db, preferences.js → bible).
  */
-export async function rescheduleFromStores() {
+/**
+ * Verrou de concurrence. Au démarrage, plusieurs chemins peuvent appeler
+ * rescheduleFromStores() quasi simultanément. Comme le garde anti-spam lit
+ * l'empreinte AVANT que la planification ne l'écrive, deux appels parallèles
+ * passaient tous les deux le test et planifiaient DEUX FOIS chaque
+ * notification (constaté dans logcat le 2026-09-08 : createChannel, cancel et
+ * schedule émis en double). On partage donc la promesse en cours.
+ */
+let reschedulingPromise = null
+
+export async function rescheduleFromStores(force = false) {
+  if (reschedulingPromise) return reschedulingPromise
+  reschedulingPromise = doRescheduleFromStores(force)
+  try {
+    return await reschedulingPromise
+  } finally {
+    reschedulingPromise = null
+  }
+}
+
+async function doRescheduleFromStores(force) {
   if (!isNative) return
   try {
     const { useFastingStore } = await import('@/stores/fasting')
@@ -508,13 +596,124 @@ export async function rescheduleFromStores() {
     const fasting = useFastingStore()
     const prayer = usePrayerStore()
     await Promise.all([fasting.load(), prayer.load()])
-    await rescheduleAll({
+
+    const state = {
       activeFast: fasting.isParticipating ? fasting.participation : null,
       upcomingFast: fasting.upcomingFast,
       morningDone: prayer.morningDone,
       eveningDone: prayer.eveningDone
-    })
+    }
+
+    // ⚠️ ANTI-SPAM : une replanification complète re-poste jusqu'à 181
+    // notifications. Rejouée à CHAQUE ouverture de l'app, Android finit par
+    // classer l'app comme spammeuse et MUTE tout : 7752 notifications postées
+    // en une journée, dont 7751 muted/demoted (constaté le 2026-09-08). Les
+    // rappels partaient bien, mais sans son ni bandeau — d'où « je ne reçois
+    // rien ». On ne replanifie donc que si l'état a RÉELLEMENT changé (la date
+    // du jour fait partie de l'empreinte : l'horizon de 7 jours glisse chaque jour).
+    if (!force && !(await stateChanged(state))) return
+
+    await rescheduleAll(state)
+    await rememberState(state)
   } catch (e) {
     console.error('[notif] rescheduleFromStores a échoué', e)
   }
+}
+
+/** Clé de l'empreinte d'état des notifications (stockage natif). */
+const NOTIF_STATE_KEY = 'abide.notif.lastState'
+
+/**
+ * Empreinte compacte de ce qui DÉTERMINE les notifications planifiées.
+ * La date du jour en fait partie : l'horizon de 7 jours doit glisser.
+ */
+function stateFingerprint(s) {
+  // ⚠️ Date LOCALE, pas toISOString() : celui-ci renvoie l'heure UTC, si bien
+  // qu'à 00h48 en heure locale (UTC+1) l'empreinte portait encore la date de la
+  // VEILLE. Résultat : au passage de minuit, on considérait l'état inchangé et
+  // on ne replanifiait pas — les rappels du jour n'existaient plus (constaté
+  // le 2026-09-08 : seules 2 alarmes de streak restaient sur 67 attendues).
+  const d = new Date()
+  const localDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return JSON.stringify({
+    // Le canal fait partie de l'empreinte : changer de canal (nouveau son,
+    // nouvelle importance) doit FORCER une replanification, sinon les
+    // notifications déjà programmées restent attachées à l'ancien canal —
+    // supprimé au démarrage — et perdent son et bandeau.
+    ch: CHANNEL_ID,
+    day: localDay,
+    fast: s.activeFast?.id ?? null,
+    next: s.upcomingFast?.id ?? null,
+    m: !!s.morningDone,
+    e: !!s.eveningDone
+  })
+}
+
+/** L'état a-t-il changé depuis la dernière planification effective ? */
+/**
+ * Vrai depuis le lancement de ce PROCESSUS tant qu'on n'a pas replanifié.
+ *
+ * ⚠️ POURQUOI C'EST INDISPENSABLE : `getPending()` ne lit PAS AlarmManager,
+ * il renvoie le cache interne du plugin. Or Android efface toutes les alarmes
+ * d'une app quand son processus est tué — « fermer » depuis les applis
+ * récentes, force-stop, ou nettoyeur de RAM (fréquent sur les ROM Transsion,
+ * Xiaomi, Huawei). Au redémarrage, le plugin annonce toujours ses 43
+ * notifications alors que le système n'en a plus AUCUNE : le garde-fou
+ * `< 10` ne se déclenchait donc jamais et l'app restait définitivement muette.
+ * Constaté le 2026-09-08 : après force-stop, getPending()=43, AlarmManager=0.
+ *
+ * On replanifie donc systématiquement au premier passage de chaque processus.
+ * Le coût est nul (une seule fois par lancement) et c'est la SEULE façon de
+ * garantir que les alarmes système existent réellement.
+ */
+let freshProcess = true
+
+/** Horodatage de la dernière replanification effective (stockage natif). */
+const NOTIF_LAST_RUN_KEY = 'abide.notif.lastRun'
+
+async function stateChanged(s) {
+  // Démarrage à froid : on ne fait confiance à aucun cache.
+  if (freshProcess) {
+    freshProcess = false
+    // ⚠️ TOUJOURS replanifier au démarrage à froid, sans condition.
+    //
+    // Un bridage horaire avait été tenté ici, puis retiré : il partait du
+    // principe qu'on pouvait savoir si des alarmes existent encore. C'est FAUX.
+    // `getPending()` renvoie le cache du plugin, qui survit au kill du processus
+    // et continue d'annoncer des échéances futures alors qu'AlarmManager est
+    // vide (mesuré le 2026-09-08 : plugin=39 futures, système=0 alarme). Aucune
+    // API JS ne permet de lire le vrai état du système.
+    //
+    // Le coût est acceptable : un démarrage à froid = un processus qui n'existait
+    // pas, ce qui n'arrive que quelques fois par jour, pas à chaque passage au
+    // premier plan (`freshProcess` est une variable de module, remise à true
+    // uniquement quand le processus est recréé). Le filtre anti-spam d'Android
+    // reste donc loin — c'est le RE-POSTAGE EN BOUCLE qui l'avait déclenché,
+    // pas quelques replanifications quotidiennes.
+    return true
+  }
+  try {
+    // Filet de sécurité : si presque plus rien n'est planifié, on replanifie
+    // quoi qu'en dise l'empreinte (empreinte périmée, purge système…).
+    const pending = await LocalNotifications.getPending()
+    if ((pending.notifications?.length ?? 0) < 10) return true
+
+    const { Preferences } = await import('@capacitor/preferences')
+    const { value } = await Preferences.get({ key: NOTIF_STATE_KEY })
+    return value !== stateFingerprint(s)
+  } catch {
+    return true // en cas de doute, on replanifie (mieux vaut ça que rien)
+  }
+}
+
+/** Mémorise l'état après une planification réussie. */
+async function rememberState(s) {
+  try {
+    const { Preferences } = await import('@capacitor/preferences')
+    await Preferences.set({ key: NOTIF_LAST_RUN_KEY, value: String(Date.now()) })
+  } catch { /* sans conséquence */ }
+  try {
+    const { Preferences } = await import('@capacitor/preferences')
+    await Preferences.set({ key: NOTIF_STATE_KEY, value: stateFingerprint(s) })
+  } catch { /* sans conséquence : on replanifiera au prochain démarrage */ }
 }

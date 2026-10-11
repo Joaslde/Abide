@@ -36,14 +36,15 @@ export async function initAppsFlyer() {
   // Écoute la résolution d'attribution : si les données custom du lien contiennent
   // un code de parrainage, on le garde en local pour l'inscription à venir.
   AppsFlyer.addListener('onConversionDataSuccess', (event) => {
-    const referralCode = event?.data?.af_referral_code ?? event?.data?.referralCode
+    const referralCode =
+      event?.data?.af_sub1 ?? event?.data?.af_referral_code ?? event?.data?.referralCode
     if (referralCode) storePendingReferralCode(String(referralCode))
   })
 
   try {
     await AppsFlyer.initSDK({
       devKey: DEV_KEY,
-      appID: 'com.abide.app',
+      appID: 'com.toabide.app',
       isDebug: false,
       registerConversionListener: true,
       // Délai d'attente du consentement ATT (iOS) avant de démarrer, en secondes.
