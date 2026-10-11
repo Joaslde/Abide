@@ -4,6 +4,11 @@ Application mobile SaaS freemium de croissance spirituelle chrétienne, conçue 
 
 > Projet en développement actif, architecture offline first, IA pastorale intégrée.
 
+## 📲 Télécharger
+
+- **Google Play** : https://play.google.com/store/apps/details?id=com.toabide.app
+- **Site** : https://toabide.online
+
 ---
 
 ## 🎯 Le problème résolu
