@@ -11,7 +11,8 @@
     "lint": "eslint src --ext .vue,.js --fix",
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap run android",
-    "cap:ios": "npx cap run ios"
+    "cap:ios": "npx cap run ios",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor-community/admob": "^6.2.0",
@@ -56,6 +57,7 @@
     "eslint": "^9.0.0",
     "eslint-plugin-vue": "^9.28.0",
     "node-fetch": "^3.3.2",
+    "patch-package": "^8.0.1",
     "vite": "^5.4.0"
   }
 }

@@ -40,6 +40,26 @@
 
 ---
 
+## ✅ ÉTAT AU 2026-10-12 : version 6 (1.4) PUBLIÉE en production (envoi n°6, 21:27)
+
+> - [x] Pubs : cause trouvée (bloc « Enchères partenaires »), nouveau bloc Standard
+>       ca-app-pub-4844051778459996/2317455341, « Test Ad » vérifié sur le téléphone
+> - [x] AppsFlyer : nouvelle clé + OneLink https://toabide.onelink.me/2cce/wgcmxjw9,
+>       code du parrain dans af_sub1, bouton « Partager mon lien » réactivé
+> - [x] 16 Ko corrigé (SQLCipher 4.10.0 via patch-package), alignement vérifié
+> - [x] AAB versionCode 6 / 1.4 construit (le 5 a été importé chez Google puis
+>       bloqué par l'erreur 16 Ko, ne pas le réutiliser)
+> - [x] Testé sur le téléphone sans désinstaller : Bible, notes, plans OK, aucun
+>       plantage ni erreur SQLite (logcat), « Test Ad » affichée
+> - [x] AAB versionCode 6 envoyé (après retrait du bundle 5 resté dans le brouillon)
+>       et publié le 2026-10-12
+> - [ ] Après publication : tester le parrainage complet (clic sur lien, installation,
+>       inscription, compteur du parrain)
+> - [ ] Plus tard : R8/obscurcissement (échéance Google février 2027), affichage
+>       bord à bord, mise à jour du SDK AdMob avant le 30 juin 2027, suivi des coûts
+
+---
+
 ## 🎉 ÉTAT AU 2026-10-11 : ABIDE EST EN PRODUCTION
 
 > - [x] Accès production accordé, release Abide 1.2 (versionCode 4) publiée à 100 %

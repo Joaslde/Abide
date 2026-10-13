@@ -34,3 +34,4 @@ keystore.properties
 # Bibles téléchargeables générées (régénérables via scripts/generate-version.js)
 dist-bibles/
 CLAUDE.md
+tasks/lessons.md

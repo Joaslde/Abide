@@ -1,0 +1,693 @@
+diff --git a/node_modules/@capacitor-community/sqlite/android/build.gradle b/node_modules/@capacitor-community/sqlite/android/build.gradle
+index b106a1a..b04b11b 100644
+--- a/node_modules/@capacitor-community/sqlite/android/build.gradle
++++ b/node_modules/@capacitor-community/sqlite/android/build.gradle
+@@ -61,7 +61,7 @@ dependencies {
+     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+     implementation "androidx.coordinatorlayout:coordinatorlayout:1.2.0"
+-    implementation 'net.zetetic:android-database-sqlcipher:4.5.3'
++    implementation 'net.zetetic:sqlcipher-android:4.10.0@aar'
+     implementation "androidx.sqlite:sqlite:2.4.0"
+     //security library
+     implementation "androidx.security:security-crypto:1.1.0-alpha06"
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLite.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLite.java
+index a4f8e62..1729427 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLite.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLite.java
+@@ -92,11 +92,10 @@ public class CapacitorSQLite {
+                                 ks.load(null);
+                                 Enumeration<String> aliases = ks.aliases();
+                                 if (aliases.hasMoreElements()) {
+-                                    masterKeyAlias =
+-                                        new MasterKey.Builder(context)
+-                                            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+-                                            .setUserAuthenticationRequired(true, VALIDITY_DURATION)
+-                                            .build();
++                                    masterKeyAlias = new MasterKey.Builder(context)
++                                        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
++                                        .setUserAuthenticationRequired(true, VALIDITY_DURATION)
++                                        .build();
+                                 } else {
+                                     masterKeyAlias = new MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build();
+                                 }
+@@ -149,14 +148,13 @@ public class CapacitorSQLite {
+     private void setSharedPreferences() throws Exception {
+         try {
+             // get instance of the EncryptedSharedPreferences class
+-            this.sharedPreferences =
+-                EncryptedSharedPreferences.create(
+-                    context,
+-                    "sqlite_encrypted_shared_prefs",
+-                    masterKeyAlias,
+-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+-                );
++            this.sharedPreferences = EncryptedSharedPreferences.create(
++                context,
++                "sqlite_encrypted_shared_prefs",
++                masterKeyAlias,
++                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
++                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
++            );
+             this.uSecret = new UtilsSecret(this.context, this.sharedPreferences);
+         } catch (Exception e) {
+             throw new Exception(e.getMessage());
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLitePlugin.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLitePlugin.java
+index 2d2bd3e..8545d21 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLitePlugin.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/CapacitorSQLitePlugin.java
+@@ -1549,8 +1549,7 @@ public class CapacitorSQLitePlugin extends Plugin {
+     }
+ 
+     private void AddObserversToNotificationCenter() {
+-        NotificationCenter
+-            .defaultCenter()
++        NotificationCenter.defaultCenter()
+             .addMethodForNotification(
+                 "importJsonProgress",
+                 new MyRunnable() {
+@@ -1562,8 +1561,7 @@ public class CapacitorSQLitePlugin extends Plugin {
+                     }
+                 }
+             );
+-        NotificationCenter
+-            .defaultCenter()
++        NotificationCenter.defaultCenter()
+             .addMethodForNotification(
+                 "exportJsonProgress",
+                 new MyRunnable() {
+@@ -1575,8 +1573,7 @@ public class CapacitorSQLitePlugin extends Plugin {
+                     }
+                 }
+             );
+-        NotificationCenter
+-            .defaultCenter()
++        NotificationCenter.defaultCenter()
+             .addMethodForNotification(
+                 "biometricResults",
+                 new MyRunnable() {
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java
+index 5a477ae..ecce926 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java
+@@ -26,6 +26,7 @@ import com.getcapacitor.community.database.sqlite.SQLite.ImportExportJson.JsonSQ
+ import com.getcapacitor.community.database.sqlite.SQLite.ImportExportJson.UtilsEncryption;
+ import com.getcapacitor.community.database.sqlite.SQLite.ImportExportJson.UtilsJson;
+ import java.io.File;
++import java.nio.charset.StandardCharsets;
+ import java.text.SimpleDateFormat;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+@@ -35,9 +36,8 @@ import java.util.List;
+ import java.util.Objects;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+-import net.sqlcipher.Cursor;
+-import net.sqlcipher.database.SQLiteDatabase;
+-import net.sqlcipher.database.SQLiteException;
++import net.zetetic.database.sqlcipher.SQLiteCursor;
++import net.zetetic.database.sqlcipher.SQLiteDatabase;
+ import org.json.JSONArray;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+@@ -115,7 +115,7 @@ public class Database {
+      * Initialize the SQLCipher Libraries
+      */
+     private void InitializeSQLCipher() {
+-        SQLiteDatabase.loadLibs(_context);
++        System.loadLibrary("sqlcipher");
+     }
+ 
+     public SupportSQLiteDatabase getDb() {
+@@ -247,7 +247,7 @@ public class Database {
+         if (_mode.equals("encryption")) {
+             if (_isEncryption) {
+                 try {
+-                    _uCipher.encrypt(_context, _file, SQLiteDatabase.getBytes(password.toCharArray()));
++                    _uCipher.encrypt(_context, _file, password.getBytes(StandardCharsets.UTF_8));
+                 } catch (Exception e) {
+                     String msg = "Failed in encryption " + e.getMessage();
+                     Log.v(TAG, msg);
+@@ -260,7 +260,7 @@ public class Database {
+         if (_mode.equals("decryption")) {
+             if (_isEncryption) {
+                 try {
+-                    _uCipher.decrypt(_context, _file, SQLiteDatabase.getBytes(password.toCharArray()));
++                    _uCipher.decrypt(_context, _file, password.getBytes());
+                     password = "";
+                 } catch (Exception e) {
+                     String msg = "Failed in decryption " + e.getMessage();
+@@ -273,9 +273,9 @@ public class Database {
+         }
+         try {
+             if (!isNCDB() && !this._readOnly) {
+-                _db = SQLiteDatabase.openOrCreateDatabase(_file, password, null);
++                _db = SQLiteDatabase.openOrCreateDatabase(_file, password, null, null);
+             } else {
+-                _db = SQLiteDatabase.openDatabase(String.valueOf(_file), password, null, SQLiteDatabase.OPEN_READONLY);
++                _db = SQLiteDatabase.openDatabase(String.valueOf(_file), password, null, SQLiteDatabase.OPEN_READONLY, null);
+             }
+             if (_db != null) {
+                 if (_db.isOpen()) {
+@@ -301,12 +301,6 @@ public class Database {
+                         close();
+                         _db = null;
+                         throw new Exception(msg);
+-                    } catch (SQLiteException e) {
+-                        String msg = "Failed in setVersion " + e.getMessage();
+-                        Log.v(TAG, msg);
+-                        close();
+-                        _db = null;
+-                        throw new Exception(msg);
+                     }
+                     if (_version > curVersion && _vUpgObject != null && _vUpgObject.size() > 0) {
+                         //                           if (_vUpgObject != null && _vUpgObject.size() > 0) {
+@@ -973,12 +967,12 @@ public class Database {
+      */
+     public JSArray selectSQL(String statement, ArrayList<Object> values) throws Exception {
+         JSArray retArray = new JSArray();
+-        Cursor c = null;
++        SQLiteCursor c = null;
+         if (_db == null) {
+             return retArray;
+         }
+         try {
+-            c = (Cursor) _db.query(statement, values.toArray(new Object[0]));
++            c = (SQLiteCursor) _db.query(statement, values.toArray(new Object[0]));
+             while (c.moveToNext()) {
+                 JSObject row = new JSObject();
+                 for (int i = 0; i < c.getColumnCount(); i++) {
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ExportToJson.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ExportToJson.java
+index b1f8b8e..c41276d 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ExportToJson.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ExportToJson.java
+@@ -164,12 +164,11 @@ public class ExportToJson {
+                     throw new Exception("No sync_table available");
+                 }
+ 
+-                tables =
+-                    switch (sqlObj.getMode()) {
+-                        case "partial" -> getTablesPartial(db, resTables);
+-                        case "full" -> getTablesFull(db, resTables);
+-                        default -> throw new Exception("CreateExportObject: expMode " + sqlObj.getMode() + " not defined");
+-                    };
++                tables = switch (sqlObj.getMode()) {
++                    case "partial" -> getTablesPartial(db, resTables);
++                    case "full" -> getTablesFull(db, resTables);
++                    default -> throw new Exception("CreateExportObject: expMode " + sqlObj.getMode() + " not defined");
++                };
+                 if (tables.size() > 0) {
+                     retObj.setDatabase(sqlObj.getDatabase());
+                     retObj.setVersion(sqlObj.getVersion());
+@@ -343,7 +342,7 @@ public class ExportToJson {
+             // first word as key
+             for (String s : sch) {
+                 String sc = s.replaceAll("\n", "").trim();
+-                String[] row = sc.trim().split(" ", 2);
++                String[] row = sc.trim().split("\\s+", 2);
+                 JsonColumn jsonRow = new JsonColumn();
+                 String uppercasedValue = row[0].toUpperCase(); // Define uppercasedValue
+                 int oPar;
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ImportFromJson.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ImportFromJson.java
+index eca8966..4c841bc 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ImportFromJson.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/ImportExportJson/ImportFromJson.java
+@@ -165,8 +165,11 @@ public class ImportFromJson {
+         for (int j = 0; j < mSchema.size(); j++) {
+             if (j == mSchema.size() - 1) {
+                 if (mSchema.get(j).getColumn() != null) {
+-                    stmt =
+-                        new StringBuilder(stmt).append(mSchema.get(j).getColumn()).append(" ").append(mSchema.get(j).getValue()).toString();
++                    stmt = new StringBuilder(stmt)
++                        .append(mSchema.get(j).getColumn())
++                        .append(" ")
++                        .append(mSchema.get(j).getValue())
++                        .toString();
+                     if (mSchema.get(j).getColumn().equals("last_modified")) {
+                         isLastModified = true;
+                     }
+@@ -174,31 +177,28 @@ public class ImportFromJson {
+                         isSqlDeleted = true;
+                     }
+                 } else if (mSchema.get(j).getForeignkey() != null) {
+-                    stmt =
+-                        new StringBuilder(stmt)
+-                            .append("FOREIGN KEY (")
+-                            .append(mSchema.get(j).getForeignkey())
+-                            .append(") ")
+-                            .append(mSchema.get(j).getValue())
+-                            .toString();
++                    stmt = new StringBuilder(stmt)
++                        .append("FOREIGN KEY (")
++                        .append(mSchema.get(j).getForeignkey())
++                        .append(") ")
++                        .append(mSchema.get(j).getValue())
++                        .toString();
+                 } else if (mSchema.get(j).getConstraint() != null) {
+-                    stmt =
+-                        new StringBuilder(stmt)
+-                            .append("CONSTRAINT ")
+-                            .append(mSchema.get(j).getConstraint())
+-                            .append(" ")
+-                            .append(mSchema.get(j).getValue())
+-                            .toString();
++                    stmt = new StringBuilder(stmt)
++                        .append("CONSTRAINT ")
++                        .append(mSchema.get(j).getConstraint())
++                        .append(" ")
++                        .append(mSchema.get(j).getValue())
++                        .toString();
+                 }
+             } else {
+                 if (mSchema.get(j).getColumn() != null) {
+-                    stmt =
+-                        new StringBuilder(stmt)
+-                            .append(mSchema.get(j).getColumn())
+-                            .append(" ")
+-                            .append(mSchema.get(j).getValue())
+-                            .append(",")
+-                            .toString();
++                    stmt = new StringBuilder(stmt)
++                        .append(mSchema.get(j).getColumn())
++                        .append(" ")
++                        .append(mSchema.get(j).getValue())
++                        .append(",")
++                        .toString();
+                     if (mSchema.get(j).getColumn().equals("last_modified")) {
+                         isLastModified = true;
+                     }
+@@ -206,23 +206,21 @@ public class ImportFromJson {
+                         isSqlDeleted = true;
+                     }
+                 } else if (mSchema.get(j).getForeignkey() != null) {
+-                    stmt =
+-                        new StringBuilder(stmt)
+-                            .append("FOREIGN KEY (")
+-                            .append(mSchema.get(j).getForeignkey())
+-                            .append(") ")
+-                            .append(mSchema.get(j).getValue())
+-                            .append(",")
+-                            .toString();
++                    stmt = new StringBuilder(stmt)
++                        .append("FOREIGN KEY (")
++                        .append(mSchema.get(j).getForeignkey())
++                        .append(") ")
++                        .append(mSchema.get(j).getValue())
++                        .append(",")
++                        .toString();
+                 } else if (mSchema.get(j).getConstraint() != null) {
+-                    stmt =
+-                        new StringBuilder(stmt)
+-                            .append("CONSTRAINT ")
+-                            .append(mSchema.get(j).getConstraint())
+-                            .append(" ")
+-                            .append(mSchema.get(j).getValue())
+-                            .append(",")
+-                            .toString();
++                    stmt = new StringBuilder(stmt)
++                        .append("CONSTRAINT ")
++                        .append(mSchema.get(j).getConstraint())
++                        .append(" ")
++                        .append(mSchema.get(j).getValue())
++                        .append(",")
++                        .toString();
+                 }
+             }
+         }
+@@ -587,16 +585,15 @@ public class ImportFromJson {
+             if (questionMarkString.length() == 0) {
+                 throw new Exception(msg + j + "questionMarkString is empty");
+             }
+-            stmt =
+-                new StringBuilder("INSERT INTO ")
+-                    .append(tableName)
+-                    .append("(")
+-                    .append(namesString)
+-                    .append(")")
+-                    .append(" VALUES (")
+-                    .append(questionMarkString)
+-                    .append(");")
+-                    .toString();
++            stmt = new StringBuilder("INSERT INTO ")
++                .append(tableName)
++                .append("(")
++                .append(namesString)
++                .append(")")
++                .append(" VALUES (")
++                .append(questionMarkString)
++                .append(");")
++                .toString();
+         } else {
+             Boolean isUpdate = true;
+             Integer idxDelete = tColNames.indexOf("sql_deleted");
+@@ -741,25 +738,24 @@ public class ImportFromJson {
+             if (colIndex == -1 || (int) rowIndex.get(colIndex) == 0) {
+                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                     String formattedRow = null;
+-                    formattedRow =
+-                        String.join(
+-                            ", ",
+-                            rowIndex
+-                                .stream()
+-                                .map(item -> {
+-                                    if (item instanceof String) {
+-                                        String val = (String) item;
+-                                        String rVal = val;
+-                                        if (val.contains("'")) {
+-                                            rVal = val.replace("'", "''");
+-                                        }
+-                                        return "'" + rVal + "'";
+-                                    } else {
+-                                        return item.toString();
++                    formattedRow = String.join(
++                        ", ",
++                        rowIndex
++                            .stream()
++                            .map(item -> {
++                                if (item instanceof String) {
++                                    String val = (String) item;
++                                    String rVal = val;
++                                    if (val.contains("'")) {
++                                        rVal = val.replace("'", "''");
+                                     }
+-                                })
+-                                .toArray(String[]::new)
+-                        );
++                                    return "'" + rVal + "'";
++                                } else {
++                                    return item.toString();
++                                }
++                            })
++                            .toArray(String[]::new)
++                    );
+                     insertValues.append("(").append(formattedRow).append("), ");
+                 } else {
+                     StringBuilder formattedRow = new StringBuilder();
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsBiometric.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsBiometric.java
+index ebbbf73..8594372 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsBiometric.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsBiometric.java
+@@ -79,41 +79,37 @@ public class UtilsBiometric {
+      */
+     private void setupBiometricPrompt(String biometricTitle, String biometricSubTitle) {
+         executor = ContextCompat.getMainExecutor(context);
+-        biometricPrompt =
+-            new BiometricPrompt(
+-                (FragmentActivity) context,
+-                executor,
+-                new BiometricPrompt.AuthenticationCallback() {
+-                    @Override
+-                    public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+-                        super.onAuthenticationError(errorCode, errString);
+-                        Toast.makeText(context, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
+-                        listener.onFailed();
+-                    }
++        biometricPrompt = new BiometricPrompt(
++            (FragmentActivity) context,
++            executor,
++            new BiometricPrompt.AuthenticationCallback() {
++                @Override
++                public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
++                    super.onAuthenticationError(errorCode, errString);
++                    Toast.makeText(context, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
++                    listener.onFailed();
++                }
+ 
+-                    @Override
+-                    public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+-                        super.onAuthenticationSucceeded(result);
+-                        listener.onSuccess(result);
+-                    }
++                @Override
++                public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
++                    super.onAuthenticationSucceeded(result);
++                    listener.onSuccess(result);
++                }
+ 
+-                    @Override
+-                    public void onAuthenticationFailed() {
+-                        super.onAuthenticationFailed();
+-                        Toast.makeText(context, "Authentication failed", Toast.LENGTH_SHORT).show();
+-                        listener.onFailed();
+-                    }
++                @Override
++                public void onAuthenticationFailed() {
++                    super.onAuthenticationFailed();
++                    Toast.makeText(context, "Authentication failed", Toast.LENGTH_SHORT).show();
++                    listener.onFailed();
+                 }
+-            );
++            }
++        );
+ 
+         // Create prompt dialog
+-        promptInfo =
+-            new BiometricPrompt.PromptInfo.Builder()
+-                .setTitle(biometricTitle)
+-                .setSubtitle(biometricSubTitle)
+-                .setAllowedAuthenticators(
+-                    BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL
+-                )
+-                .build();
++        promptInfo = new BiometricPrompt.PromptInfo.Builder()
++            .setTitle(biometricTitle)
++            .setSubtitle(biometricSubTitle)
++            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
++            .build();
+     }
+ }
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsDrop.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsDrop.java
+index 5a91fcf..8342a89 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsDrop.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsDrop.java
+@@ -6,7 +6,7 @@ import java.util.ArrayList;
+ import java.util.Dictionary;
+ import java.util.Enumeration;
+ import java.util.List;
+-import net.sqlcipher.Cursor;
++import net.zetetic.database.sqlcipher.SQLiteCursor;
+ 
+ public class UtilsDrop {
+ 
+@@ -20,7 +20,7 @@ public class UtilsDrop {
+ 
+     public List<String> getTablesNames(Database db) throws Exception {
+         List<String> tables = new ArrayList<String>();
+-        Cursor cursor = null;
++        SQLiteCursor cursor = null;
+         String query = "SELECT name FROM sqlite_master WHERE ";
+         query += "type='table' AND name NOT LIKE 'sync_table' ";
+         query += "AND name NOT LIKE '_temp_%' ";
+@@ -28,7 +28,7 @@ public class UtilsDrop {
+         query += "AND name NOT LIKE 'android_%' ";
+         query += "ORDER BY rootpage DESC;";
+         try {
+-            cursor = (Cursor) db.getDb().query(query);
++            cursor = (SQLiteCursor) db.getDb().query(query);
+             cursor.moveToFirst();
+             while (!cursor.isAfterLast()) {
+                 String tableName = cursor.getString(0);
+@@ -51,12 +51,12 @@ public class UtilsDrop {
+ 
+     public List<String> getViewNames(Database db) throws Exception {
+         List<String> views = new ArrayList<String>();
+-        Cursor cursor = null;
++        SQLiteCursor cursor = null;
+         String query = "SELECT name FROM sqlite_master WHERE ";
+         query += "type='view' AND name NOT LIKE 'sqlite_%' ";
+         query += "ORDER BY rootpage DESC;";
+         try {
+-            cursor = (Cursor) db.getDb().query(query);
++            cursor = (SQLiteCursor) db.getDb().query(query);
+             cursor.moveToFirst();
+             while (!cursor.isAfterLast()) {
+                 String viewName = cursor.getString(0);
+@@ -113,10 +113,10 @@ public class UtilsDrop {
+ 
+     public List<String> getIndexesNames(Database db) {
+         List<String> indexes = new ArrayList<String>();
+-        Cursor cursor = null;
++        SQLiteCursor cursor = null;
+         String query = "SELECT name FROM sqlite_master WHERE ";
+         query += "type='index' AND name NOT LIKE 'sqlite_%';";
+-        cursor = (Cursor) db.getDb().query(query);
++        cursor = (SQLiteCursor) db.getDb().query(query);
+         cursor.moveToFirst();
+         while (!cursor.isAfterLast()) {
+             String indexName = cursor.getString(0);
+@@ -152,10 +152,10 @@ public class UtilsDrop {
+ 
+     public List<String> getTriggersNames(Database db) {
+         List<String> triggers = new ArrayList<String>();
+-        Cursor cursor = null;
++        SQLiteCursor cursor = null;
+         String query = "SELECT name FROM sqlite_master WHERE ";
+         query += "type='trigger';";
+-        cursor = (Cursor) db.getDb().query(query);
++        cursor = (SQLiteCursor) db.getDb().query(query);
+         cursor.moveToFirst();
+         while (!cursor.isAfterLast()) {
+             String triggerName = cursor.getString(0);
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsFile.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsFile.java
+index 4e2fa2f..eada893 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsFile.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsFile.java
+@@ -261,7 +261,8 @@ public class UtilsFile {
+     }
+ 
+     public String getFileExtension(String name) {
+-        if (name.lastIndexOf(".") != -1 && name.lastIndexOf(".") != 0) return name.substring(name.lastIndexOf(".") + 1); else return "";
++        if (name.lastIndexOf(".") != -1 && name.lastIndexOf(".") != 0) return name.substring(name.lastIndexOf(".") + 1);
++        else return "";
+     }
+ 
+     public Boolean restoreDatabase(Context context, String databaseName) {
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLCipher.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLCipher.java
+index e6f24e3..1585bc2 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLCipher.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLCipher.java
+@@ -5,9 +5,8 @@ import android.content.SharedPreferences;
+ import java.io.File;
+ import java.io.FileNotFoundException;
+ import java.io.IOException;
+-import net.sqlcipher.database.SQLiteDatabase;
+-import net.sqlcipher.database.SQLiteException;
+-import net.sqlcipher.database.SQLiteStatement;
++import net.zetetic.database.sqlcipher.SQLiteDatabase;
++import net.zetetic.database.sqlcipher.SQLiteStatement;
+ 
+ public class UtilsSQLCipher {
+ 
+@@ -36,12 +35,12 @@ public class UtilsSQLCipher {
+      * @return the detected state of the database
+      */
+     public State getDatabaseState(Context ctxt, File dbPath, SharedPreferences sharedPreferences, GlobalSQLite globVar) {
+-        SQLiteDatabase.loadLibs(ctxt);
++        System.loadLibrary("sqlcipher");
+         if (dbPath.exists()) {
+             SQLiteDatabase db = null;
+ 
+             try {
+-                db = SQLiteDatabase.openDatabase(dbPath.getAbsolutePath(), "", null, SQLiteDatabase.OPEN_READONLY);
++                db = SQLiteDatabase.openDatabase(dbPath.getAbsolutePath(), "", null, SQLiteDatabase.OPEN_READONLY, null);
+ 
+                 db.getVersion();
+ 
+@@ -50,7 +49,7 @@ public class UtilsSQLCipher {
+                 try {
+                     String passphrase = sharedPreferences.getString("secret", "");
+                     if (passphrase.length() > 0) {
+-                        db = SQLiteDatabase.openDatabase(dbPath.getAbsolutePath(), passphrase, null, SQLiteDatabase.OPEN_READONLY);
++                        db = SQLiteDatabase.openDatabase(dbPath.getAbsolutePath(), passphrase, null, SQLiteDatabase.OPEN_READONLY, null);
+                         db.getVersion();
+                         return (State.ENCRYPTED_SECRET);
+                     } else {
+@@ -59,7 +58,13 @@ public class UtilsSQLCipher {
+                 } catch (Exception e1) {
+                     try {
+                         if (globVar.secret.length() > 0) {
+-                            db = SQLiteDatabase.openDatabase(dbPath.getAbsolutePath(), globVar.secret, null, SQLiteDatabase.OPEN_READONLY);
++                            db = SQLiteDatabase.openDatabase(
++                                dbPath.getAbsolutePath(),
++                                globVar.secret,
++                                null,
++                                SQLiteDatabase.OPEN_READONLY,
++                                null
++                            );
+                             db.getVersion();
+                             return (State.ENCRYPTED_GLOBAL_SECRET);
+                         } else {
+@@ -92,11 +97,11 @@ public class UtilsSQLCipher {
+      * @throws IOException
+      */
+     public void encrypt(Context ctxt, File originalFile, byte[] passphrase) throws IOException {
+-        SQLiteDatabase.loadLibs(ctxt);
++        System.loadLibrary("sqlcipher");
+ 
+         if (originalFile.exists()) {
+             File newFile = File.createTempFile("sqlcipherutils", "tmp", ctxt.getCacheDir());
+-            SQLiteDatabase db = SQLiteDatabase.openDatabase(originalFile.getAbsolutePath(), "", null, SQLiteDatabase.OPEN_READWRITE);
++            SQLiteDatabase db = SQLiteDatabase.openDatabase(originalFile.getAbsolutePath(), "", null, SQLiteDatabase.OPEN_READWRITE, null);
+             int version = db.getVersion();
+ 
+             db.close();
+@@ -135,7 +140,7 @@ public class UtilsSQLCipher {
+     }
+ 
+     public void decrypt(Context ctxt, File originalFile, byte[] passphrase) throws IOException {
+-        SQLiteDatabase.loadLibs(ctxt);
++        System.loadLibrary("sqlcipher");
+ 
+         if (originalFile.exists()) {
+             // Create a temporary file for the decrypted database in the cache directory
+@@ -146,7 +151,8 @@ public class UtilsSQLCipher {
+                 decryptedFile.getAbsolutePath(),
+                 "",
+                 null,
+-                SQLiteDatabase.OPEN_READWRITE
++                SQLiteDatabase.OPEN_READWRITE,
++                null
+             );
+ 
+             // Open the encrypted database with the provided passphrase
+@@ -154,7 +160,8 @@ public class UtilsSQLCipher {
+                 originalFile.getAbsolutePath(),
+                 new String(passphrase),
+                 null,
+-                SQLiteDatabase.OPEN_READWRITE
++                SQLiteDatabase.OPEN_READWRITE,
++                null
+             );
+ 
+             int version = encryptedDb.getVersion();
+@@ -196,14 +203,14 @@ public class UtilsSQLCipher {
+         }
+     }
+ 
+-    public void changePassword(Context ctxt, File file, String password, String nwpassword) throws IOException {
+-        SQLiteDatabase.loadLibs(ctxt);
++    public void changePassword(Context ctxt, File file, String password, String nwpassword) throws Exception {
++        System.loadLibrary("sqlcipher");
+ 
+         if (file.exists()) {
+-            SQLiteDatabase db = SQLiteDatabase.openDatabase(file.getAbsolutePath(), password, null, SQLiteDatabase.OPEN_READWRITE);
++            SQLiteDatabase db = SQLiteDatabase.openDatabase(file.getAbsolutePath(), password, null, SQLiteDatabase.OPEN_READWRITE, null);
+ 
+             if (!db.isOpen()) {
+-                throw new SQLiteException("database " + file.getAbsolutePath() + " open failed");
++                throw new Exception("database " + file.getAbsolutePath() + " open failed");
+             }
+             db.changePassword(nwpassword);
+             db.close();
+diff --git a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLite.java b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLite.java
+index 202d291..f1c3d15 100644
+--- a/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLite.java
++++ b/node_modules/@capacitor-community/sqlite/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLite.java
+@@ -6,7 +6,7 @@ import com.getcapacitor.JSArray;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.List;
+-import net.sqlcipher.Cursor;
++import net.zetetic.database.sqlcipher.SQLiteCursor;
+ import org.json.JSONArray;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+@@ -19,7 +19,7 @@ public class UtilsSQLite {
+         String SELECT_CHANGE = "SELECT total_changes()";
+         Boolean success = true;
+         int ret = Integer.valueOf(-1);
+-        Cursor cursor = (Cursor) db.query(SELECT_CHANGE, null);
++        SQLiteCursor cursor = (SQLiteCursor) db.query(SELECT_CHANGE, null);
+         if (cursor != null) {
+             if (cursor.moveToFirst()) {
+                 ret = Integer.parseInt(cursor.getString(0));
+@@ -33,7 +33,7 @@ public class UtilsSQLite {
+         String SELECT_CHANGE = "SELECT last_insert_rowid()";
+         Boolean success = true;
+         long ret = (long) -1;
+-        Cursor cursor = (Cursor) db.query(SELECT_CHANGE, null);
++        SQLiteCursor cursor = (SQLiteCursor) db.query(SELECT_CHANGE, null);
+         if (cursor.moveToFirst()) {
+             ret = Long.parseLong(cursor.getString(0));
+         }
