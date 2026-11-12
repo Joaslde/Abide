@@ -532,6 +532,8 @@ export default {
       downloadError: 'Download failed',
       switched: 'Version activated',
       switchError: 'Could not switch version',
+      audioHint: 'Versions marked with headphones also have audio.',
+      versionCount: '{n} version | {n} versions',
       offline: 'Catalog unavailable (offline).'
     }
   },

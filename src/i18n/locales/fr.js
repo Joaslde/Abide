@@ -536,6 +536,8 @@ export default {
       downloadError: 'Échec du téléchargement',
       switched: 'Version activée',
       switchError: 'Impossible de changer de version',
+      audioHint: 'Les versions marquées d’un casque ont aussi l’audio.',
+      versionCount: '{n} version | {n} versions',
       offline: 'Catalogue indisponible (hors ligne).'
     }
   },

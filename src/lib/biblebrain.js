@@ -51,6 +51,16 @@ export const AUDIO_MAP = {
     nt: 'EN1WEBN2DA',
     ot: 'EN1WEBO2DA',
     otTimestamps: false // l'AT WEB n'a pas de timestamps (sondé)
+  },
+  BSB: {
+    bibleId: 'ENGBER',
+    copyright: '℗ Domaine public, Berean Standard Bible, Faith Comes By Hearing',
+    nt: 'ENGBERN1DA',
+    ot: 'ENGBERO1DA',
+    // Sondé le 2026-11-07 : audio présent dans les deux Testaments, mais aucun
+    // timestamp (ni AT ni NT) → lecture sans surlignage verset par verset.
+    ntTimestamps: false,
+    otTimestamps: false
   }
 }
 
@@ -94,8 +104,9 @@ export function filesetForBook(versionId, bookId) {
   const isNT = NT_BOOKS.has(bookId)
   const filesetId = isNT ? map.nt : map.ot
   if (!filesetId) return null
-  // Le NT a toujours des timestamps ; l'AT dépend de la version (flag otTimestamps).
-  const hasTimestamps = isNT ? true : map.otTimestamps !== false
+  // Timestamps présents par défaut ; flags ntTimestamps / otTimestamps à false
+  // quand BibleBrain n'en fournit pas pour ce Testament (sondé version par version).
+  const hasTimestamps = isNT ? map.ntTimestamps !== false : map.otTimestamps !== false
   return { filesetId, copyright: map.copyright, hasTimestamps }
 }
 

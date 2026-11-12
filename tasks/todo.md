@@ -40,6 +40,118 @@
 
 ---
 
+## 🚧 VERSION SUIVANTE (1.5) : espagnol, corrections utilisateurs, passage au payant (planifié 2026-11-07)
+
+> Objectif : envoyer en examen Google d'ici la semaine du 2026-11-14.
+> Trois chantiers. Ordre recommandé si le délai est trop court : A et B d'abord (sans
+> dépendance externe), C peut partir dans une version 1.6 (dépend de la validation du
+> compte marchand Google, qui prend plusieurs jours).
+
+### A. Version espagnole complète
+- [ ] `src/i18n/locales/es.js` : traduction de TOUTES les clés de fr.js (~810 lignes),
+      tutoiement (« tú »), ton pastoral identique. Relecture humaine conseillée.
+- [ ] `src/i18n/index.js` : déclarer `es` dans SUPPORTED_LOCALES ; détection de la langue
+      du téléphone (es-* → es)
+- [ ] Écran Langue (Réglages) : ajouter Español
+- [ ] Guide IA : `supabase/functions/ai-chat` SUPPORTED_LOCALES + LOCALE_NAMES (`es`),
+      redéployer. Idem `quiz-chapter` si le quiz dépend de la langue.
+- [ ] Bibles espagnoles : UNIQUEMENT domaine public (ex. Reina-Valera 1909).
+      Vérifié 2026-11-07 : la clé BibleBrain du projet donne accès à 15 Bibles
+      espagnoles (dont SPARVC = Reina Valera 1909 en texte ; audio sur SPABDA, SPAWTC,
+      SPAR95, SPAPDT…). Aucune audio n'existe pour la RV1909 : choisir une audio
+      espagnole et vérifier ses droits, en sachant que son texte ne correspondra pas
+      mot pour mot à la RV1909. Ne PAS utiliser bolls.life (droits des versions
+      hébergées non garantis pour une app commerciale). La
+      Reina-Valera 1960 est sous droits (Sociedades Bíblicas Unidas) : interdite sans
+      accord écrit (règle PROJECT.md §12). Générer + uploader sur R2 avec les scripts
+      existants, ajouter au catalogue des versions.
+- [ ] Bascule auto langue ↔ version Bible : vérifier qu'elle gère `es`
+- [ ] Audio Bible espagnol : vérifier la disponibilité BibleBrain (filesets SPA)
+- [ ] Contenus : titres/descriptions des 14 plans de lecture, verset du jour, textes des
+      notifications locales, onboarding et révélation du profil
+- [ ] Image de verset partagée : signature `imageSignature.appName` en espagnol
+- [ ] Fiche Play Store en espagnol (es-ES ou es-419) : titre, descriptions
+- [ ] Site toabide.online : au minimum la politique de confidentialité en espagnol
+      (facultatif mais recommandé)
+
+### A2. Catalogue de Bibles élargi + écran des versions par langue (décidé 2026-11-07)
+> Vérifié sur le catalogue eBible.org (translations.csv, colonne Copyright) et l'API
+> BibleBrain. Règle : seules les versions DOMAINE PUBLIC sont téléchargeables hors ligne.
+> Sur les 15 « Bibles espagnoles » BibleBrain : 4 vidéo seule, 4 audio seul, 7 avec texte
+> dont la plupart sous droits → pas téléchargeables. Rappel BibleBrain : audio JAMAIS
+> derrière un paywall, copyright de chaque enregistrement affiché.
+- [ ] ANGLAIS (4 → ~15) : BSB Berean Standard Bible (moderne, prioritaire), BBE, Douay-
+      Rheims 1899, Geneva 1599, Revised Version, Darby EN, Webster, Majority Standard
+      Bible, World Messianic Bible, WEB catholique / britannique, AKJV
+- [ ] ESPAGNOL (0 → 5/6) : Reina-Valera 1909, Biblia en Español Sencillo (spabes),
+      Biblia Libre para el Mundo (spablm), BLL (spabll), Sagradas Escrituras 1569 (sse),
+      RV1858 NT seul
+- [ ] FRANÇAIS (3 → 5) : Ostervald (fra_fob), Bible Libre pour le Monde (frasbl).
+      Les versions modernes (Segond 21, Colombe, Semeur, PDV) exigent un accord éditeur.
+- [ ] Vérifier pour chaque version : 66 livres complets, découpage versets compatible
+      avec le schéma SQLite et les codes livres, puis générer + uploader sur R2
+      (scripts existants) et ajouter au manifest
+- [ ] Optionnel : versions sous droits en LECTURE EN LIGNE via BibleBrain, UNIQUEMENT
+      après confirmation écrite du support BibleBrain (support@digitalbibleplatform.com)
+      que c'est permis pour une app commerciale
+- [ ] UI : écran Versions groupé par langue, sections repliables (Français / English /
+      Español), langue de l'app ouverte par défaut, les autres repliées
+
+### B. Bugs et UX remontés par les utilisateurs
+- [ ] Liste à recueillir auprès de l'utilisateur, puis un point par élément ici
+
+### C. Passage au payant (Abide Plus via Google Play)
+> ⚠️ RÈGLE GOOGLE PLAY : un abonnement numérique vendu DANS une app distribuée sur le
+> Play Store doit passer par Google Play Billing (« Google Pay » côté utilisateur).
+> KKiaPay/FedaPay ne sont pas utilisables in-app pour ça. Le plan PROJECT.md (KKiaPay)
+> est donc remplacé pour Android par Google Play Billing.
+> Architecture recommandée : RevenueCat (déjà prévu au stack pour iOS) + webhook
+> Supabase. Le client ne décide jamais du premium (SECURITY.md) : seul le webhook
+> serveur écrit is_premium / premium_expires / premium_source (trigger
+> protect_premium_columns déjà en place).
+- [ ] DÉCISIONS à prendre avec l'utilisateur : prix mensuel / annuel (devise XOF et EUR),
+      essai gratuit ou non, contenu exact du premium
+- [ ] Play Console : créer le COMPTE MARCHAND (profil de paiement Google, vérification
+      de plusieurs jours, à lancer en premier)
+- [ ] Play Console : créer les produits d'abonnement (mensuel, annuel) et leurs prix
+- [ ] RevenueCat : projet, app Android liée, accès API Play (compte de service Google
+      Cloud), entitlement « premium », offering
+- [ ] Plugin `@revenuecat/purchases-capacitor` : version compatible Capacitor 6 à
+      vérifier avant installation (règle CLAUDE.md)
+- [ ] Edge Function `payment-webhook` : vérification de l'authentification du webhook
+      RevenueCat, mise à jour is_premium / premium_expires / premium_source='google_iap',
+      gestion achat, renouvellement, annulation, expiration, remboursement. Ajouter
+      'google_iap' à la contrainte CHECK de premium_source si absent.
+- [ ] Cohabitation avec le premium de PARRAINAGE : garder la date la plus lointaine,
+      ne jamais raccourcir un abonnement payé (même règle que le parrainage)
+- [ ] ⚠️ Plafond Guide IA premium : DÉCIDÉ 50 messages/jour (utilisateur, 2026-11-07).
+      Aujourd'hui le premium est ILLIMITÉ (ai-chat et quiz-chapter) : appliquer ce
+      plafond côté serveur pour maîtriser les coûts OpenRouter.
+- [ ] Écran Paywall (`PaywallView`) : offres, prix réels lus depuis Google Play,
+      bouton d'achat, « Restaurer mes achats », liens CGU et confidentialité, gestion
+      de l'abonnement (lien vers Google Play)
+- [ ] Points d'entrée vers le paywall : quota IA atteint, quiz épuisé, Réglages, Plus
+- [ ] Tests : comptes testeurs de licence Play Console (achats sans débit réel),
+      cycle complet achat → webhook → premium → pubs coupées → expiration
+- [ ] Conformité : questionnaire IARC à refaire (achats numériques = OUI), formulaire
+      Sécurité des données (historique d'achats), CGU (abonnement, renouvellement,
+      résiliation, remboursement) et politique de confidentialité (RevenueCat, Google
+      Play) à mettre à jour sur toabide.online
+- [ ] Fiche Play Store : mention « Achats intégrés » apparaîtra automatiquement
+
+### D. Nouvelles fonctionnalités (à décider)
+- [ ] Revue de l'app avec l'utilisateur pour choisir les ajouts, notamment ce qui rend
+      le premium attractif (voix TTS des réponses IA, audio hors ligne, plans exclusifs…)
+
+### Rappels techniques déjà planifiés
+- [ ] versionCode 7 minimum pour la prochaine version (6 est publié)
+- [ ] R8 / obscurcissement : échéance Google février 2027
+- [ ] SDK AdMob v23 : mettre à jour avant le 30 juin 2027
+- [ ] Affichage bord à bord (recommandation Play Console)
+- [ ] Suivi des coûts OpenRouter / Supabase (encore plus important avec le payant)
+
+---
+
 ## ✅ ÉTAT AU 2026-10-12 : version 6 (1.4) PUBLIÉE en production (envoi n°6, 21:27)
 
 > - [x] Pubs : cause trouvée (bloc « Enchères partenaires »), nouveau bloc Standard
