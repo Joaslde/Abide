@@ -18,6 +18,7 @@
  */
 
 import Database from 'better-sqlite3'
+import { CANON, OT_COUNT, NAMES_EN, NAMES_FR, NAMES_ES } from './bible-canon.js'
 import { mkdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -25,42 +26,8 @@ import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 
-// Ordre canonique des 66 livres (id partagé). Les noms sont par langue.
-const CANON = [
-  'GEN','EXO','LEV','NUM','DEU','JOS','JDG','RUT','1SA','2SA','1KI','2KI',
-  '1CH','2CH','EZR','NEH','EST','JOB','PSA','PRO','ECC','SNG','ISA','JER',
-  'LAM','EZK','DAN','HOS','JOL','AMO','OBA','JON','MIC','NAM','HAB','ZEP',
-  'HAG','ZEC','MAL','MAT','MRK','LUK','JHN','ACT','ROM','1CO','2CO','GAL',
-  'EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB','JAS','1PE',
-  '2PE','1JN','2JN','3JN','JUD','REV'
-]
-const OT_COUNT = 39 // les 39 premiers = Ancien Testament
 
-// Noms anglais (KJV) dans l'ordre canonique.
-const NAMES_EN = [
-  'Genesis','Exodus','Leviticus','Numbers','Deuteronomy','Joshua','Judges','Ruth',
-  '1 Samuel','2 Samuel','1 Kings','2 Kings','1 Chronicles','2 Chronicles','Ezra',
-  'Nehemiah','Esther','Job','Psalms','Proverbs','Ecclesiastes','Song of Solomon',
-  'Isaiah','Jeremiah','Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
-  'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah','Haggai','Zechariah',
-  'Malachi','Matthew','Mark','Luke','John','Acts','Romans','1 Corinthians',
-  '2 Corinthians','Galatians','Ephesians','Philippians','Colossians',
-  '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy','Titus','Philemon',
-  'Hebrews','James','1 Peter','2 Peter','1 John','2 John','3 John','Jude','Revelation'
-]
 
-// Noms français (Darby, etc.) dans l'ordre canonique.
-const NAMES_FR = [
-  'Genèse','Exode','Lévitique','Nombres','Deutéronome','Josué','Juges','Ruth',
-  '1 Samuel','2 Samuel','1 Rois','2 Rois','1 Chroniques','2 Chroniques','Esdras',
-  'Néhémie','Esther','Job','Psaumes','Proverbes','Ecclésiaste','Cantique des Cantiques',
-  'Ésaïe','Jérémie','Lamentations','Ézéchiel','Daniel','Osée','Joël','Amos',
-  'Abdias','Jonas','Michée','Nahoum','Habacuc','Sophonie','Aggée','Zacharie',
-  'Malachie','Matthieu','Marc','Luc','Jean','Actes','Romains','1 Corinthiens',
-  '2 Corinthiens','Galates','Éphésiens','Philippiens','Colossiens',
-  '1 Thessaloniciens','2 Thessaloniciens','1 Timothée','2 Timothée','Tite','Philémon',
-  'Hébreux','Jacques','1 Pierre','2 Pierre','1 Jean','2 Jean','3 Jean','Jude','Apocalypse'
-]
 
 // Catalogue des versions générables.
 const VERSIONS = {
@@ -105,10 +72,30 @@ const VERSIONS = {
     language: 'fr',
     apiKey: 'martin',
     names: NAMES_FR
+  },
+  akjv: {
+    id: 'AKJV',
+    name: 'American King James Version',
+    language: 'en',
+    apiKey: 'akjv',
+    names: NAMES_EN
+  },
+  sse: {
+    id: 'SSE_ES',
+    name: 'Sagradas Escrituras 1569',
+    language: 'es',
+    apiKey: 'sse',
+    names: NAMES_ES
   }
   // Note : 'tyndale' (apiKey getbible.net) est partiel — seulement NT + quelques livres AT.
   // Les livres 6–39 retournent 404. Ne pas uploader : mauvaise expérience utilisateur.
   // bbe, neg1979, nbs : introuvables sur getbible.net (404 sur le livre 1).
+}
+
+// Retire les marques de paragraphe (¶) et les espaces multiples laissés par
+// certaines versions de getbible.net (AKJV, Sagradas Escrituras…).
+function cleanText(text) {
+  return text.replace(/¶/g, '').replace(/\s+/g, ' ').trim()
 }
 
 function sleep(ms) {
@@ -195,7 +182,7 @@ async function main() {
       const rows = []
       for (const ch of chapters) {
         for (const v of ch.verses ?? []) {
-          rows.push([cfg.id, bookId, ch.chapter, v.verse, v.text.trim()])
+          rows.push([cfg.id, bookId, ch.chapter, v.verse, cleanText(v.text)])
         }
       }
       const insertMany = db.transaction((vs) => { for (const r of vs) insertVerse.run(...r) })

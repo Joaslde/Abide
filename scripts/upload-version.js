@@ -8,7 +8,12 @@
  * L'app, elle, ne lit que le manifeste + les .db via URL PUBLIQUE.
  *
  * Usage :
- *   node scripts/upload-version.js kjv
+ *   node scripts/upload-version.js kjv          (une version)
+ *   node scripts/upload-version.js bsb rv1909   (plusieurs)
+ *
+ * L'argument est le nom du fichier sans « SQLite.db » (ex. darby_fr). Le nom
+ * affiché et la langue sont lus DANS la base (table versions) : une seule source
+ * de vérité, pas de liste à tenir à jour ici.
  *
  * Prérequis dans .env.local :
  *   CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY, CLOUDFLARE_R2_SECRET_KEY,
@@ -22,6 +27,7 @@ import { readFileSync, statSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
+import Database from 'better-sqlite3'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -35,15 +41,28 @@ const {
   R2_PUBLIC_BASE_URL
 } = process.env
 
-// Métadonnées des versions (doivent matcher generate-version.js).
-const META = {
-  kjv:   { id: 'KJV',      file: 'kjvSQLite.db',      name: 'King James Version',      language: 'en' },
-  web:   { id: 'WEB',      file: 'webSQLite.db',       name: 'World English Bible',     language: 'en' },
-  asv:   { id: 'ASV',      file: 'asvSQLite.db',       name: 'American Standard Version', language: 'en' },
-  darby: { id: 'DARBY_FR', file: 'darby_frSQLite.db', name: 'Darby (Français)',            language: 'fr' },
-  ylt:   { id: 'YLT',     file: 'yltSQLite.db',      name: "Young's Literal Translation", language: 'en' },
-  martin:{ id: 'MARTIN_FR',file: 'martin_frSQLite.db', name: 'Martin 1744 (Français)',   language: 'fr' }
-  // Note : tyndale retiré (partiel sur getbible.net — NT uniquement). bbe/neg1979/nbs absents.
+// Anciennes clés courtes conservées pour compatibilité.
+const ALIASES = { darby: 'darby_fr', martin: 'martin_fr' }
+
+/** Lit id, nom et langue directement dans la base générée. */
+function readMeta(fileBase) {
+  const file = `${fileBase}SQLite.db`
+  const dbPath = join(ROOT, 'dist-bibles', file)
+  if (!existsSync(dbPath)) return null
+  const db = new Database(dbPath, { readonly: true })
+  const row = db.prepare('SELECT id, name, language FROM versions LIMIT 1').get()
+  db.close()
+  return row ? { ...row, file, dbPath } : null
+}
+
+/**
+ * Répare un texte encodé deux fois (UTF-8 relu comme Latin-1, ex. « FranÃ§ais »).
+ * Bug constaté le 2026-11-07 sur les noms du manifeste publié.
+ */
+function fixMojibake(text) {
+  if (typeof text !== 'string' || !/[ÃÂ]/.test(text)) return text
+  const repaired = Buffer.from(text, 'latin1').toString('utf8')
+  return repaired.includes('�') ? text : repaired
 }
 
 const MANIFEST_KEY = 'bibles/manifest.json'
@@ -81,66 +100,56 @@ async function readManifest(client) {
   }
 }
 
-async function main() {
-  const key = process.argv[2]
-  const meta = META[key]
+async function uploadOne(client, manifest, fileBase) {
+  const meta = readMeta(ALIASES[fileBase] ?? fileBase)
   if (!meta) {
-    console.error(`Version inconnue : "${key}". Disponibles : ${Object.keys(META).join(', ')}`)
+    console.error(`❌ Base introuvable pour "${fileBase}" dans dist-bibles/. Génère-la d'abord.`)
     process.exit(1)
   }
-  if (!R2_PUBLIC_BASE_URL) {
-    console.error('❌ R2_PUBLIC_BASE_URL manquant dans .env.local (URL publique du bucket).')
-    console.error('   Active l\'accès public du bucket R2 et colle l\'URL (ex : https://pub-xxxx.r2.dev).')
-    process.exit(1)
-  }
+  const buf = readFileSync(meta.dbPath)
+  const size = statSync(meta.dbPath).size
 
-  const dbPath = join(ROOT, 'dist-bibles', meta.file)
-  if (!existsSync(dbPath)) {
-    console.error(`❌ Fichier introuvable : ${dbPath}\n   Génère-le d'abord : node scripts/generate-version.js ${key}`)
-    process.exit(1)
-  }
-
-  const client = makeClient()
-  const buf = readFileSync(dbPath)
-  const size = statSync(dbPath).size
-
-  // 1. Upload du .db
-  console.log(`⬆️  Upload ${meta.file} (${(size / 1e6).toFixed(1)} Mo) vers R2…`)
+  console.log(`⬆️  ${meta.name} (${meta.id}, ${meta.language}) : ${(size / 1e6).toFixed(1)} Mo…`)
   await client.send(new PutObjectCommand({
     Bucket: CLOUDFLARE_R2_BUCKET,
     Key: dbKey(meta.file),
     Body: buf,
     ContentType: 'application/x-sqlite3'
   }))
-  console.log('   ✓ .db uploadé')
 
-  // 2. Mise à jour du manifeste
-  const manifest = await readManifest(client)
   const publicUrl = `${R2_PUBLIC_BASE_URL.replace(/\/$/, '')}/${dbKey(meta.file)}`
-  const entry = {
-    id: meta.id,
-    name: meta.name,
-    language: meta.language,
-    url: publicUrl,
-    size,
-    updated_at: new Date().toISOString()
-  }
   manifest.versions = [
     ...manifest.versions.filter((v) => v.id !== meta.id),
-    entry
+    { id: meta.id, name: meta.name, language: meta.language, url: publicUrl, size, updated_at: new Date().toISOString() }
   ]
+}
+
+async function main() {
+  const keys = process.argv.slice(2)
+  if (!keys.length) {
+    console.error('Usage : node scripts/upload-version.js <fichier> [<fichier>…]  (ex. bsb rv1909)')
+    process.exit(1)
+  }
+  if (!R2_PUBLIC_BASE_URL) {
+    console.error('❌ R2_PUBLIC_BASE_URL manquant dans .env.local (URL publique du bucket).')
+    process.exit(1)
+  }
+
+  const client = makeClient()
+  const manifest = await readManifest(client)
+  // Réparation des noms déjà abîmés par l'ancien bug d'encodage.
+  manifest.versions = manifest.versions.map((v) => ({ ...v, name: fixMojibake(v.name) }))
+
+  for (const key of keys) await uploadOne(client, manifest, key)
 
   await client.send(new PutObjectCommand({
     Bucket: CLOUDFLARE_R2_BUCKET,
     Key: MANIFEST_KEY,
-    Body: JSON.stringify(manifest, null, 2),
-    ContentType: 'application/json'
+    Body: Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'),
+    ContentType: 'application/json; charset=utf-8'
   }))
-  console.log('   ✓ manifeste mis à jour')
-
-  console.log(`\n✅ ${meta.name} disponible au téléchargement.`)
-  console.log(`   .db       : ${publicUrl}`)
-  console.log(`   manifeste : ${R2_PUBLIC_BASE_URL.replace(/\/$/, '')}/${MANIFEST_KEY}`)
+  console.log(`
+✅ ${keys.length} version(s) publiée(s), manifeste : ${manifest.versions.length} versions.`)
 }
 
 main().catch((e) => {
