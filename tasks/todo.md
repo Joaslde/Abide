@@ -1412,3 +1412,22 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] ⚠️ À TESTER SUR APPAREIL : lire un chapitre → ligne dans Supabase ;
       effacer les données → se reconnecter → tout revient ; sync 2× → 0 doublon
 - [ ] Purger les 740 doublons de reading_plans (APRÈS validation du non-doublonnage)
+
+---
+
+## 🔁 REPRISE DE SESSION (écrit le 2026-11-13)
+
+> État : v1.5 COMMITÉE (ef14df7, « Version 1.5 espagnol et corrections »), NON poussée.
+> Tout le lot A (espagnol, Bibles) et B (bugs, onboarding à 8 questions) est validé sur
+> le Pixel 8 Pro. ai-chat et quiz-chapter sont déployés. Reste le lot C (paiement).
+> `supabase/.temp/cli-latest` est un fichier temporaire de la CLI : ne pas le commiter.
+
+Commandes utiles (Git Bash, depuis la racine du projet) :
+- Build web + sync : `npx vite build && npx cap sync android`
+- APK : `cd android && export JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" && ./gradlew.bat assembleDebug`
+- Installer : `"C:/Users/DELL/AppData/Local/Android/Sdk/platform-tools/adb.exe" install -r android/app/build/outputs/apk/debug/app-debug.apk`
+- Mesurer l'UI sur le téléphone : `adb forward tcp:9333 localabstract:<webview_devtools_remote_PID>` puis DevTools (voir lessons 2026-11-13)
+- Déployer une fonction : `export SUPABASE_ACCESS_TOKEN=$(grep "^ACCESS_TOKEN_SUPABASE=" .env.local | cut -d= -f2 | tr -d '\r')` puis `npx supabase functions deploy <f> --project-ref puzhmjrdhjgzookjptod --yes` (seulement après accord explicite)
+
+Avant l'envoi en examen Google : versionCode >= 7, `bundleRelease`, test des pubs avec
+l'ID de production, fiche espagnole (docs/play-store-es.md).
