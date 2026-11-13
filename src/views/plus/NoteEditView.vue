@@ -286,7 +286,7 @@ ion-button.active { color: var(--gold); }
   cursor: pointer;
 }
 
-/* Bloc citation (versets affichés) — différencié du texte de l'utilisateur. */
+/* Bloc citation (versets affichés), différencié du texte de l'utilisateur. */
 .verse-block {
   display: block;
   margin: var(--space-3) auto;

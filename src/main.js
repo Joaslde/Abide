@@ -19,6 +19,7 @@ import '@ionic/vue/css/display.css'
 
 /* Design system Abide (palette navy/gold, fonts, utilitaires) */
 import './theme/variables.css'
+import './assets/fonts/bible/bible-fonts.css'
 
 import { usePreferencesStore } from './stores/preferences'
 import { useAuthStore } from './stores/auth'
@@ -91,7 +92,7 @@ async function bootstrap() {
   await router.isReady()
 
   // Après un OAuth réussi, router vers onboarding ou l'app (le guard s'en charge ensuite).
-  // (La reprise de lecture, elle, se fait au 1er clic sur l'onglet Bible — TabsLayout.)
+  // (La reprise de lecture, elle, se fait au 1er clic sur l'onglet Bible, TabsLayout.)
   if (cameFromOAuth && auth.isAuthenticated) {
     router.replace(auth.shouldOnboard ? '/onboarding' : '/tabs/immersion')
   }
@@ -103,7 +104,7 @@ async function bootstrap() {
 // Un écran vide est le pire échec possible (l'utilisateur ne peut rien faire,
 // même pas lire sa Bible hors ligne).
 bootstrap().catch((e) => {
-  console.error('[bootstrap] échec — montage de secours :', e)
+  console.error('[bootstrap] échec, montage de secours :', e)
   try {
     app.mount('#app')
   } catch { /* déjà monté */ }

@@ -78,7 +78,7 @@ const auth = useAuthStore()
 const type = computed(() => (route.query.type === 'evening' ? 'evening' : 'morning'))
 const done = computed(() => prayer.momentDoneToday(type.value))
 
-/** Salutation avec prénom (repli gracieux — règle de marque). */
+/** Salutation avec prénom (repli gracieux, règle de marque). */
 const greeting = computed(() => {
   const base = t(`sanctuaire.moment.${type.value}Greeting`)
   return auth.firstName ? `${base}, ${auth.firstName}.` : `${base}.`

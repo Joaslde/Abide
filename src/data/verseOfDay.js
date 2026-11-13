@@ -1,5 +1,5 @@
 /**
- * Verset / passage du jour — 100 % LOCAL (offline).
+ * Verset / passage du jour, 100 % LOCAL (offline).
  *
  * Cycle par jour de l'année : le jour N de l'année affiche VERSES[N].
  * La liste tourne indéfiniment (le 6 juillet montre toujours la même référence),

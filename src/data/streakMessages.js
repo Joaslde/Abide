@@ -1,7 +1,7 @@
 /**
  * Textes variés pour les notifications de streak (Duolingo-like).
  * Plusieurs formulations par situation pour ne jamais répéter la même phrase
- * deux jours de suite — tirage déterministe (même mécanique que prayerPool.js).
+ * deux jours de suite, tirage déterministe (même mécanique que prayerPool.js).
  */
 
 const POOL = {
@@ -15,7 +15,7 @@ const POOL = {
     urgent: [
       { title: 'Ta série de {streak} jours va s’éteindre 🔥', body: 'Il reste 2h avant minuit. Ne laisse pas ta flamme s’éteindre ce soir.' },
       { title: 'Dernière ligne droite ⏳', body: '{streak} jours de série, à deux doigts de s’arrêter. Un chapitre, et c’est sauvé.' },
-      { title: 'Ne laisse pas tomber maintenant', body: 'Bientôt minuit — ta série de {streak} jours ne tient plus qu’à un fil.' },
+      { title: 'Ne laisse pas tomber maintenant', body: 'Bientôt minuit : ta série de {streak} jours ne tient plus qu’à un fil.' },
       { title: 'Il est encore temps 🔥', body: 'Quelques minutes suffisent pour garder tes {streak} jours de série.' }
     ],
     // J+1, J+2, J+3… (indexé par nb de jours écoulés depuis la casse − 1)
@@ -36,14 +36,34 @@ const POOL = {
     urgent: [
       { title: 'Your {streak}-day streak is about to end 🔥', body: '2 hours left before midnight. Don’t let your flame go out tonight.' },
       { title: 'Final stretch ⏳', body: '{streak} days strong, about to stop. One chapter and it’s saved.' },
-      { title: 'Don’t give up now', body: 'Midnight is close — your {streak}-day streak is hanging by a thread.' },
+      { title: 'Don’t give up now', body: 'Midnight is close: your {streak}-day streak is hanging by a thread.' },
       { title: 'There’s still time 🔥', body: 'A few minutes is all it takes to keep your {streak}-day streak.' }
     ],
     lost: [
       { title: 'Your streak has ended', body: 'We miss you! Your {streak}-day streak is waiting for you to come back.' },
-      { title: 'Your streak has ended', body: '{streak} days in a row — that was beautiful. Come back today and start again.' },
+      { title: 'Your streak has ended', body: '{streak} days in a row, that was beautiful. Come back today and start again.' },
       { title: 'Come back anytime', body: 'Your {streak}-day flame went out, but a new one can start right now.' },
       { title: 'The Word is waiting', body: 'It’s been a while. Just one chapter to get going again.' }
+    ]
+  },
+  es: {
+    soft: [
+      { title: 'No olvides tu lectura de hoy', body: 'Tu racha de {streak} días te espera. Bastan unos minutos para mantenerla encendida.' },
+      { title: '¿Un momento para la Palabra?', body: 'Tu llama de {streak} días sigue ardiendo. No dejes que se apague esta noche.' },
+      { title: 'Tu racha piensa en ti', body: '{streak} días seguidos es algo precioso. Un capítulo basta para continuar.' },
+      { title: 'Un pequeño recordatorio', body: 'Todavía no abriste la Biblia hoy. Tu racha de {streak} días cuenta contigo.' }
+    ],
+    urgent: [
+      { title: 'Tu racha de {streak} días está por apagarse 🔥', body: 'Quedan 2 horas antes de la medianoche. No dejes que tu llama se apague esta noche.' },
+      { title: 'Último tramo ⏳', body: '{streak} días de racha, a punto de detenerse. Un capítulo y está salvada.' },
+      { title: 'No te rindas ahora', body: 'Ya casi es medianoche: tu racha de {streak} días pende de un hilo.' },
+      { title: 'Todavía hay tiempo 🔥', body: 'Bastan unos minutos para conservar tus {streak} días de racha.' }
+    ],
+    lost: [
+      { title: 'Tu racha se detuvo', body: '¡Te extrañamos! Tu racha de {streak} días espera que vuelvas.' },
+      { title: 'Tu racha se detuvo', body: '{streak} días seguidos, fue hermoso. Vuelve hoy y empieza de nuevo.' },
+      { title: 'Vuelve cuando quieras', body: 'Tu llama de {streak} días se apagó, pero una nueva puede empezar ahora mismo.' },
+      { title: 'La Palabra te espera', body: 'Ha pasado un tiempo. Un solo capítulo basta para volver a empezar.' }
     ]
   }
 }

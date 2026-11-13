@@ -43,7 +43,7 @@
           <label>
             <span>{{ t('notes.picker.to') }}</span>
             <select v-model.number="vEnd">
-              <option :value="0">—</option>
+              <option :value="0">-</option>
               <option v-for="v in verseCount" :key="v" :value="v">{{ v }}</option>
             </select>
           </label>

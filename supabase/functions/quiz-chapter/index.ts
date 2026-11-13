@@ -6,7 +6,7 @@
 //   3. On lit le VRAI texte du chapitre depuis bible_embeddings (source de vérité)
 //      → l'IA travaille sur le texte réel, pas sa mémoire → zéro hallucination
 //   4. OpenRouter renvoie un JSON strict : 5 questions × 4 options × 1 bonne réponse
-//   5. Validation STRICTE du JSON (tout output LLM est hostile — SECURITY.md §6)
+//   5. Validation STRICTE du JSON (tout output LLM est hostile : SECURITY.md §6)
 //
 // QUOTA (2026-07-25) : quota quotidien de quiz vérifié AVANT tout appel LLM
 //    (colonnes ai_sessions.quiz_used / quiz_limit, compteur SÉPARÉ du Guide).
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-    // — Auth : on identifie l'utilisateur via son JWT —
+    // Auth : on identifie l'utilisateur via son JWT, 
     const authHeader = req.headers.get('Authorization') ?? ''
     const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } }
@@ -117,17 +117,20 @@ Deno.serve(async (req) => {
     const user = userData?.user
     if (!user) return json({ error: 'unauthorized' }, 401)
 
-    // — Input (tout input client est hostile : SECURITY.md §6) —
+    // Input (tout input client est hostile : SECURITY.md §6), 
     const body = await req.json()
     const bookId = String(body?.bookId ?? '').toUpperCase()
     const chapter = Number(body?.chapter)
+    // Langue de l'app : whitelist, repli français (SECURITY.md §6).
+    const QUIZ_LANGUAGES: Record<string, string> = { fr: 'français', en: 'anglais', es: 'espagnol' }
+    const quizLanguage = QUIZ_LANGUAGES[String(body?.uiLocale ?? '')] ?? QUIZ_LANGUAGES.fr
     if (!VALID_BOOKS.has(bookId)) return json({ error: 'bad_request' }, 400)
     if (!Number.isInteger(chapter) || chapter < 1 || chapter > 150) return json({ error: 'bad_request' }, 400)
 
     // service_role : lecture serveur (bible_embeddings = contenu public).
     const admin = createClient(supabaseUrl, serviceKey)
 
-    // — QUOTA QUIZ QUOTIDIEN (avant TOUT appel LLM → un refus coûte 0) —
+    // QUOTA QUIZ QUOTIDIEN (avant TOUT appel LLM → un refus coûte 0), 
     // Compteur SÉPARÉ de celui du Guide (colonnes quiz_used/quiz_limit sur la
     // même ligne du jour) : épuiser ses quiz ne bloque pas le Guide, et inversement.
     // Premium actif (aujourd'hui obtenu par PARRAINAGE, demain par paiement) → illimité.
@@ -171,7 +174,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // — Texte réel du chapitre (source de vérité) —
+    // Texte réel du chapitre (source de vérité), 
     const { data: rows } = await admin
       .from('bible_embeddings')
       .select('verse, text')
@@ -183,7 +186,7 @@ Deno.serve(async (req) => {
 
     const chapterText = rows.map((r: any) => `${r.verse}. ${r.text}`).join('\n')
 
-    // — Prompt : QCM en JSON strict —
+    // Prompt : QCM en JSON strict, 
     const sys = `Tu es un concepteur de quiz biblique pour une application de lecture. À partir du TEXTE EXACT d'un chapitre de la Bible (fourni ci-dessous), tu génères un QCM pour vérifier la compréhension de ce que la personne vient de lire.
 
 RÈGLES ABSOLUES :
@@ -191,16 +194,17 @@ RÈGLES ABSOLUES :
 - Chaque question a EXACTEMENT ${OPTION_COUNT} propositions de réponse, dont UNE SEULE correcte.
 - Les questions portent UNIQUEMENT sur le contenu du chapitre fourni (faits, personnages, paroles, enchaînement, sens). N'invente RIEN qui ne soit dans le texte.
 - Les mauvaises réponses (distracteurs) doivent être plausibles mais clairement fausses au regard du texte.
-- Français clair, questions courtes, ton bienveillant. Pas de piège tordu.
+- Rédige les questions ET les quatre réponses en ${quizLanguage}, même si le texte du chapitre fourni est dans une autre langue. Langue claire, questions courtes, ton bienveillant. Pas de piège tordu.
+- N'utilise JAMAIS de tiret cadratin (—) ni de tiret demi-cadratin (–) : virgule, deux-points ou parenthèses à la place.
 - Ne cite pas les numéros de versets dans les questions (la personne teste sa mémoire du chapitre, pas sa capacité à retrouver un verset).
 
-VARIÉTÉ (TRÈS IMPORTANT) — la personne peut REFAIRE le quiz plusieurs fois sur le même chapitre :
+VARIÉTÉ (TRÈS IMPORTANT) : la personne peut REFAIRE le quiz plusieurs fois sur le même chapitre :
 - À CHAQUE génération, produis des questions DIFFÉRENTES des quiz précédents possibles. Évite de reposer systématiquement les mêmes questions "évidentes".
 - Puise dans des ANGLES variés : un fait précis, un personnage et son rôle, une parole/citation et qui la prononce, une cause et sa conséquence, l'ordre des événements, une intention ou un sens, un détail secondaire souvent négligé.
 - Reformule, change les tournures, explore différentes parties du chapitre. Deux quiz du même chapitre ne doivent PAS se ressembler.
 - Utilise la graine de variété ci-dessous pour choisir un angle d'attaque différent (ne la mentionne jamais dans les questions).
 
-FORMAT DE SORTIE — un objet JSON STRICT, rien d'autre :
+FORMAT DE SORTIE : un objet JSON STRICT, rien d'autre :
 {
   "questions": [
     { "question": "…", "options": ["…","…","…","…"], "correctIndex": 0 }
@@ -232,7 +236,7 @@ FORMAT DE SORTIE — un objet JSON STRICT, rien d'autre :
     const questions = validateQuiz(parsed)
     if (!questions) return json({ error: 'generation_failed' }, 502)
 
-    // — Consommation du quota : SEULEMENT ici, quiz valide en main. Les sorties
+    // Consommation du quota : SEULEMENT ici, quiz valide en main. Les sorties
     //   `generation_failed` ci-dessus partent sans rien décompter : on ne fait
     //   jamais payer un échec de génération à l'utilisateur.
     let remaining: number | null = null

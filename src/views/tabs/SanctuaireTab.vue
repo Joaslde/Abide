@@ -29,7 +29,7 @@
 
           <template v-if="fasting.isParticipating">
             <p class="card-text strong">
-              {{ t(`sanctuaire.fasts.${fasting.participation.type}.title`) }} —
+              {{ t(`sanctuaire.fasts.${fasting.participation.type}.title`) }} ·
               {{ t('sanctuaire.fasting.dayOf', { day: fasting.progress.day, total: fasting.progress.total }) }}
             </p>
             <div class="bar"><div class="fill" :style="{ width: fastPercent + '%' }" /></div>
@@ -106,7 +106,7 @@ function openMoment() {
   router.push(`/tabs/sanctuaire/moment?type=${momentType.value}`)
 }
 
-// Rafraîchi à CHAQUE affichage (vue Ionic en cache — lesson 2026-07-09).
+// Rafraîchi à CHAQUE affichage (vue Ionic en cache, lesson 2026-07-09).
 onIonViewWillEnter(async () => {
   await Promise.all([prayer.load(), fasting.load()])
 })

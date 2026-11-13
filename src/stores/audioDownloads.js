@@ -12,7 +12,7 @@ import { getChapterCount } from '@/lib/bible-db'
  * - Fichiers : Directory.Data → audio/{versionId}/{bookId}/{chapter}.mp3
  *   + audio/{versionId}/{bookId}/timestamps.json ({ "1": [{verse,start,end}], … })
  * - Métadonnées persistées dans Preferences (offline-safe, comme les versions
- *   texte — voir lessons 2026-06-26 : métadonnées COMPLÈTES, pas juste des ids).
+ *   texte, voir lessons 2026-06-26 : métadonnées COMPLÈTES, pas juste des ids).
  * - Les URLs BibleBrain /download sont signées/expirantes → on télécharge le
  *   FICHIER immédiatement, on ne stocke jamais l'URL.
  * - Reprise idempotente : un chapitre déjà présent sur disque n'est pas retéléchargé.
@@ -44,7 +44,7 @@ export const useAudioDownloadsStore = defineStore('audioDownloads', () => {
   /** Téléchargement en cours : { key, done, total, percent } ou null. */
   const progress = ref(null)
 
-  /** Estimations de taille (Mo) par bookKey — cache mémoire pour le cercle ⬇. */
+  /** Estimations de taille (Mo) par bookKey, cache mémoire pour le cercle ⬇. */
   const sizeEstimates = ref({})
 
   const totalSizeBytes = computed(() =>
@@ -135,7 +135,7 @@ export const useAudioDownloadsStore = defineStore('audioDownloads', () => {
     progress.value = { key, done: 0, total, percent: 0 }
 
     // Le dossier du livre doit exister AVANT downloadFile (qui ne crée pas les
-    // dossiers parents — DownloadFileOptions n'a pas d'option recursive).
+    // dossiers parents, DownloadFileOptions n'a pas d'option recursive).
     try {
       await Filesystem.mkdir({ path: audioDir(versionId, bookId), directory: Directory.Data, recursive: true })
     } catch { /* existe déjà */ }

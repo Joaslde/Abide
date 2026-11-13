@@ -5,10 +5,10 @@ requises par Google Play (politique de confidentialité, conditions d'utilisatio
 
 ## Fichiers
 
-- `index.html` — page d'accueil
-- `privacy.html` — politique de confidentialité (basée sur `docs/privacy-policy-draft.md`)
-- `terms.html` — conditions d'utilisation
-- `styles.css` — style partagé (palette identique à l'app : or/navy)
+- `index.html`, page d'accueil
+- `privacy.html`, politique de confidentialité (basée sur `docs/privacy-policy-draft.md`)
+- `terms.html`, conditions d'utilisation
+- `styles.css`, style partagé (palette identique à l'app : or/navy)
 
 ## Déployer
 
@@ -23,7 +23,7 @@ Ce dossier est 100 % statique : aucun build, aucune dépendance. Déployable tel
 Hébergé sur Vercel, connecté au dépôt du projet (dossier `landing/` sélectionné
 comme racine de déploiement).
 
-- URL finale : `https://toabide.online/` — DNS en cours de propagation
+- URL finale : `https://toabide.online/`, DNS en cours de propagation
 - URL provisoire (déjà fonctionnelle) : `https://abide-ivory-three.vercel.app/`
 
 | Page | URL finale | URL provisoire |
@@ -34,17 +34,17 @@ comme racine de déploiement).
 | Conditions | `https://toabide.online/terms.html` | `https://abide-ivory-three.vercel.app/terms.html` |
 
 `vercel.json` (`cleanUrls: false`) est nécessaire : sans lui, Vercel redirige toutes
-les pages secondaires vers `/` (comportement SPA par défaut) — bug rencontré et
+les pages secondaires vers `/` (comportement SPA par défaut), bug rencontré et
 corrigé le 2026-07-27, cf. tasks/lessons.md.
 
 Ces URLs sont câblées dans `src/views/settings/SettingsView.vue` (FAQ/CGU/confidentialité,
-via `@capacitor/browser`) avec l'URL **finale** (`toabide.online`) — à vérifier une fois
+via `@capacitor/browser`) avec l'URL **finale** (`toabide.online`), à vérifier une fois
 le DNS propagé.
 
 ## À faire avant publication définitive
 
 - [ ] Vérifier que `https://toabide.online/` répond bien (DNS propagé) avant la
-      soumission Google Play — sinon utiliser temporairement l'URL Vercel provisoire
+      soumission Google Play, sinon utiliser temporairement l'URL Vercel provisoire
       dans la fiche Play Console et dans l'app
 - [ ] Mettre à jour le lien Google Play dans `index.html` une fois l'app publiée
       (actuellement pointe vers `com.toabide.app`, correct si l'app est publiée sous cet id)

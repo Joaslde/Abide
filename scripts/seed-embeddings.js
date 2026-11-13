@@ -3,7 +3,7 @@
  * Génère les embeddings des versets de la LSG 1910 et les insère dans
  * bible_embeddings (Supabase, pgvector) pour le RAG du Guide IA.
  *
- * ⚠️ LOCAL UNIQUEMENT — utilise la clé service_role Supabase (.env.local).
+ * ⚠️ LOCAL UNIQUEMENT, utilise la clé service_role Supabase (.env.local).
  * Cette clé BYPASSE le RLS → jamais dans l'app.
  *
  * Embeddings : Hugging Face Inference API (gratuit), modèle multilingue

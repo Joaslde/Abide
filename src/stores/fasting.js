@@ -10,7 +10,7 @@ import {
 import { localDateStr } from '@/stores/streak'
 
 /**
- * Sanctuaire — tracker de jeûne.
+ * Sanctuaire, tracker de jeûne.
  * Le CALENDRIER (jours de jeûne chrétiens) est calculé (fastingCalendar, pur).
  * La PARTICIPATION de l'utilisateur est locale (user-db, table fasting).
  */

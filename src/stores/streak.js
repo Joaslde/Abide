@@ -6,7 +6,13 @@ import {
 import { pushUserData } from '@/lib/sync'
 import { scheduleStreakWarning, scheduleStreakLostFollowUp, cancelStreakLostFollowUp } from '@/lib/notifications'
 
-/** Date locale 'YYYY-MM-DD' (pas UTC — le streak suit le fuseau de l'utilisateur). */
+/** Date locale 'YYYY-MM-DD' (pas UTC, le streak suit le fuseau de l'utilisateur). */
+/**
+ * Palier à partir duquel la flamme s'embrase (plus grande, animée, braises) :
+ * une série de 10 jours mérite d'être célébrée (demande du 2026-11-12).
+ */
+export const STREAK_BLAZE_FROM = 10
+
 export function localDateStr(d = new Date()) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -120,7 +126,7 @@ export const useStreakStore = defineStore('streak', () => {
 
   /**
    * Enregistre une activité aujourd'hui (règle permissive : OUVRIR un chapitre
-   * suffit — pas besoin de le cocher « lu »). On persiste le jour dans
+   * suffit, pas besoin de le cocher « lu »). On persiste le jour dans
    * activity_days (source de vérité, immuable) PUIS on recalcule la série
    * depuis l'historique complet.
    * On détecte le 1er passage du jour pour déclencher l'overlay Lottie une fois.

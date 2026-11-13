@@ -4,12 +4,12 @@
  *   node scripts/fetch-verse-backgrounds.js
  *
  * Source : Unsplash (licence gratuite, usage commercial autorisé, sans
- * attribution obligatoire — https://unsplash.com/license).
+ * attribution obligatoire, https://unsplash.com/license).
  *
  * POURQUOI SI PETIT ? Les images sont AFFICHÉES ASSOMBRIES DERRIÈRE DU TEXTE
  * dans une carte d'environ 350×190 pt. On peut donc compresser très fort sans
  * que ça se voie : ~45 Ko/image en WebP au lieu de ~2 Mo pour l'original.
- * 40 images ≈ 1,8 Mo bundlés — acceptable pour du 100 % offline.
+ * 40 images ≈ 1,8 Mo bundlés, acceptable pour du 100 % offline.
  *
  * ⚠️ REVUE HUMAINE OBLIGATOIRE : le script ne peut pas juger du CONTENU des
  * photos. Après exécution, ouvrir src/assets/backgrounds/ et supprimer toute
@@ -33,7 +33,7 @@ const HEIGHT = 420
 const QUALITY = 68 // WebP : au-delà, le gain visuel est nul sur une image sombre
 
 /**
- * Photos Unsplash — paysages inspirants (montagnes, mer, aube, vallées,
+ * Photos Unsplash, paysages inspirants (montagnes, mer, aube, vallées,
  * déserts, forêts, ciels). IDs stables (permaliens Unsplash).
  */
 const PHOTO_IDS = [
@@ -116,7 +116,7 @@ async function main() {
       console.log(`✓ ${name}  ${kb} Ko`)
     } catch (e) {
       // On continue : une photo retirée d'Unsplash ne doit pas tout arrêter.
-      console.warn(`✗ ${id} — ${e.message}`)
+      console.warn(`✗ ${id}, ${e.message}`)
     }
   }
 

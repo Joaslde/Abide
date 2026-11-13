@@ -1,5 +1,5 @@
 /**
- * AdMob — publicités INTERSTITIELLES uniquement (modèle YouVersion).
+ * AdMob, publicités INTERSTITIELLES uniquement (modèle YouVersion).
  *
  * Pas de bannières. Une pub plein écran (parfois vidéo, passable après ~5s)
  * apparaît sur certains déclencheurs, jamais pendant un moment protégé.
@@ -11,7 +11,7 @@
  *
  * RÈGLES : jamais si isPremium ; une pub qui échoue ne bloque JAMAIS l'accès.
  * La vérification !isPremium est faite par le STORE (ads.js) qui appelle ces
- * fonctions — ce module reste bas niveau (il ignore l'état premium).
+ * fonctions, ce module reste bas niveau (il ignore l'état premium).
  *
  * IDs de test Google (officiels, safe à committer) tant que VITE_ADMOB_* absents.
  * @see https://developers.google.com/admob/android/test-ads
@@ -41,14 +41,21 @@ export async function initAdMob() {
  * Prépare puis montre un interstitiel. Résout après fermeture de la pub (ou
  * immédiatement si indisponible). Ne lève JAMAIS : l'accès à la fonctionnalité
  * appelante ne doit jamais dépendre d'une pub.
+ * @param {() => boolean} canShow  revérifié juste avant l'affichage
+ * @returns {Promise<boolean>} true si la pub a réellement été affichée
  */
-export async function showInterstitial() {
-  if (!isNative) return
+export async function showInterstitial(canShow = () => true) {
+  if (!isNative) return false
   await initAdMob()
   try {
     await AdMob.prepareInterstitial({ adId: INTERSTITIAL_ID, isTesting: IS_TESTING })
+    // Le chargement prend une à trois secondes : l'utilisateur a pu ouvrir un
+    // chapitre ou l'onboarding entre-temps. On revérifie AU MOMENT d'afficher.
+    if (!canShow()) return false
     await AdMob.showInterstitial()
+    return true
   } catch {
     /* pub indisponible (réseau, inventaire) → silencieux, on n'empêche rien */
+    return false
   }
 }

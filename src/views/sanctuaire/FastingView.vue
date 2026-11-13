@@ -42,7 +42,7 @@
             <span class="block-label">{{ t('sanctuaire.fasting.nextLabel') }}</span>
             <p class="big">{{ t(`sanctuaire.fasts.${fasting.upcomingFast.type}.title`) }}</p>
             <p class="sub">
-              {{ t('sanctuaire.fasting.startsIn', { days: daysUntil }) }} —
+              {{ t('sanctuaire.fasting.startsIn', { days: daysUntil }) }}.
               {{ t(`sanctuaire.fasts.${fasting.upcomingFast.type}.desc`) }}
             </p>
           </template>

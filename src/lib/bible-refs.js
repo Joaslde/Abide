@@ -65,12 +65,12 @@ export const REF_REGEX_VERBOSE =
  * Regex CHAPITRE SEUL : « Matthieu 6 », « 1 Corinthiens 13 », « Psaume 23 ».
  *
  * Sans elle, l'IA qui renvoie vers un chapitre entier (et non un verset précis)
- * produisait un texte NON cliquable — alors que c'est justement le cas où la
+ * produisait un texte NON cliquable, alors que c'est justement le cas où la
  * personne veut lire tout le passage.
  *
  * ⚠️ Deux garde-fous indispensables contre les faux positifs :
  *  - `(?![\s]*[.:]\s*\d)` : si un verset suit (« Jean 3.16 »), on laisse la
- *    regex compacte gérer — sinon on capturerait « Jean 3 » et casserait le lien.
+ *    regex compacte gérer, sinon on capturerait « Jean 3 » et casserait le lien.
  *  - `(?!\s*\d)` : évite d'avaler un second nombre (« Jean 3 16 »).
  * Le filtrage final par BOOK_CODES écarte de toute façon « page 5 », « article 3 ».
  */
@@ -111,7 +111,7 @@ export function splitByRefs(text) {
       // Livres numérotés (1 Jean, 2 Timothée, 1 Corinthiens…) : le mot qui
       // précède peut avoir absorbé le chiffre au tour précédent (« Lire 1 »),
       // si bien que ce match démarre sur « Jean » sans son « 1 ». On regarde
-      // donc le TEXTE SOURCE juste avant le match — la capture, elle, ne
+      // donc le TEXTE SOURCE juste avant le match, la capture, elle, ne
       // contient plus le chiffre. Sans ça « Lire 1 Jean 4 » donnait JHN 4.
       const before = /([123])\s+$/.exec(text.slice(0, m.index))
       if (before) {

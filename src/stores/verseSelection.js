@@ -16,9 +16,9 @@ import { ref, computed } from 'vue'
 export const useVerseSelectionStore = defineStore('verseSelection', () => {
   const active = ref(false) // mode sélection en cours ?
   const context = ref(null) // { versionId, bookId, bookName, chapter }
-  // Map<numéro de verset, texte> — garde le texte pour formater la copie.
+  // Map<numéro de verset, texte>, garde le texte pour formater la copie.
   const selected = ref(new Map())
-  // NOTE : les SURLIGNAGES ne vivent plus ici — ils sont PERSISTÉS dans le
+  // NOTE : les SURLIGNAGES ne vivent plus ici, ils sont PERSISTÉS dans le
   // store userData (SQLite local via user-db.js). Ce store ne gère que la
   // sélection temporaire (responsabilité unique).
 

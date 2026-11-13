@@ -20,7 +20,7 @@
           </button>
         </div>
 
-        <!-- Champ code (optionnel — peut aussi passer d'ici) -->
+        <!-- Champ code (optionnel, peut aussi passer d'ici) -->
         <div v-else class="code-block">
           <ion-input
             v-model="code"
@@ -68,9 +68,9 @@ const submitting = ref(false)
  * Contournement TEMPORAIRE : tant que l'app n'est pas publiée sur le Play
  * Store, le lien OneLink du parrainage ne peut pas être testé (AppsFlyer
  * redirige vers une fiche Store inexistante). Cette saisie manuelle appelle
- * directement referral-attribute — même Edge Function, même garanties
+ * directement referral-attribute, même Edge Function, même garanties
  * (idempotente via la contrainte UNIQUE referred_id, whitelist de format,
- * anti auto-parrainage) — sans dépendre du mécanisme d'attribution
+ * anti auto-parrainage), sans dépendre du mécanisme d'attribution
  * automatique côté auth.js, qui a déjà tenté sa seule tentative à
  * l'inscription (avant que l'onboarding, donc ce code, n'existe).
  */

@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from '@ionic/vue-router'
+import { isAdProtectedPath } from '@/lib/ad-rules'
 import { useAuthStore } from '@/stores/auth'
 import { usePreferencesStore } from '@/stores/preferences'
 import { isOnlineCached } from '@/lib/network'
@@ -64,7 +65,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    // Code de parrainage éventuel — AVANT le quiz. Contournement temporaire du
+    // Code de parrainage éventuel, AVANT le quiz. Contournement temporaire du
     // lien OneLink (non fonctionnel tant que l'app n'est pas publiée) : la
     // personne invitée peut saisir le code manuellement ici.
     path: '/onboarding/referral',
@@ -89,15 +90,15 @@ const routes = [
     children: [
       { path: '', redirect: '/tabs/home' },
       {
-        // Accueil : verset du jour + streak + plan — données locales, invité OK.
+        // Accueil : verset du jour + streak + plan, données locales, invité OK.
         path: 'home',
         component: () => import('@/views/tabs/HomeView.vue')
       },
       {
-        // Immersion (Bible/lecture) — accessible aux invités.
+        // Immersion (Bible/lecture), accessible aux invités.
         // Toutes les sous-routes du lecteur vivent SOUS l'onglet : la barre
         // d'onglets reste visible partout et Ionic préserve la pile de l'onglet.
-        // Chaque enfant a son composant (jamais de parent sans composant — lesson).
+        // Chaque enfant a son composant (jamais de parent sans composant, lesson).
         path: 'immersion',
         component: () => import('@/views/tabs/ImmersionTab.vue')
       },
@@ -119,7 +120,7 @@ const routes = [
         component: () => import('@/views/bible/BibleChapterView.vue')
       },
       {
-        // Choix d'un plan de lecture (profil / parcours / custom) — invité OK.
+        // Choix d'un plan de lecture (profil / parcours / custom), invité OK.
         path: 'immersion/plan',
         component: () => import('@/views/plan/PlanChooseView.vue')
       },
@@ -139,7 +140,7 @@ const routes = [
         component: () => import('@/views/plan/PlanDetailView.vue')
       },
       {
-        // Sanctuaire (prière + jeûne) — LOCAL-FIRST : accessible aux invités
+        // Sanctuaire (prière + jeûne), LOCAL-FIRST : accessible aux invités
         // et hors ligne (comme la Bible et Plus). Pas de requiresAuth.
         path: 'sanctuaire',
         component: () => import('@/views/tabs/SanctuaireTab.vue')
@@ -168,7 +169,7 @@ const routes = [
         meta: { requiresAuth: true }
       },
       {
-        // « Plus » : notes, signets, surlignés — données 100 % locales,
+        // « Plus » : notes, signets, surlignés, données 100 % locales,
         // accessible aux invités (offline-first).
         path: 'plus',
         component: () => import('@/views/tabs/PlusTab.vue')
@@ -203,7 +204,7 @@ const routes = [
     redirect: '/tabs/immersion'
   },
   {
-    // Audio Bible — accessible aux invités
+    // Audio Bible, accessible aux invités
     path: '/audio',
     component: () => import('@/views/audio/AudioPlayerView.vue')
   },
@@ -230,6 +231,16 @@ const routes = [
     component: () => import('@/views/settings/SettingsView.vue')
   },
   {
+    // Parrainage ouvert DEPUIS LES RÉGLAGES (page hors onglets). Pousser
+    // /tabs/plus/referral depuis /settings faisait parfois restaurer la racine de
+    // l'onglet Plus par Ionic au lieu d'ouvrir la page (bug 2026-11-12). Même vue,
+    // route de premier niveau ; les accès depuis l'intérieur des onglets gardent
+    // /tabs/plus/referral.
+    path: '/settings/referral',
+    component: () => import('@/views/plus/ReferralView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     // Langue et réglages de lecture Bible = locaux → invités OK.
     path: '/settings/language',
     component: () => import('@/views/settings/LanguageView.vue')
@@ -237,6 +248,11 @@ const routes = [
   {
     path: '/settings/bible',
     component: () => import('@/views/settings/BibleSettingsView.vue')
+  },
+  {
+    // Heures des rappels du jour : réglages locaux → invités OK.
+    path: '/settings/notifications',
+    component: () => import('@/views/settings/NotificationSettingsView.vue')
   },
   {
     // Profil (infos identitaires + actions compte) → réservé aux connectés.
@@ -280,7 +296,7 @@ router.beforeEach(async (to) => {
   const onAuthFlow = to.path.startsWith('/auth') || to.path.startsWith('/onboarding') || to.path === '/welcome'
 
   // ── HORS LIGNE : quoi qu'il arrive (session ou non), on va à l'Accueil ──
-  //    (rien de ce qui exige le réseau — Welcome, connexion, onboarding — n'est
+  //    (rien de ce qui exige le réseau, Welcome, connexion, onboarding, n'est
   //    utile sans internet ; la Bible et le reste local restent accessibles).
   //
   // ⚠️ Lecture SYNCHRONE du cache réseau (isOnlineCached), surtout pas `await
@@ -329,7 +345,7 @@ router.beforeEach(async (to) => {
   // → on force l'onboarding. « Plus tard » ne pose aucun flag → reproposé ici.
   // Refusé (snooze actif) OU rempli → shouldOnboard = false → on laisse passer (Accueil).
   // « Plus tard » (onboardingPostponed) libère la navigation pour cette session
-  // uniquement — au prochain démarrage le flag est perdu et le quiz revient.
+  // uniquement, au prochain démarrage le flag est perdu et le quiz revient.
   if (authStore.shouldOnboard && !onboardingPostponed && !to.path.startsWith('/onboarding')) {
     return '/onboarding'
   }
@@ -340,22 +356,16 @@ router.beforeEach(async (to) => {
  * Après chaque transition « neutre », on tente une pub (le store applique le
  * cooldown de 4 min et la règle !isPremium). On EXCLUT les écrans protégés
  * (lecture Bible, prière guidée) et l'Ancre/IA qui a son propre déclencheur
- * à l'ouverture (onOpenAiGuide) — sinon on doublerait la pub.
+ * à l'ouverture (onOpenAiGuide), sinon on doublerait la pub.
  */
-const AD_PROTECTED_PREFIXES = [
-  '/tabs/immersion/book/', // lecture d'un chapitre (le texte biblique)
-  '/tabs/sanctuaire/moment', // prière guidée du matin/soir
-  '/tabs/ancre', // Guide IA : pub gérée à l'ouverture, pas via la navigation
-  '/auth', '/onboarding', '/welcome'
-]
 router.afterEach((to) => {
-  if (AD_PROTECTED_PREFIXES.some((p) => to.path.startsWith(p))) return
+  if (isAdProtectedPath(to.path)) return
   // Import paresseux : évite un cycle router ↔ store au chargement du module.
   import('@/stores/ads').then(({ useAdsStore }) => useAdsStore().onNavigation())
 })
 
 /**
- * Reprise de lecture — au 1er CLIC sur l'onglet Bible de la session (pas au
+ * Reprise de lecture, au 1er CLIC sur l'onglet Bible de la session (pas au
  * démarrage : l'app s'ouvre normalement). Consommé une seule fois : les clics
  * suivants gardent le comportement Ionic normal (retour à la racine de l'onglet).
  * Retourne le chemin du dernier chapitre lu, ou null.

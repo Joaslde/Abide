@@ -38,7 +38,7 @@
             class="item tappable"
             @click="prefs.setBibleFont(f.id)"
           >
-            <span class="label" :style="{ fontFamily: f.stack }">{{ f.label }}</span>
+            <span class="label" :style="{ fontFamily: f.stack }">{{ f.labelKey ? t(f.labelKey) : f.label }}</span>
             <ion-icon v-if="prefs.bibleFont === f.id" class="check" :icon="checkmark" />
           </button>
         </div>
@@ -60,11 +60,13 @@ import { usePreferencesStore } from '@/stores/preferences'
 const { t, locale } = useI18n()
 const prefs = usePreferencesStore()
 
-const sampleVerse = computed(() =>
-  locale.value === 'en'
-    ? '“In the beginning was the Word, and the Word was with God, and the Word was God.” — John 1:1'
-    : '« Au commencement était la Parole, et la Parole était avec Dieu, et la Parole était Dieu. » — Jean 1:1'
-)
+// Verset d'exemple affiché dans l'aperçu de la police, dans la langue de l'app.
+const SAMPLE_VERSES = {
+  fr: '« Au commencement était la Parole, et la Parole était avec Dieu, et la Parole était Dieu. » (Jean 1:1)',
+  en: '“In the beginning was the Word, and the Word was with God, and the Word was God.” (John 1:1)',
+  es: '« En el principio era el Verbo, y el Verbo era con Dios, y el Verbo era Dios. » (Juan 1:1)'
+}
+const sampleVerse = computed(() => SAMPLE_VERSES[locale.value] ?? SAMPLE_VERSES.fr)
 
 function setSize(v) {
   prefs.setBibleFontSize(v)

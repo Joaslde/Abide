@@ -3,7 +3,7 @@
  * Uploade une base de Bible générée (dist-bibles/) vers Cloudflare R2,
  * puis met à jour le manifeste public des versions téléchargeables.
  *
- * ⚠️ LOCAL UNIQUEMENT — utilise les clés secrètes R2 (.env.local).
+ * ⚠️ LOCAL UNIQUEMENT, utilise les clés secrètes R2 (.env.local).
  * Ces clés ne doivent JAMAIS être incluses dans l'app (cf. SECURITY.md).
  * L'app, elle, ne lit que le manifeste + les .db via URL PUBLIQUE.
  *

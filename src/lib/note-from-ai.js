@@ -2,7 +2,7 @@
  * Conversion d'un message du Guide IA → contenu de remarque (Note).
  *
  * L'IA AGIT : l'utilisateur exporte une réponse du Guide dans une note. On veut :
- *   - un texte PROPRE (le Markdown des réponses IA — titres #, gras **, listes —
+ *   - un texte PROPRE (le Markdown des réponses IA, titres #, gras **, listes, 
  *     n'est PAS rendu par l'éditeur de notes, seuls les tags @verset le sont) ;
  *   - les références bibliques citées converties en TAGS de note cliquables,
  *     au format `@[Libellé](CODE.chapitre.verset)` (cf. NoteEditView / TAG_RE).

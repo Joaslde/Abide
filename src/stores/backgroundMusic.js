@@ -7,13 +7,13 @@ import musicUrl from '@/assets/audio/background-calm.mp3'
 /**
  * Musique de fond « récessive » de la lecture audio.
  *
- * Relation ESCLAVE de l'audio Bible (store audio) — jamais l'inverse :
+ * Relation ESCLAVE de l'audio Bible (store audio), jamais l'inverse :
  *   - audio Bible play  → la musique play (volume bas, en boucle)
  *   - audio Bible pause → la musique pause
  *   - audio Bible stop  (currentUrl = null) → la musique s'arrête
  *   - bouton on/off dédié : coupe la musique SEULE (l'audio Bible continue)
  * Pas de contrôle écran verrouillé : ce n'est qu'un fond, pas un player à part.
- * Un simple <audio loop> HTML5 à faible volume — aucun plugin natif requis.
+ * Un simple <audio loop> HTML5 à faible volume, aucun plugin natif requis.
  */
 const KEY = 'abide.bgmusic.enabled'
 const VOLUME = 0.24 // volume bas : accompagne sans couvrir la voix

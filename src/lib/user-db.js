@@ -536,9 +536,9 @@ export async function readChaptersFor(_versionId, bookId) {
  *
  * ⚠️ Table distincte de reading_progress À DESSEIN : ouvrir la Bible est un FAIT
  * (règle permissive du streak), alors que « chapitre lu » est un choix explicite
- * et RÉVOCABLE. Les mélanger faisait qu'un jour sans chapitre coché valait 0 —
+ * et RÉVOCABLE. Les mélanger faisait qu'un jour sans chapitre coché valait 0, 
  * et que décocher un chapitre aurait effacé un jour de série passé.
- * @param {string} day  'YYYY-MM-DD' (date LOCALE — le streak suit le fuseau user)
+ * @param {string} day  'YYYY-MM-DD' (date LOCALE, le streak suit le fuseau user)
  */
 export async function markActiveDay(day) {
   await initUserDb()
@@ -621,7 +621,7 @@ export async function setStreak({ current_streak, longest_streak, last_active })
  * Résultat de quiz GLOBAL par chapitre (comme reading_progress : le contenu du
  * chapitre est le même quelle que soit la version → les ids de livres sont
  * canoniques). On ne garde QUE le meilleur score (rejouer ne fait jamais perdre
- * d'étoiles — décision utilisateur 2026-07-10).
+ * d'étoiles, décision utilisateur 2026-07-10).
  *
  * ⚠️ TODO(sync) : purement local pour l'instant, comme reading_progress dont la
  * sync Supabase est reportée (cf. sync.js). À pousser par lots plus tard.
@@ -644,7 +644,7 @@ export async function getQuizResult(bookId, chapter) {
 /**
  * Enregistre un résultat de quiz SI c'est un nouveau record (score strictement
  * supérieur au meilleur enregistré). Retourne le résultat CONSERVÉ { score,
- * stars, isBest } — isBest=true si ce résultat vient de battre l'ancien.
+ * stars, isBest }, isBest=true si ce résultat vient de battre l'ancien.
  */
 export async function saveQuizResult(bookId, chapter, score, stars) {
   await initUserDb()
@@ -850,7 +850,7 @@ const USER_TABLES = [
 /**
  * Efface TOUTES les données utilisateur locales (suppression de compte RGPD).
  * Vide chaque table (natif) ou clé localStorage (web) sans supprimer la base
- * elle-même — les tables restent prêtes à être réutilisées si l'utilisateur
+ * elle-même, les tables restent prêtes à être réutilisées si l'utilisateur
  * recrée un compte. La Bible (base read-only séparée) n'est jamais touchée.
  */
 export async function clearAllLocalData() {
@@ -924,7 +924,7 @@ export async function listAllActivityDays() {
   return lsRead('activity_days')
 }
 
-/** Tous les plans (actifs et passés) — le cloud garde l'historique. */
+/** Tous les plans (actifs et passés), le cloud garde l'historique. */
 export async function listAllPlans() {
   await initUserDb()
   if (isNative) {

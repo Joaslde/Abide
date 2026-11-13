@@ -41,6 +41,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { WEEKDAY_LETTERS, dateLocale } from '@/i18n'
 import { IonIcon } from '@ionic/vue'
 import { chevronBack, chevronForward } from 'ionicons/icons'
 import { fastsForMonth, isoDate } from '@/data/fastingCalendar'
@@ -62,18 +63,13 @@ function shift(delta) {
 
 const monthLabel = computed(() =>
   new Date(year.value, month.value - 1, 1).toLocaleDateString(
-    locale.value === 'en' ? 'en-US' : 'fr-FR',
+    dateLocale(locale.value),
     { month: 'long', year: 'numeric' }
   )
 )
 
 /** Lun→Dim (cohérent avec la ligne de streak). */
-const dayNames = computed(() => {
-  const base = locale.value === 'en'
-    ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-    : ['L', 'M', 'M', 'J', 'V', 'S', 'D']
-  return base
-})
+const dayNames = computed(() => WEEKDAY_LETTERS[locale.value] ?? WEEKDAY_LETTERS.fr)
 
 const cells = computed(() => {
   const fasts = fastsForMonth(year.value, month.value)

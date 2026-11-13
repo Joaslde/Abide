@@ -11,7 +11,7 @@
  * On expose donc DEUX actions : « Partager » (feuille système, qui contient
  * déjà WhatsApp, Instagram, Facebook et le reste) et « Enregistrer » (l'image
  * atterrit dans Pictures/Abide, visible dans la galerie, prête à être publiée
- * à la main — c'est d'ailleurs le seul chemin fiable pour une story Instagram).
+ * à la main, c'est d'ailleurs le seul chemin fiable pour une story Instagram).
  */
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
@@ -20,7 +20,7 @@ import { Share } from '@capacitor/share'
 /**
  * Plugin natif maison : @capacitor/filesystem ne sait pas écrire dans la
  * galerie. Directory.Documents produit un fichier introuvable depuis Google
- * Photos — la personne croit que le téléchargement a échoué.
+ * Photos, la personne croit que le téléchargement a échoué.
  */
 const Gallery = registerPlugin('Gallery')
 
@@ -61,7 +61,7 @@ export async function shareVerseImage({ base64, reference, text }) {
     await Share.share({
       // `text` accompagne l'image dans les apps qui gèrent les deux (WhatsApp,
       // e-mail). Instagram l'ignore : c'est le comportement normal du système.
-      text: `« ${text} »\n— ${reference}`,
+      text: `« ${text} »\n${reference}`,
       files: [uri],
       dialogTitle: reference
     })

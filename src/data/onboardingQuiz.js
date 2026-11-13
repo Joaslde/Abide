@@ -1,6 +1,6 @@
 /**
  * Configuration centrale du quiz d'onboarding (source de vérité unique).
- * Pilote la vue réutilisable QuizQuestionView — voir docs/onboarding-quiz.md.
+ * Pilote la vue réutilisable QuizQuestionView, voir docs/onboarding-quiz.md.
  *
  * Les LIBELLÉS (questions + options) vivent dans i18n (onboarding.quiz.qN),
  * pas ici. Cette config ne porte que la structure : type, champ DB, scoring.
@@ -12,6 +12,13 @@
 /** Les 4 blocs thématiques (pilotent la barre de progression). */
 export const QUIZ_BLOCKS = ['identity', 'faith', 'bible', 'spiritual']
 
+/**
+ * Questions POSÉES, dans l'ordre. Réduit de 13 à 8 questions le 2026-11-12
+ * (l'onboarding était jugé trop long) : q4 église, q5 durée de foi, q8 repères
+ * bibliques, q10 centres d'intérêt et q13 temps disponible ne sont plus posées.
+ * Leurs libellés restent dans i18n et leurs colonnes en base : les réactiver
+ * = remettre leur entrée ici (et revoir le barème de onboardingScoring.js).
+ */
 export const QUIZ_QUESTIONS = [
   // ─── BLOC 1 : Identité ───
   {
@@ -27,30 +34,8 @@ export const QUIZ_QUESTIONS = [
     id: 'q3', block: 'identity', type: 'country_city',
     fields: ['country', 'city'], optional: false
   },
-  {
-    id: 'q4', block: 'identity', type: 'church',
-    fields: ['church_name', 'church_denomination'], optional: true,
-    options: [
-      { value: 'catholique' },
-      { value: 'protestant' },
-      { value: 'evangelique' },
-      { value: 'pentecotiste' },
-      { value: 'autre' }
-    ]
-  },
 
   // ─── BLOC 2 : Parcours de foi ───
-  {
-    id: 'q5', block: 'faith', type: 'single',
-    field: 'faith_duration', optional: false,
-    options: [
-      { value: 'new' },
-      { value: 'few_years' },
-      { value: 'long' },
-      { value: 'very_long' },
-      { value: 'undecided' }
-    ]
-  },
   {
     id: 'q6', block: 'faith', type: 'single',
     field: 'faith_stage', optional: false,
@@ -76,20 +61,6 @@ export const QUIZ_QUESTIONS = [
     ]
   },
   {
-    id: 'q8', block: 'bible', type: 'multi',
-    field: 'bible_landmarks', optional: false,
-    // score : nombre de repères cochés (0-5). "lost" force le score à 0.
-    score: { type: 'count', resetOption: 'lost' },
-    options: [
-      { value: 'gospels' },
-      { value: 'psalms' },
-      { value: 'epistles' },
-      { value: 'prophets' },
-      { value: 'revelation' },
-      { value: 'lost' } // "j'ai du mal à m'y retrouver"
-    ]
-  },
-  {
     id: 'q9', block: 'bible', type: 'single',
     field: 'reading_frequency', optional: false,
     score: { type: 'map', values: { never: 0, sometimes: 1, weekly: 2, daily: 3 } },
@@ -98,17 +69,6 @@ export const QUIZ_QUESTIONS = [
       { value: 'sometimes' },
       { value: 'weekly' },
       { value: 'daily' }
-    ]
-  },
-  {
-    id: 'q10', block: 'bible', type: 'single',
-    field: 'depth_interest', optional: false,
-    score: { type: 'map', values: { basics: 0, application: 1, meaning: 2, theology: 3 } },
-    options: [
-      { value: 'basics' },
-      { value: 'application' },
-      { value: 'meaning' },
-      { value: 'theology' }
     ]
   },
 
@@ -132,17 +92,6 @@ export const QUIZ_QUESTIONS = [
       { value: 'noon' },
       { value: 'evening' },
       { value: 'night' }
-    ]
-  },
-  {
-    id: 'q13', block: 'spiritual', type: 'single',
-    field: 'daily_goal_min', optional: false,
-    // Valeurs numériques stockées dans daily_goal_min (réutilisé, migration 001).
-    options: [
-      { value: 5 },
-      { value: 15 },
-      { value: 25 },
-      { value: 30 }
     ]
   }
 ]

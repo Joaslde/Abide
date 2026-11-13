@@ -55,7 +55,7 @@ export const usePlanStore = defineStore('plan', () => {
    *  - { source:'custom', planType|days, scope, bookId? }
    *  - { source:'profile' }                → plan préétabli associé au profil onboarding
    *  - { source:'template', templateId }   → plan préétabli bundlé
-   * Lève 'no_profile' si source:'profile' est demandé sans profil connu — à
+   * Lève 'no_profile' si source:'profile' est demandé sans profil connu, à
    * vérifier via hasKnownProfile() AVANT d'appeler createPlan (l'écran doit
    * rediriger vers l'onboarding plutôt que planter silencieusement).
    */

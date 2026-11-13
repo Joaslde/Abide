@@ -1,5 +1,5 @@
 /**
- * KKiaPay SDK — Paiement Mobile Money + cartes locales (Android)
+ * KKiaPay SDK, Paiement Mobile Money + cartes locales (Android)
  * Initialisation et déclenchement du paiement.
  * Le statut premium est validé UNIQUEMENT via le webhook Supabase.
  */

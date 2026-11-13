@@ -16,7 +16,7 @@
       <path d="M9.8 20.4v-5.2a2.2 2.2 0 0 1 4.4 0v5.2" />
     </template>
 
-    <!-- Bible : livre OUVERT avec ruban marque-page — bien plus parlant
+    <!-- Bible : livre OUVERT avec ruban marque-page, bien plus parlant
          qu'un livre fermé, et c'est l'objet central de l'app. -->
     <template v-else-if="name === 'bible'">
       <path d="M12 6.6C10.4 5.3 8.4 4.6 6.2 4.6H4.4a.9.9 0 0 0-.9.9v11.6a.9.9 0 0 0 .9.9h1.8c2.2 0 4.2.7 5.8 2" />
@@ -26,7 +26,7 @@
       <path d="M15.4 4.8v4.3l1.5-1.1 1.5 1.1V4.8" :stroke-width="strokeWidth * 0.85" />
     </template>
 
-    <!-- L'Ancre : vraie ancre (Hébreux 6.19 — « une ancre de l'âme »).
+    <!-- L'Ancre : vraie ancre (Hébreux 6.19, « une ancre de l'âme »).
          Donne enfin du sens au nom de l'onglet, là où une boussole n'en avait pas. -->
     <template v-else-if="name === 'anchor'">
       <circle cx="12" cy="5" r="2.1" />

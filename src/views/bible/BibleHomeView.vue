@@ -2,11 +2,13 @@
   <ion-page>
     <ion-header class="ion-no-border">
       <ion-toolbar>
-        <ion-title>{{ t('bible.title') }}</ion-title>
+        <!-- Span à nous : ion-title place son texte dans le shadow DOM, on ne
+             pourrait pas le mesurer pour l'ajuster (cf. lessons 2026-09-10). -->
+        <ion-title><span ref="titleEl" class="fit-text">{{ t('bible.title') }}</span></ion-title>
         <ion-buttons slot="end">
           <!-- Badge version déroulable -->
           <button class="version-badge" @click="showVersions = true">
-            <span>{{ activeVersionName }}</span>
+            <span>{{ versionLabel }}</span>
             <ion-icon :icon="chevronDown" />
           </button>
         </ion-buttons>
@@ -15,10 +17,10 @@
       <!-- Onglets AT / NT -->
       <ion-segment :value="testament" @ionChange="onSegment" class="testament-seg">
         <ion-segment-button value="OT">
-          <ion-label>{{ t('bible.oldTestament') }}</ion-label>
+          <ion-label ref="otLabelEl" class="fit-text">{{ t('bible.oldTestament') }}</ion-label>
         </ion-segment-button>
         <ion-segment-button value="NT">
-          <ion-label>{{ t('bible.newTestament') }}</ion-label>
+          <ion-label ref="ntLabelEl" class="fit-text">{{ t('bible.newTestament') }}</ion-label>
         </ion-segment-button>
       </ion-segment>
     </ion-header>
@@ -78,8 +80,10 @@ import { chevronDown, searchOutline } from 'ionicons/icons'
 import { useBibleStore } from '@/stores/bible'
 import { useBibleVersionsStore } from '@/stores/bibleVersions'
 import VersionSelector from '@/components/bible/VersionSelector.vue'
+import { useFitText } from '@/composables/useFitText'
+import { versionShortLabel } from '@/lib/version-label'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const store = useBibleStore()
 const versionsStore = useBibleVersionsStore()
@@ -102,11 +106,19 @@ function setTestament(value) {
   testament.value = value
 }
 
-const activeVersionName = computed(() => {
-  const v = versions.value.find((x) => x.id === store.activeVersion)
-  // Repli : forme courte connue, sinon l'id.
-  return v?.id === 'LSG1910' ? 'LSG 1910' : (v?.name ?? store.activeVersion)
-})
+// Libellé COURT dans le badge : le nom complet (« La Biblia en Español
+// Sencillo ») écrasait le titre de la vue jusqu'à « La… ». Le nom complet
+// reste visible dans le sélecteur de versions.
+const versionLabel = computed(() => versionShortLabel(store.activeVersion))
+
+// Aucun texte de l'en-tête ne doit être coupé par « … », dans aucune langue :
+// la police se réduit seulement si le texte déborde (« Antiguo Testamento »).
+const titleEl = ref(null)
+const otLabelEl = ref(null)
+const ntLabelEl = ref(null)
+useFitText(titleEl, { max: 20, min: 14, watch: [locale] })
+// Les deux onglets forment un groupe : même taille de police pour les deux.
+useFitText([otLabelEl, ntLabelEl], { max: 14, min: 10, step: 0.25, watch: [locale] })
 
 onMounted(async () => {
   await store.loadBooks()
@@ -179,7 +191,14 @@ ion-title {
   --background: var(--navy);
   padding: var(--space-2) var(--space-4) var(--space-3);
 }
+/* Conteneur mesurable pour useFitText : une ligne, largeur bornée. */
+.fit-text {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+}
 ion-segment-button {
+  min-width: 0;
   --color: var(--muted);
   --color-checked: var(--gold);
   --indicator-color: var(--gold);
@@ -239,7 +258,7 @@ ion-segment-button {
   color: var(--muted);
 }
 
-/* Bulle de recherche — discrète, dorée, pas trop grosse pour ne pas cacher le texte. */
+/* Bulle de recherche, discrète, dorée, pas trop grosse pour ne pas cacher le texte. */
 .search-fab {
   --background: var(--navy2);
   --background-activated: var(--card-bg);

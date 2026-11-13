@@ -1,4 +1,4 @@
-# tasks/todo.md — Abide | Roadmap & Suivi Détaillé
+# tasks/todo.md, Abide | Roadmap & Suivi Détaillé
 
 > RÈGLE ABSOLUE : Ce fichier est à consulter ET mettre à jour **avant** chaque
 > implémentation (planification) et **après** chaque implémentation (statut).
@@ -11,7 +11,7 @@
 
 ---
 
-## 🔴 EN COURS — Changement de package Android (2026-09-10)
+## 🔴 EN COURS, Changement de package Android (2026-09-10)
 
 > `com.abide.app` refusé par Play Console (déjà pris par un tiers). Remplacé par
 > **`com.toabide.app`** dans tout le code (voir `tasks/lessons.md` 2026-09-10 pour le détail).
@@ -26,16 +26,16 @@
 > - [x] Supabase Dashboard → Auth → Providers → Google → "Authorized Client IDs" :
 >       nouveau Client ID Android ajouté à la liste (2026-09-10)
 > - [x] **Google Sign-In testé sur appareil réel avec le nouveau package : fonctionne** (2026-09-10)
-> - [ ] AppsFlyer : **reporté après publication** (2026-09-10, décision utilisateur) — pas
+> - [ ] AppsFlyer : **reporté après publication** (2026-09-10, décision utilisateur), pas
 >       de compte AppsFlyer créé pour l'instant (l'ancien test utilisait `com.abide.app`
 >       + un email pro intérimaire). OneLink a de toute façon besoin que l'app soit déjà
 >       publiée pour fonctionner (deferred deep linking) → recréer un compte DÉFINITIF au
 >       moment de la publication, avec une adresse `@toabide.online` plutôt qu'un email
 >       personnel (à créer : `contact@toabide.online` ou via Google Workspace).
 > - [x] AdMob : magasin d'applications Google Play lié à `com.toabide.app` le 2026-09-11
->       (déclenché par l'existence de l'app sur Play Console, même en Test interne — pas
+>       (déclenché par l'existence de l'app sur Play Console, même en Test interne, pas
 >       besoin d'attendre la production). Lien "Verify app to lift limit" cliqué, examen
->       AdMob en cours (délai variable, non bloquant pour la suite — continuer la fiche
+>       AdMob en cours (délai variable, non bloquant pour la suite, continuer la fiche
 >       Play Store pendant ce temps).
 
 ---
@@ -74,6 +74,26 @@
 - [ ] Site toabide.online : au minimum la politique de confidentialité en espagnol
       (facultatif mais recommandé)
 
+### ✅ AVANCEMENT au 2026-11-12
+- [x] Catalogue : 16 Bibles libres publiées sur R2 (EN 13, FR 5 avec LSG, ES 5), 6 anciennes
+      nettoyées (¶, espaces doubles), noms du manifeste réparés (encodage). Douay-Rheims
+      écartée (numérotation Vulgate). Écran Versions groupé par langue + casque audio.
+      Validé par l'utilisateur sur le Pixel 8 Pro. Commité (bbd852a, c7e3dae).
+- [x] Audio BSB (Berean Standard Bible) ajouté à AUDIO_MAP, flag ntTimestamps
+- [x] es.js complet (613 clés, parité exacte FR/EN/ES vérifiée), espagnol déclaré dans i18n
+- [x] Sélecteur de langue : noms des langues dans leur propre langue (LANGUAGE_NAMES)
+- [x] Données ES : splash, messages de série, prières matin/soir, jeûne, rappels
+- [x] Dates : DATE_LOCALES / WEEKDAY_LETTERS centralisés (jeûne, journal, série, profil,
+      parrainage suivent maintenant la langue de l'APP et plus celle du téléphone)
+- [x] Guide IA : espagnol + plafond premium 50 messages/jour, message dédié au premium
+- [x] Quiz : génère dans la langue de l'app (BUG corrigé : il était toujours en français,
+      même pour les anglophones)
+- [x] Textes « accès illimité » → « premium » (app FR/EN/ES + site faq.html, index.html)
+- [x] ai-chat et quiz-chapter déployés (accord du 2026-11-12)
+- [ ] ⏳ Tester l'interface espagnole sur le téléphone
+- [x] Fiche Play Store en espagnol : brouillon dans docs/play-store-es.md (à relire puis coller dans Play Console)
+- [ ] Louis Segond INTÉGRÉE : 3 598 versets avec espaces doubles (voir lessons 2026-11-07)
+
 ### A2. Catalogue de Bibles élargi + écran des versions par langue (décidé 2026-11-07)
 > Vérifié sur le catalogue eBible.org (translations.csv, colonne Copyright) et l'API
 > BibleBrain. Règle : seules les versions DOMAINE PUBLIC sont téléchargeables hors ligne.
@@ -97,8 +117,56 @@
 - [ ] UI : écran Versions groupé par langue, sections repliables (Français / English /
       Español), langue de l'app ouverte par défaut, les autres repliées
 
-### B. Bugs et UX remontés par les utilisateurs
-- [ ] Liste à recueillir auprès de l'utilisateur, puis un point par élément ici
+### B. Bugs et UX remontés par les utilisateurs (liste reçue le 2026-11-12)
+> Décisions utilisateur : AUCUNE pub pendant l'onboarding ; premier rappel PLUS TÔT ;
+> animation de fin de chapitre qui MARQUE le chapitre comme lu ; sélection de
+> questions d'onboarding proposée par Claude (en attente de validation).
+- [x] Vue Bible : titre et onglets AT/NT coupés par « … » (ex. « La… », « Antiguo
+      Testa… »). Corrigé : badge de version en libellé court (lib/version-label.js),
+      useFitText sur le titre et les deux onglets.
+- [x] Onglet « L'Ancre » écrit en dur (resté en français en espagnol) → traduit
+- [x] Plus → Parrainage ramène parfois sur la page Plus : route de premier niveau
+      /settings/referral depuis les Réglages
+- [x] Publicités : aucune pendant l'onboarding (adsAllowed exige !shouldOnboard), et
+      l'écran est revérifié juste avant l'affichage (lib/ad-rules.js + canShow dans
+      admob.js). Le cooldown ne démarre que si une pub a vraiment été vue.
+- [x] Audit des tirets cadratin : textes FR/EN/ES, données, site, commentaires (81
+      fichiers). Texte généré (Guide, quiz) filtré par lib/typography.js ; consigne
+      ajoutée aux prompts de ai-chat et quiz-chapter (⏳ à déployer).
+      Citations partagées : « verset » puis la référence à la ligne, sans tiret.
+- [x] Écran Réglages → Notifications (NotificationSettingsView) : 7 rappels du jour
+      (matin 2, soir 3, série 2), heure et interrupteur pour chacun, heures rangées dans
+      l'ordre, retour aux valeurs par défaut. Premier rappel du matin : 10h → 7h.
+      Avertit si les notifications sont coupées (bouton vers les réglages Android,
+      nouvelle méthode native openNotificationSettings) ou si l'exemption batterie
+      manque. lib/reminder-settings.js, empreinte anti-spam mise à jour.
+- [x] Fin de chapitre : marqué comme lu automatiquement quand la fin est à l'écran
+      après un temps de lecture minimal (4 à 45 s selon la longueur), onde dorée et
+      rebond de l'icône (< 1 s) + vibration légère. Un « démarquer » est respecté.
+      (composables/useChapterEndReached.js)
+- [x] Polices : 7 polices de lecture EMBARQUÉES (Literata, Merriweather, Lora, EB
+      Garamond, Crimson Pro, Source Serif, Atkinson Hyperlegible) + Sans + défaut.
+      Les anciennes polices système (absentes d'Android) sont migrées. « Par défaut »
+      était écrit en dur en français : traduit.
+- [x] Flamme à partir de 10 jours (STREAK_BLAZE_FROM) : en-tête de l'accueil (flamme
+      plus grande qui vacille, halo) et écran de célébration (flamme agrandie, halo qui
+      respire, braises, chiffre en dégradé de feu, message dédié).
+- [ ] ⏳ Tester tout le lot B sur le téléphone (non branché le 2026-11-12 au soir :
+      APK debug compilé, pas installé)
+
+#### ✅ ONBOARDING réduit de 13 à 8 questions (choix de l'utilisateur, 2026-11-12)
+- [x] Gardées : q1 naissance, q2 genre, q3 pays/ville, q6 où en es-tu avec Jésus,
+      q7 ressenti face à la Bible, q9 fréquence de lecture, q11 frein principal,
+      q12 moment préféré. Retirées : q4 église, q5 durée de foi, q8 repères bibliques,
+      q10 centres d'intérêt, q13 temps disponible (libellés et colonnes conservés).
+- [x] Niveau biblique recalibré sur q7 + q9 (score 0 à 6, seuils 1 / 3 / 4)
+- [x] Profil Explorateur déduit de q11 « la compréhension » ou du niveau profond ;
+      les 5 profils restent atteignables (vérifié sur toutes les combinaisons)
+- [x] q12 règle le premier rappel du jour (matin 7h ; midi 12h + 14h ; soir 18h ;
+      nuit 21h, 22h, 23h), modifiable ensuite dans Réglages → Notifications
+- [x] Pas de pub pendant l'onboarding
+- [x] ai-chat et quiz-chapter redéployés (consigne sans tiret cadratin), accord du 2026-11-12
+- [ ] ⏳ Tester le nouvel onboarding sur le téléphone (APK compilé, téléphone débranché)
 
 ### C. Passage au payant (Abide Plus via Google Play)
 > ⚠️ RÈGLE GOOGLE PLAY : un abonnement numérique vendu DANS une app distribuée sur le
@@ -230,24 +298,24 @@
 
 ---
 
-## 📋 SUIVI — Formulaire de publication Google Play Console (2026-09-10)
+## 📋 SUIVI, Formulaire de publication Google Play Console (2026-09-10)
 
 > Progression détaillée du formulaire de création/soumission de l'app sur Play Console,
 > écran par écran, pour reprendre exactement où on s'est arrêté d'une session à l'autre.
 
-### Écran 1 — "Créer une application" (infos de base)
-- [x] Nom de l'app : `Abide — Bible & Guide IA` (24/30 caractères)
+### Écran 1, "Créer une application" (infos de base)
+- [x] Nom de l'app : `Abide, Bible & Guide IA` (24/30 caractères)
 - [x] Nom du package : `com.toabide.app` (validé disponible, cf. section changement de
       package ci-dessus)
-- [x] Langue par défaut : Anglais (États-Unis) — en-US
+- [x] Langue par défaut : Anglais (États-Unis), en-US
 - [x] Type : Appli (pas Jeu)
-- [x] Gratuite ou payante : **Sans frais** (cohérent avec le modèle freemium — le premium
+- [x] Gratuite ou payante : **Sans frais** (cohérent avec le modèle freemium, le premium
       se gère via IAP/KKiaPay dans l'app, pas via un prix Play Store)
 - [x] Protection automatique de l'app (anti-sideloading) : laissée activée
 - [x] Déclaration "Règlement du programme pour les développeurs" : cochée
-- [x] Bouton "Créer une application" cliqué — app créée avec succès (2026-09-10)
+- [x] Bouton "Créer une application" cliqué, app créée avec succès (2026-09-10)
 
-### Écran 2 — Tableau de bord de l'app
+### Écran 2, Tableau de bord de l'app
 - [x] App visible dans Play Console, tableau de bord affiché avec le parcours en 3 blocs :
       Tests internes / Terminer la configuration / Tests fermés
 - [ ] **PROCHAINE ACTION** : cliquer "Afficher les tâches" sous "Terminer la configuration
@@ -261,17 +329,17 @@
       Décidé : garder en-US par défaut MAIS **ajouter le français comme langue
       supplémentaire de la fiche Play Store** (Présence sur le Store → Fiche principale →
       sélecteur de langue → Ajouter le français) et le remplir en PRIORITÉ/plus complet
-      que l'anglais — cohérent avec le marché cible (Afrique francophone + diaspora).
-- [ ] Coordonnées de contact (email public — décider : email perso actuel ou attendre
+      que l'anglais, cohérent avec le marché cible (Afrique francophone + diaspora).
+- [ ] Coordonnées de contact (email public, décider : email perso actuel ou attendre
       l'email `@toabide.online` à créer)
 - [ ] URL politique de confidentialité → `https://toabide.online/privacy.html` (déjà prêt)
 - [ ] Data Safety Form (déclaration des données collectées)
 - [ ] Classification du contenu (questionnaire IARC)
 - [ ] Public cible & contenu (âge, présence de pubs → cocher oui, AdMob)
-- [x] Signature d'application Play (Play App Signing — Google gère la clé finale, recommandé)
+- [x] Signature d'application Play (Play App Signing, Google gère la clé finale, recommandé)
 - [x] Clé d'upload générée le 2026-09-10 : `keystore/abide-upload-key.keystore`, alias
       `abide-upload`. SHA-1 upload : `AE:B0:08:D1:23:1F:D1:12:08:D0:F4:0A:51:68:12:71:64:37:14:E9`
-      (⚠️ PAS le SHA-1 à enregistrer pour OAuth — voir plus bas)
+      (⚠️ PAS le SHA-1 à enregistrer pour OAuth, voir plus bas)
 - [x] Build AAB signé release réussi (`./gradlew bundleRelease`), uploadé sur Play Console
       en Test interne le 2026-09-10 ("Abide - 1 (1.0)")
 - [x] Testeur ajouté (toi-même) dans "Test Interne liste", app installée avec succès depuis
@@ -280,8 +348,8 @@
       Google pour signer l'APK distribué (Play App Signing re-signe avec SA PROPRE clé,
       différente de la clé d'upload) a été extrait directement de l'APK installé via
       `apksigner verify --print-certs` → `CA:BE:68:D5:BD:F2:83:AA:46:F4:F3:B5:F1:0A:2E:C9:91:2A:2F:72`
-      (les SHA-1 copiés depuis le dashboard Play Console — colonnes "classique" et
-      "post-quantique" — ne correspondaient à AUCUNE clé réelle, piège documenté en détail
+      (les SHA-1 copiés depuis le dashboard Play Console, colonnes "classique" et
+      "post-quantique", ne correspondaient à AUCUNE clé réelle, piège documenté en détail
       dans `tasks/lessons.md` 2026-09-11). 3e Client OAuth Android créé avec ce SHA-1
       (`34894391883-fr1hf8mtvqd90np7l65920uncc48buac.apps.googleusercontent.com`), ajouté
       dans Supabase Authorized Client IDs → **connexion testée et fonctionnelle depuis le
@@ -291,13 +359,13 @@
       `34894391883-bemreedn3dq8htpuuv7viqeqp4o2d0v2.apps.googleusercontent.com,`
       `34894391883-fr1hf8mtvqd90np7l65920uncc48buac.apps.googleusercontent.com`
 
-### ⚠️ CONTRAINTE CRITIQUE DE PLANNING — exigence Google de test fermé (2026-09-10)
+### ⚠️ CONTRAINTE CRITIQUE DE PLANNING, exigence Google de test fermé (2026-09-10)
 > Source : https://support.google.com/googleplay/android-developer/answer/14151465
 > (lien donné par Google Play Console lui-même dans le parcours de publication).
 >
 > Pour un NOUVEAU compte développeur, la production publique (accessible à tout le monde)
 > n'est PAS accessible directement. Étapes obligatoires dans l'ordre :
-> 1. Test interne (optionnel, rapide — quelques minutes, petit groupe de confiance)
+> 1. Test interne (optionnel, rapide, quelques minutes, petit groupe de confiance)
 > 2. **Test fermé OBLIGATOIRE : 12 testeurs minimum, inscrits en continu pendant AU MOINS
 >    14 JOURS CONSÉCUTIFS** avant de pouvoir candidater à la production
 > 3. Formulaire de candidature à l'accès production (3 parties : engagement des testeurs,
@@ -311,18 +379,18 @@
 >       jamais son compte de test ne compte pas dans les 12)
 > - [ ] Une fois en test fermé (fiche Play Store publiée, même non publique) : vérifier si
 >       AdMob réel et AppsFlyer OneLink deviennent utilisables à ce stade (probable mais
->       à confirmer) — pourrait débloquer ces deux chantiers sans attendre la production
+>       à confirmer), pourrait débloquer ces deux chantiers sans attendre la production
 
 ---
 
-## ⚠️ COORDINATION — 2 SESSIONS EN PARALLÈLE (2026-07-25)
+## ⚠️ COORDINATION, 2 SESSIONS EN PARALLÈLE (2026-07-25)
 
 > Deux sessions Claude travaillent en même temps sur ce projet. Règles de non-collision :
 >
 > | Session | Périmètre EXCLUSIF |
 > |---------|--------------------|
-> | **A — Parrainage** | migrations `referrals`/`referral_code`, **trigger `protect_premium_columns`**, Edge Functions `referral-*`, SDK AppsFlyer, `ReferralView.vue` |
-> | **B — Limites IA** | Edge Function `ai-chat` (quota), table `ai_sessions`, écran « quota atteint » côté client |
+> | **A, Parrainage** | migrations `referrals`/`referral_code`, **trigger `protect_premium_columns`**, Edge Functions `referral-*`, SDK AppsFlyer, `ReferralView.vue` |
+> | **B, Limites IA** | Edge Function `ai-chat` (quota), table `ai_sessions`, écran « quota atteint » côté client |
 >
 > - Le **trigger `protect_premium_columns` appartient à la session Parrainage** (Étape 0
 >   de son plan, et sa logique de paliers doit pouvoir écrire `premium_expires` côté serveur).
@@ -332,7 +400,7 @@
 
 ---
 
-## ÉTAT RÉEL VALIDÉ SUR APPAREIL — 2026-07-26 (fin de journée)
+## ÉTAT RÉEL VALIDÉ SUR APPAREIL, 2026-07-26 (fin de journée)
 
 > Mis à jour après vérification indépendante (base Supabase interrogée directement,
 > pas de confiance aveugle dans les cases cochées précédentes). Ce qui suit fait foi.
@@ -352,13 +420,13 @@
 - **Catalogue de 13 plans de lecture** (4 vie · 5 biblique · 4 discipline), vignettes
   vérifiées visuellement, aperçu jour par jour avant activation, vue du parcours
   en cours avec progression, lien depuis Plus
-- **Programme de parrainage COMPLET** — vérifié en base réelle (trigger sécurité actif,
+- **Programme de parrainage COMPLET** vérifié en base réelle (trigger sécurité actif,
   table `referrals` + `referral_code` présents), Edge Functions déployées, OneLink
   configuré, écran fonctionnel. Le parcours d'attribution réel (installation via lien →
   compte → filleul compté) n'est PAS encore testable : nécessite la publication Play Store.
-- **Faille RLS `is_premium` CORRIGÉE** — trigger `protect_premium_columns` actif en prod.
+- **Faille RLS `is_premium` CORRIGÉE** trigger `protect_premium_columns` actif en prod.
 
-**✅ Plans par profil — FAIT (2026-07-27)** : `PROFILE_PRESET_IDS` (planGenerator.js)
+**✅ Plans par profil, FAIT (2026-07-27)** : `PROFILE_PRESET_IDS` (planGenerator.js)
 associe chacun des 5 profils onboarding à un VRAI preset (plus de portée générique) :
 source→learn-to-pray · marcheur→creation-to-covenant · explorateur→identity-in-christ ·
 veilleur→peace-over-anxiety · porteur→**sharing-your-faith (nouveau 14e plan, créé pour
@@ -367,33 +435,33 @@ combler ce profil**, vignette vérifiée visuellement, 0 erreur de validation ca
 (déjà en place dans PlanChooseView, i18n `plan.choose.noProfile*`).
 
 **🚧 CE QU'IL RESTE VRAIMENT POUR LE MVP :**
-1. **Publication Play Store** — voir section dédiée ci-dessous. C'est le seul gros morceau restant.
-2. **SMTP Resend** — compte + domaine en cours côté utilisateur ; clé à fournir, puis
+1. **Publication Play Store** voir section dédiée ci-dessous. C'est le seul gros morceau restant.
+2. **SMTP Resend** compte + domaine en cours côté utilisateur ; clé à fournir, puis
    configuration du template OTP dans Supabase → débloque le mot de passe oublié.
-3. **Mini-site — DÉPLOYÉ ET DNS PROPAGÉ (2026-07-27)** sur Vercel via toabide.online
+3. **Mini-site, DÉPLOYÉ ET DNS PROPAGÉ (2026-07-27)** sur Vercel via toabide.online
    (résolu : le blocage était un cache DNS local sur la machine de l'utilisateur, pas
-   une mauvaise config — nameservers Vercel corrects et validés dès le départ).
+   une mauvaise config, nameservers Vercel corrects et validés dès le départ).
    4 pages : index, faq, privacy, terms. Bug Vercel "SPA fallback" corrigé
    (`landing/vercel.json`, cf. lessons.md). Email de contact : ldejoas@gmail.com
    (mis à jour partout : landing + app).
    - [x] Câblé dans `SettingsView.vue` (FAQ/CGU/Confidentialité) via `@capacitor/browser`
-         (installé en @6.0.6, compatible Capacitor 6 — dernière stable de la branche 6.x)
+         (installé en @6.0.6, compatible Capacitor 6, dernière stable de la branche 6.x)
    - [ ] ⚠️ À TESTER SUR APPAREIL : Réglages → FAQ/CGU/Confidentialité → ouvre le
          navigateur in-app sur la bonne page (pas d'écran blanc, pas de 404)
    - [ ] ⚠️ Vérifier que https://toabide.online/ répond (DNS propagé) AVANT la
-         soumission Google Play — sinon re-câbler temporairement sur l'URL Vercel
+         soumission Google Play, sinon re-câbler temporairement sur l'URL Vercel
    - [ ] Donner l'URL de confidentialité finale à la fiche Google Play Console
 
-**✅ Code de parrainage manuel à l'onboarding — FAIT (2026-07-27)**
+**✅ Code de parrainage manuel à l'onboarding, FAIT (2026-07-27)**
 > Contournement TEMPORAIRE : le lien OneLink ne peut pas être testé tant que l'app
 > n'est pas publiée (redirige vers une fiche Play Store inexistante). En attendant :
-- [x] `OnboardingReferralView.vue` — nouvel écran entre Welcome et Quiz : « As-tu été
+- [x] `OnboardingReferralView.vue`, nouvel écran entre Welcome et Quiz : « As-tu été
       invité par un ami ? » Oui/Non → si Oui, champ code (optionnel, passable) →
       appelle `referral-attribute` directement (même Edge Function, idempotente)
 - [x] Route `/onboarding/referral`, `OnboardingWelcomeView.startQuiz()` y redirige
 - [x] `src/lib/appsflyer.js` : `storePendingReferralCode` exportée (réutilisable)
 - [x] `ReferralView.vue` : bouton « Partager mon lien » **commenté** (pas supprimé)
-      avec justification inline — le code reste affiché pour transmission à l'oral
+      avec justification inline, le code reste affiché pour transmission à l'oral
 - [x] i18n fr/en `onboarding.referral.*`
 - [x] `vite build` OK, APK installé
 - [ ] ⚠️ À TESTER : onboarding → répondre Oui → coller un vrai code de parrainage
@@ -403,9 +471,9 @@ combler ce profil**, vignette vérifiée visuellement, 0 erreur de validation ca
 - [ ] Réactiver le partage de lien (décommenter `ReferralView.vue`) une fois l'app
       publiée sur le Play Store et le OneLink vérifié fonctionnel en conditions réelles
 - [x] Vérifié : `isPremium` (parrainage) coupe déjà les pubs automatiquement
-      (`stores/ads.js` teste `!isPremium` avant chaque appel AdMob) — rien à faire
+      (`stores/ads.js` teste `!isPremium` avant chaque appel AdMob), rien à faire
 
-**⚠️ Icône/screenshots/politique de confidentialité ne sont PAS reportables — Google
+**⚠️ Icône/screenshots/politique de confidentialité ne sont PAS reportables, Google
 Play les EXIGE dès la 1re soumission. Décision utilisateur : version PROVISOIRE de
 chacun maintenant → publication → remplacement par les versions définitives via une
 mise à jour ultérieure (rapide à approuver). Voir section « Publication Play Store ».**
@@ -413,15 +481,15 @@ mise à jour ultérieure (rapide à approuver). Voir section « Publication Play
 **⏸️ VRAIMENT REPORTABLE APRÈS LE DÉPLOIEMENT :**
 - Icône app + splash screen DÉFINITIFS (une version provisoire suffit pour publier)
 - Notifications push serveur (les notifications LOCALES couvrent déjà les besoins)
-- **iOS entièrement** — lancement Android d'abord, un Mac sera obtenu plus tard
-- Paiements (KKiaPay/FedaPay/RevenueCat) — le MVP reste 100 % gratuit
+- **iOS entièrement** lancement Android d'abord, un Mac sera obtenu plus tard
+- Paiements (KKiaPay/FedaPay/RevenueCat), le MVP reste 100 % gratuit
 - Vraies publicités AdMob : rester en mode TEST jusqu'au lancement (voir §1.7)
 
 ---
 
 ## En Cours
 
-### 🔴 BLOQUANT MISE EN LIGNE — Survie des notifications au kill du processus
+### 🔴 BLOQUANT MISE EN LIGNE, Survie des notifications au kill du processus
 
 Android efface TOUTES les alarmes d'une app quand son processus est tué :
 balayage depuis les applis récentes, force-stop, nettoyeur de RAM (systématique
@@ -429,12 +497,12 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 **57 alarmes avant `am force-stop`, 0 après.**
 
 - [x] Replanification forcée au démarrage à froid du processus (`freshProcess`),
-      sans consulter `getPending()` qui renvoie un cache mensonger — bridée à
+      sans consulter `getPending()` qui renvoie un cache mensonger, bridée à
       1×/heure pour ne pas réalimenter le filtre anti-spam Android. (2026-09-08)
 - [ ] **Receiver `BOOT_COMPLETED`** : replanifier au redémarrage du téléphone.
       La permission est déjà dans le manifest, le receiver n'existe pas.
 - [ ] **WorkManager périodique** (~6h) : replanifier même sans ouverture de l'app.
-      SEULE façon de couvrir quelqu'un qui balaie l'app et ne la rouvre pas —
+      SEULE façon de couvrir quelqu'un qui balaie l'app et ne la rouvre pas, 
       sinon il ne reçoit plus AUCUN rappel, indéfiniment.
 - [ ] Tester le cycle complet : balayer l'app → attendre un créneau → vérifier
       `dumpsys notification | grep post_frequency` (count doit incrémenter).
@@ -444,7 +512,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > courant sur Android d'entrée de gamme.
 
 
-### Bascule langue ↔ version Bible — BUG CORRIGÉ ✅ (2026-07-26)
+### Bascule langue ↔ version Bible, BUG CORRIGÉ ✅ (2026-07-26)
 - [x] `setLocalePref` appelait `versions.installed` SANS avoir appelé `loadInstalled()`
       → depuis les Réglages, la liste ne contenait que la LSG bundlée, donc la KJV
       pourtant téléchargée n'était jamais trouvée. Fix : `await versions.loadInstalled()`
@@ -467,7 +535,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > Demandé par l'utilisateur : avant d'activer un plan, voir le détail JOUR PAR JOUR
 > des passages (défilable), avec le bouton « Commencer » / « Remplacer » en bas.
 > Et depuis l'accueil, un bouton pour revoir son parcours (jours faits / restants).
-> UN SEUL composant, deux modes — évite de dupliquer la liste jour par jour.
+> UN SEUL composant, deux modes, évite de dupliquer la liste jour par jour.
 
 - [x] `PlanDetailView.vue` : liste jour par jour (Jour N + chapitres cliquables), défilable
 - [x] Mode APERÇU (`plan/preview/:templateId`) : titre + image + desc + CTA bas
@@ -493,15 +561,15 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Champ `category` + `PLAN_CATEGORIES` + `presetsByCategory()` → écran de choix groupé
 - [x] i18n fr **et** en : `plan.presets.<id>.title/desc` + `plan.categories.*`
 - [x] Vignettes carrées : `scripts/fetch-plan-thumbs.js` (Unsplash, licence commerciale),
-      bundlées dans `src/assets/plans/<id>.webp` — 82 Ko au total, 100 % offline
+      bundlées dans `src/assets/plans/<id>.webp`, 82 Ko au total, 100 % offline
 - [x] **Revue visuelle faite** : 6 images inadaptées détectées et remplacées
       (posture de yoga, poignée de main corporate, doublon, peinture abstraite,
-      concert rock, texte incrusté) — cf. lessons.md
+      concert rock, texte incrusté), cf. lessons.md
 - [x] Affichage : vignette 56px à gauche dans PlanChooseView, 48px dans DailyPlanCard (accueil)
 - [x] `vite build` OK · plannings vérifiés (aucun jour vide, max 2 chapitres/jour)
 - [ ] ⚠️ À TESTER SUR APPAREIL : écran de choix (3 catégories, 13 plans, vignettes),
       démarrer un plan, vignette visible sur l'accueil, plan sur mesure sans vignette
-- [ ] **Prochaine étape** : plans par PROFIL — `PROFILE_RECIPES` (planGenerator.js) pointe
+- [ ] **Prochaine étape** : plans par PROFIL, `PROFILE_RECIPES` (planGenerator.js) pointe
       encore vers des portées génériques (« tout Jean », « tous les Psaumes »). À remplacer
       par 1-2 vrais plans thématiques par profil. ⚠️ Le profil `porteur` (évangélisation)
       n'est couvert par AUCUN des 12 plans actuels → il en faudra un nouveau.
@@ -509,36 +577,36 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 ### Publication Play Store (1re version) 🚧 (planifié 2026-07-26)
 > Objectif : passer la 1re revue Google Play avec le MINIMUM viable, pour que le
 > lien OneLink du parrainage devienne réellement fonctionnel. Versions PROVISOIRES
-> acceptées pour icône/captures/politique — remplacées plus tard sans re-publication
+> acceptées pour icône/captures/politique, remplacées plus tard sans re-publication
 > lourde (les mises à jour sont approuvées bien plus vite que la 1re soumission).
 > État natif vérifié le 2026-07-26 : applicationId com.abide.app ✅ · targetSdk 36 ✅
 > (au-delà du minimum Google actuel) · AUCUNE config de signature release ❌ ·
 > icône = placeholder Capacitor générique ❌ · aucune page de politique trouvée ❌.
 
-**Actions UTILISATEUR (comptes, paiement, éditorial — hors de portée de Claude) :**
-- [ ] Créer le compte Google Play Console (25 $ US, paiement unique à vie) — https://play.google.com/console/signup
+**Actions UTILISATEUR (comptes, paiement, éditorial, hors de portée de Claude) :**
+- [ ] Créer le compte Google Play Console (25 $ US, paiement unique à vie), https://play.google.com/console/signup
 - [ ] Vérification d'identité Google (peut prendre 1-2 jours, à lancer TÔT)
 - [ ] Créer la fiche de l'app dans la Console (nom, description courte/longue, catégorie,
-      classification de contenu — questionnaire Google, public cible)
+      classification de contenu, questionnaire Google, public cible)
 - [ ] Fournir le texte de la politique de confidentialité (Claude peut rédiger un brouillon
-      adapté à Abide — collecte de compte, données Bible locales, IA — mais la publier à une
+      adapté à Abide, collecte de compte, données Bible locales, IA, mais la publier à une
       URL stable, ex. la landing Nuxt, est une action utilisateur)
 - [ ] Décider où héberger la page politique de confidentialité (landing Nuxt existante ?
-      simple page statique ?) — donner l'URL à Claude une fois en ligne
+      simple page statique ?), donner l'URL à Claude une fois en ligne
 
 **Actions CLAUDE (technique, une fois les infos ci-dessus disponibles) :**
 - [ ] ⏸️ **EN PAUSE (décision 2026-07-26)** : générer la clé de signature (keystore) release
-      + configurer `signingConfigs` — l'utilisateur attend que l'app soit VRAIMENT prête avant
+      + configurer `signingConfigs`, l'utilisateur attend que l'app soit VRAIMENT prête avant
       cette étape irréversible (garder le keystore ce n'est pas le sujet, le TIMING l'est :
       pas de keystore "d'essai" à jeter, on le crée une seule fois pour de bon)
 - [ ] Générer un Android App Bundle (.aab) signé en release (pas l'APK debug utilisé jusqu'ici)
-- [ ] Icône app PROVISOIRE (toutes résolutions mipmap) — un visuel simple aux couleurs de la
+- [ ] Icône app PROVISOIRE (toutes résolutions mipmap), un visuel simple aux couleurs de la
       marque (or/navy), pas besoin d'être définitif
 - [ ] 2-3 captures d'écran provisoires (screenshot direct de l'app sur l'appareil de test :
-      Bible, Guide IA, Sanctuaire) — suffisant pour la fiche Store minimale
+      Bible, Guide IA, Sanctuaire), suffisant pour la fiche Store minimale
 - [ ] Rédiger le brouillon de politique de confidentialité (à valider/publier par l'utilisateur)
 - [ ] Vérifier `targetSdkVersion` contre l'exigence Google Play en vigueur au moment de la
-      soumission (change chaque année — déjà à 36, probablement conforme, à reconfirmer)
+      soumission (change chaque année, déjà à 36, probablement conforme, à reconfirmer)
 - [ ] Vérifier qu'aucun log de debug / clé de test ne fuite dans le build release
       (SECURITY.md §10 : désactiver le mode debug WebView en production)
 
@@ -549,7 +617,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Une fois approuvée : tester le lien OneLink du parrainage en conditions réelles
       (2e appareil → installe via le lien → inscription → filleul compté)
 
-### Limites d'usage IA (sans paiement) 🚧 (planifié 2026-07-25) — SESSION B
+### Limites d'usage IA (sans paiement) 🚧 (planifié 2026-07-25), SESSION B
 > MVP gratuit : pas de paywall, mais un plafond pour que les coûts OpenRouter restent
 > supportables. Quand le quota est atteint → message pastoral « reviens demain », jamais
 > une erreur technique. Quota **modifiable sans redéploiement** (colonne en base).
@@ -558,7 +626,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 
 - [x] `ai-chat` : quota du jour vérifié AVANT l'embedding ET l'appel LLM → 429 si dépassé
       (ordre vérifié par script : quota@27022 < embed@27625 < llm@30333 → coût nul)
-- [x] `ai-chat` : `sessions_used` incrémenté APRÈS la réponse persistée uniquement —
+- [x] `ai-chat` : `sessions_used` incrémenté APRÈS la réponse persistée uniquement, 
       une erreur LLM sort par le catch sans rien décompter (on ne fait pas payer un échec)
 - [x] Premium actif (is_premium + premium_expires non expiré) → quota ignoré, illimité
 - [x] Quota Guide = **7 msg/jour** (migrations successives : 1 → 15 → 10 → `ai_daily_quota_7`).
@@ -586,7 +654,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > Le DEFAULT ne vaut que pour les lignes créées ensuite : sans l'UPDATE, ceux qui ont
 > déjà posé une question aujourd'hui gardent l'ancienne limite jusqu'à demain.
 >
-> ⚠️ **2026-07-26 : sessions_limit temporairement remonté à 20** (pour tests) — était
+> ⚠️ **2026-07-26 : sessions_limit temporairement remonté à 20** (pour tests), était
 > à 7. **À REMETTRE À 7** avant le déploiement public :
 > `ALTER TABLE ai_sessions ALTER COLUMN sessions_limit SET DEFAULT 7;`
 > (quiz_limit non touché cette fois, resté à sa valeur précédente)
@@ -606,7 +674,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
       sur « Refaire le quiz ».
 - [x] **BUG scroll verset** : un lien de source IA surlignait le bon verset mais laissait la
       vue en haut du chapitre (il fallait défiler à la main). CAUSE : un seul `nextTick()` ne
-      suffit pas — Ionic monte la vue avec une transition et l'`ion-content` n'est pas encore
+      suffit pas, Ionic monte la vue avec une transition et l'`ion-content` n'est pas encore
       scrollable, donc `scrollIntoView` partait dans le vide. FIX : réessai jusqu'à 20 fois
       (~2,8 s max) avec vérification réelle via `getBoundingClientRect()`, 1re passe en
       `auto` puis `smooth`. + 2 watchers ajoutés : changement de chapitre ET changement de
@@ -624,19 +692,19 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
       parse PAS le corps des réponses non-2xx → sans ça un 429 = « erreur serveur »)
 - [x] Client : question retirée de l'affichage optimiste + remise dans le champ de saisie
       (elle n'est pas perdue, elle est renvoyable demain telle quelle)
-- [x] `AncreTab` : `presentChatError()` factorise les 3 catch — toast ambre pastoral avec
+- [x] `AncreTab` : `presentChatError()` factorise les 3 catch, toast ambre pastoral avec
       le prénom pour le quota, rouge seulement pour les vraies pannes
 - [x] i18n fr/en `ai.quotaReached` + `ai.quotaReachedNamed`
 - [x] `// TODO(limites)` retiré de l'en-tête de la fonction
 - [x] `vite build` compile sans erreur
-- [x] `ai-chat` DÉPLOYÉE en production — **version 11 ACTIVE**, quota effectif (2026-07-25).
+- [x] `ai-chat` DÉPLOYÉE en production, **version 11 ACTIVE**, quota effectif (2026-07-25).
       Déploiement : `SUPABASE_ACCESS_TOKEN` vient de `ACCESS_TOKEN_SUPABASE` (.env.local),
       puis `npx supabase functions deploy ai-chat --project-ref … --no-verify-jwt`.
 - [ ] ⚠️ À TESTER SUR APPAREIL : épuiser le quota → toast pastoral (pas rouge) · la
       question reste dans le champ · le lendemain le compteur repart · un premium n'est
       jamais bloqué
 
-### Programme de parrainage (affiliation) 🚧 (planifié 2026-07-13) — SESSION A
+### Programme de parrainage (affiliation) 🚧 (planifié 2026-07-13), SESSION A
 > Chaque utilisateur génère un lien de parrainage (AppsFlyer, compte déjà créé,
 > app com.abide.app enregistrée). Filleul = installation via lien + compte créé.
 > Paliers FIXES (non cumulatifs, remplace/étend) : 10→10j premium · 25→30j · 50→90j
@@ -645,7 +713,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > Plan complet : C:\Users\DELL\.claude\plans\temporal-bubbling-sky.md
 
 - [x] **Étape 0 (BLOQUANT, sécurité)** : migration trigger `protect_premium_columns` sur
-      `profiles` — bloque toute modif cliente de is_premium/premium_expires/premium_source
+      `profiles`, bloque toute modif cliente de is_premium/premium_expires/premium_source
       (faille RLS actuelle découverte : policy UPDATE ne restreint aucune colonne)
 - [x] Entrée `SECU` dans tasks/lessons.md pour la faille RLS + le fix
 - [x] Étape 1 : migration `referrals` (table + policy lecture) + `profiles.referral_code`
@@ -657,7 +725,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Étape 3 : SDK AppsFlyer Capacitor (vérifier compat Capacitor 6), init dans App.vue,
       écoute attribution → stocke `pending_referral_code` (Preferences)
 - [x] Étape 4 : template OneLink côté dashboard AppsFlyer (manuel, utilisateur)
-- [x] Étape 5 : client — après inscription réussie, lire pending_referral_code → appeler
+- [x] Étape 5 : client, après inscription réussie, lire pending_referral_code → appeler
       referral-attribute une fois → effacer la clé
 - [x] Étape 6 : ReferralView.vue (pattern SettingsView : div.group/button.item) + route
       plus/referral + point d'entrée dans Plus/Settings
@@ -666,7 +734,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
       `supabase functions serve` (code valide/invalide/déjà utilisé/auto-parrainage),
       `vite build`, test appareil réel (partage lien → 2e device → compte → referrals à jour)
 
-### La Note IA — exporter un message du Guide en remarque 🚧 (planifié 2026-07-13)
+### La Note IA, exporter un message du Guide en remarque 🚧 (planifié 2026-07-13)
 > L'IA AGIT (2e endroit) : depuis une réponse du Guide, bouton « Exporter en note »
 > → crée une remarque avec le texte (Markdown nettoyé en texte simple) + les versets
 > cités convertis en tags @[…](). Ouvre la note directement (l'utilisateur ajuste).
@@ -681,7 +749,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] À TESTER SUR APPAREIL : exporter → note ouverte, versets en @tags cliquables, badge dans la liste, édition ne perd pas le badge ✅ validé appareil 2026-07-25
 
 
-### Quiz de fin de chapitre (Pilier IA — idée 13, version chapitre) 🚧 (planifié 2026-07-10)
+### Quiz de fin de chapitre (Pilier IA, idée 13, version chapitre) 🚧 (planifié 2026-07-10)
 > Demandé par l'utilisateur : un bouton en bas de chaque chapitre qui génère un
 > QCM de 5 questions sur le chapitre lu (connexion requise). ≥3 bonnes = réussi.
 > Barème étoiles : 3=★ · 4=★★ · 5=★★★. On garde le MEILLEUR score (rejouer ne fait
@@ -701,7 +769,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] DÉPLOYER l'Edge Function : `supabase functions deploy quiz-chapter` (secrets déjà en place : OPENROUTER_KEY, SUPABASE_*) ✅ validé appareil 2026-07-25
 - [x] À TESTER SUR APPAREIL : générer, répondre, étoiles sur la grille, offline → message, rejouer garde le best ✅ validé appareil 2026-07-25
 
-### Phase 1.0 — Fondations Préférences (thème + langue + police) ⚡ PRIORITAIRE
+### Phase 1.0, Fondations Préférences (thème + langue + police) ⚡ PRIORITAIRE
 > Demandé par l'utilisateur le 2026-06-18 : à poser AVANT de continuer l'auth.
 - [x] Installer vue-i18n + créer `src/i18n/` (messages fr + en)
 - [x] Store `preferences.js` (locale, theme, bibleFont, bibleFontSize) persisté via @capacitor/preferences
@@ -711,7 +779,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Documenter polices+thème dans `design-pattern.md`
 - [x] Documenter architecture préférences + parcours invité dans `PROJECT.md`
 
-### Phase 1.0b — Écran de Bienvenue (Welcome) + parcours invité
+### Phase 1.0b, Écran de Bienvenue (Welcome) + parcours invité
 - [x] WelcomeView (vraie photo croix + overlay dégradé vertical, Skip, "Abide"+slogan, btn Google, btn Email)
 - [x] N'apparaît qu'au tout premier lancement (flag firstLaunchDone en Preferences)
 - [x] Skip → accès invité (lecture Bible + audio uniquement), reste → login requis
@@ -719,13 +787,13 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Traduire LoginView/RegisterView/ForgotPasswordView avec i18n
 - [x] LoginView (structure Opal : Skip, logo, Welcome back, sous-titre, Email, Password, Forgot, gros bouton, Google, lien Register)
 - [x] RegisterView (même structure : + Prénom, force du mot de passe, Google)
-- [x] Inscription sans confirmation email (session immédiate → redirection /onboarding) — Confirm email désactivé dans Supabase
+- [x] Inscription sans confirmation email (session immédiate → redirection /onboarding), Confirm email désactivé dans Supabase
 - [x] Google Cloud : projet `abide-499910`, écran consentement, client OAuth **Web** créé (id 34894391883-...)
 - [x] Coller Client ID + Secret dans Supabase Dashboard (Auth → Providers → Google) ✅
 - [x] Désactiver "Confirm email" dans Supabase Dashboard ✅
 - [x] `loginWithGoogle()` web testable (signInWithOAuth + route /auth/callback)
 
-### Phase 1.1 — Authentification (UI + flux)
+### Phase 1.1, Authentification (UI + flux)
 - [x] Créer le design system : `src/theme/variables.css` (palette navy/gold, fonts) + import dans main.js
 - [x] Charger les Google Fonts (Cormorant, Playfair, Lora, DM Sans) dans index.html
 - [x] LoginView complète (email/password, magic link, lien mot de passe oublié, erreurs génériques)
@@ -736,16 +804,16 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] `vite build` compile sans erreur
 - [ ] Test navigateur du flux (inscription → email → login) ← EN COURS (toi)
 
-> Note : Google OAuth + deep links Capacitor reportés (nécessitent config Google Cloud) — fait plus tard dans 1.1.
+> Note : Google OAuth + deep links Capacitor reportés (nécessitent config Google Cloud), fait plus tard dans 1.1.
 > Note : suppression de compte RGPD + reset password depuis deep link → après config Supabase Auth.
 
 ---
 
-## Phase Actuelle : Phase 1 — MVP
+## Phase Actuelle : Phase 1, MVP
 
 ---
 
-# PHASE 0 — Setup & Fondations ✅ (12 juin 2026)
+# PHASE 0, Setup & Fondations ✅ (12 juin 2026)
 
 ## 0.1 Initialisation du projet
 - [x] Setup Vue 3 + Ionic 8 + Capacitor 6 (installation manuelle, dossier non vide)
@@ -787,7 +855,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Cloudflare R2 : credentials dans .env.local ✅
 
 ## 0.6 Build & vérification
-- [x] ~~EAS~~ — n'est pas utilisé (c'est Expo). Capacitor utilisé directement.
+- [x] ~~EAS~~, n'est pas utilisé (c'est Expo). Capacitor utilisé directement.
 - [x] Plateforme Android ajoutée (dossier android/ généré)
 - [x] Premier build Android debug (`gradlew assembleDebug`) + install sur appareil réel ✅ (2026-06-25)
 - [ ] Premier build iOS ← nécessite un Mac + Xcode
@@ -795,9 +863,9 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 
 ---
 
-# PHASE 1 — MVP (Semaines 2–6) | Objectif : 1 000 users gratuits
+# PHASE 1, MVP (Semaines 2-6) | Objectif : 1 000 users gratuits
 
-## 1.1 — AUTHENTIFICATION (sécurisée et complète)
+## 1.1, AUTHENTIFICATION (sécurisée et complète)
 
 ### Configuration Supabase Auth
 - [x] Activer les providers : Email/Password + Google OAuth dans Supabase (Google : config Dashboard à finaliser par l'utilisateur)
@@ -805,7 +873,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Configurer les templates d'email Supabase (reset password) en français
 - [ ] Configurer la durée de session (JWT 604800) et le refresh token rolling
 
-> ⚠️ **BLOQUANT AVANT TOUTE COMPILATION ANDROID** — Login Google natif obligatoire :
+> ⚠️ **BLOQUANT AVANT TOUTE COMPILATION ANDROID** Login Google natif obligatoire :
 > L'utilisateur ne doit JAMAIS sortir de l'app vers un navigateur pour se connecter.
 > Le flow web `signInWithOAuth` (navigateur) ne sert qu'aux tests en dev web.
 > Dès le premier `npx cap add android` / test sur appareil, il FAUT :
@@ -817,7 +885,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > Client OAuth **iOS** : à créer quand on aura un Mac + Xcode.
 
 ### Inscription (Register)
-- [ ] RegisterView — formulaire email + mot de passe
+- [ ] RegisterView, formulaire email + mot de passe
 - [ ] Validation email (format) côté client
 - [ ] Validation force du mot de passe (min 8 car, règles claires affichées)
 - [ ] Indicateur visuel de force du mot de passe
@@ -827,18 +895,18 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Création automatique du profil dans `profiles` (trigger Supabase ou côté client après confirmation)
 
 ### Connexion (Login)
-- [ ] LoginView — formulaire email + mot de passe
+- [ ] LoginView, formulaire email + mot de passe
 - [ ] Bouton "Se connecter avec Google" (OAuth)
 - [ ] Option "Lien magique" (Magic Link sans mot de passe)
 - [ ] Gestion erreurs (mauvais identifiants, email non confirmé, compte inexistant)
-- [ ] Limitation tentatives (anti-bruteforce — rate limiting Supabase)
+- [ ] Limitation tentatives (anti-bruteforce, rate limiting Supabase)
 - [ ] Redirection vers onboarding si première connexion, sinon vers l'app
 
 ### Mot de passe oublié / modification
 - [x] Lien "Mot de passe oublié" sur LoginView
-- [x] ForgotPasswordView — saisie email + envoi **code OTP** (6 chiffres, anti-énumération)
-- [x] VerifyOtpView — 6 cases auto-focus + collage + resend 60s (verifyOtp type email)
-- [x] ResetPasswordView — nouveau mot de passe + confirmation (session OTP requise)
+- [x] ForgotPasswordView, saisie email + envoi **code OTP** (6 chiffres, anti-énumération)
+- [x] VerifyOtpView, 6 cases auto-focus + collage + resend 60s (verifyOtp type email)
+- [x] ResetPasswordView, nouveau mot de passe + confirmation (session OTP requise)
 - [ ] ⛔ BLOQUÉ-SMTP : Template email "Magic Link" → {{ .Token }} (code 6 chiffres)
       Supabase interdit l'édition des templates sur le SMTP par défaut.
       → Nécessite un SMTP custom (Resend recommandé, gratuit 3000/mois).
@@ -856,34 +924,34 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Guard onboarding : rediriger vers onboarding si `onboarding_done = false`
 - [ ] Déconnexion (logout) + nettoyage session locale
 - [ ] Gestion expiration token (refresh transparent ou re-login)
-- [ ] Suppression de compte (RGPD — option dans Settings + cascade Supabase)
-- [ ] Tester : inscription email, login email, Google OAuth, magic link, reset password — sur iOS ET Android
+- [ ] Suppression de compte (RGPD, option dans Settings + cascade Supabase)
+- [ ] Tester : inscription email, login email, Google OAuth, magic link, reset password, sur iOS ET Android
 
-## 1.2 — ONBOARDING ✅ (2026-06-23)
+## 1.2, ONBOARDING ✅ (2026-06-23)
 
-- [x] OnboardingWelcomeView — salutation animée FadeInWords (prénom en or, mots mot par mot)
+- [x] OnboardingWelcomeView, salutation animée FadeInWords (prénom en or, mots mot par mot)
 - [x] 3 boutons : "Oui avec plaisir" → quiz | "Je le ferai plus tard" → app (revient) | "Non merci…" → app (définitif, onboarding_done=true)
-- [x] Migration 007_onboarding_profile.sql — 17 colonnes ajoutées sur `profiles` ✅ APPLIQUÉE
-- [x] `src/data/onboardingQuiz.js` — config data-driven des 13 questions (type, field, options, scoring)
-- [x] `src/data/onboardingScoring.js` — fonctions pures : computeBibleLevel, computeProfile, pillarForProfile, notifTimeForSlot
-- [x] `src/stores/onboarding.js` — answers, currentIndex, canGoNext, next/prev/reset/finish
-- [x] `src/components/shared/ProgressBar.vue` — 4 segments gold
-- [x] `src/components/onboarding/ChoiceOption.vue` — carte option single/multi, bordure gold si sélectionné
-- [x] `src/components/onboarding/DatePicker.vue` — ion-datetime + affichage âge en direct
-- [x] `src/components/onboarding/CountryCityInput.vue` — pays (Bénin défaut) + ville libre
-- [x] `src/components/onboarding/ChurchInput.vue` — nom église + dénomination (question optionnelle)
-- [x] `QuizQuestionView.vue` — vue unique pilotée par onboardingQuiz.js (13 questions × 1 vue)
-- [x] `ProfileRevealView.vue` — symbole animé, profil en or, FadeInWords, RGPD consent, bouton démarrer
-- [x] i18n fr + en : section onboarding complète (q1–q13, profils, niveaux, révélation)
+- [x] Migration 007_onboarding_profile.sql, 17 colonnes ajoutées sur `profiles` ✅ APPLIQUÉE
+- [x] `src/data/onboardingQuiz.js`, config data-driven des 13 questions (type, field, options, scoring)
+- [x] `src/data/onboardingScoring.js`, fonctions pures : computeBibleLevel, computeProfile, pillarForProfile, notifTimeForSlot
+- [x] `src/stores/onboarding.js`, answers, currentIndex, canGoNext, next/prev/reset/finish
+- [x] `src/components/shared/ProgressBar.vue`, 4 segments gold
+- [x] `src/components/onboarding/ChoiceOption.vue`, carte option single/multi, bordure gold si sélectionné
+- [x] `src/components/onboarding/DatePicker.vue`, ion-datetime + affichage âge en direct
+- [x] `src/components/onboarding/CountryCityInput.vue`, pays (Bénin défaut) + ville libre
+- [x] `src/components/onboarding/ChurchInput.vue`, nom église + dénomination (question optionnelle)
+- [x] `QuizQuestionView.vue`, vue unique pilotée par onboardingQuiz.js (13 questions × 1 vue)
+- [x] `ProfileRevealView.vue`, symbole animé, profil en or, FadeInWords, RGPD consent, bouton démarrer
+- [x] i18n fr + en : section onboarding complète (q1, q13, profils, niveaux, révélation)
 - [x] `auth.firstName` computed (source unique : profile.display_name → user_metadata → first word)
 - [x] Règle marque "utiliser le prénom souvent" documentée dans CLAUDE.md + PROJECT.md
-- [x] `stores/ads.js` — contexte 'onboarding' ajouté à AD_BLOCKED_CONTEXTS
+- [x] `stores/ads.js`, contexte 'onboarding' ajouté à AD_BLOCKED_CONTEXTS
 - [x] TEST COMPLET à faire : parcours quiz entier → ProfileRevealView → vérifier colonnes en DB ✅ validé appareil 2026-07-25
 
-## 1.3 — LECTEUR BIBLE (Pilier Immersion) 🚧 (texte fait le 2026-06-23)
+## 1.3, LECTEUR BIBLE (Pilier Immersion) 🚧 (texte fait le 2026-06-23)
 
 ### Accès aux données ✅
-- [x] bible-db.js : chargement DB double moteur — sql.js (web/dev) + copyFromAssets (natif), 100% offline
+- [x] bible-db.js : chargement DB double moteur, sql.js (web/dev) + copyFromAssets (natif), 100% offline
 - [x] bible-db.js : `getVersions()` (versions installées localement)
 - [x] bible-db.js : `getBooks(versionId)` (liste des livres, ordre canonique)
 - [x] bible-db.js : `getChapterCount(versionId, bookId)`
@@ -891,17 +959,17 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] bible-db.js : `getVerses(versionId, bookId, chapter)`
 - [x] `initBible()` appelée au démarrage dans App.vue (onMounted)
 - [x] Store bible.js (version/livre/chapitre actifs + cache des livres AT/NT)
-- [x] .db bundlé : **public/assets/databases/lsg1910SQLite.db + databases.json** (natif — copyFromAssets cherche là, voir lesson 2026-06-25) ; public/db + public/sql-wasm.wasm (web/sql.js)
+- [x] .db bundlé : **public/assets/databases/lsg1910SQLite.db + databases.json** (natif, copyFromAssets cherche là, voir lesson 2026-06-25) ; public/db + public/sql-wasm.wasm (web/sql.js)
 
 ### Interface de lecture ✅
-- [x] BibleHomeView — onglets AT/NT (swipe horizontal) + badge version déroulable + liste livres avec nb chapitres
-- [x] BibleBookView — nom du livre + grille des chapitres
-- [x] BibleChapterView — versets (police var(--font-bible), taille réglable 16→24px) + nav prev/next + swipe + réglages
-- [x] Composant VerseItem (numéro doré + texte ALIGNÉ À GAUCHE — changé le 2026-07-21, plus de justify)
+- [x] BibleHomeView, onglets AT/NT (swipe horizontal) + badge version déroulable + liste livres avec nb chapitres
+- [x] BibleBookView, nom du livre + grille des chapitres
+- [x] BibleChapterView, versets (police var(--font-bible), taille réglable 16→24px) + nav prev/next + swipe + réglages
+- [x] Composant VerseItem (numéro doré + texte ALIGNÉ À GAUCHE, changé le 2026-07-21, plus de justify)
 - [x] Header chapitre façon éditoriale (2026-07-21) : gros chiffre flottant à gauche (float, 76px),
       le texte du 1er verset s'enroule autour (effet "journal") puis passe pleine largeur dessous.
       Marge droite du lecteur resserrée (space-3 au lieu de space-6).
-- [x] ChapterNavigator (prev/next) — intégré en footer de BibleChapterView
+- [x] ChapterNavigator (prev/next), intégré en footer de BibleChapterView
 - [x] Réglage taille de police (sheet, persisté via preferences.bibleFontSize)
 - [x] Composant VersionSelector (bottom sheet : versions installées + bouton "Ajouter" → store à venir)
 - [x] ImmersionTab branché sur BibleHomeView (la Bible EST le pilier Immersion)
@@ -917,14 +985,14 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Refonte barre d'action façon YouVersion : voile sticky bas + rangée de pastilles couleur (highlight) + Copier/Comparer/Partager/Note (2026-06-26)
 - [ ] Badge version dans vue chapitre (header droite) → change de version en gardant chapitre+versets
 - [ ] Panneau ⚙️ réglages lecture : taille texte + choix police (6-7 polices) + mode clair/sombre
-- [ ] ⚠️ IMPORTANT — PERSISTANCE OFFLINE DES SURLIGNAGES (demandé 2026-06-26) : le highlight est VISUEL pour l'instant (en mémoire, perdu au changement de chapitre/redémarrage). À brancher : sauvegarde locale SQLite (table highlights : version_id, book_id, chapter, verse, color) + file de sync vers Supabase (local-first). NE PAS OUBLIER.
+- [ ] ⚠️ IMPORTANT, PERSISTANCE OFFLINE DES SURLIGNAGES (demandé 2026-06-26) : le highlight est VISUEL pour l'instant (en mémoire, perdu au changement de chapitre/redémarrage). À brancher : sauvegarde locale SQLite (table highlights : version_id, book_id, chapter, verse, color) + file de sync vers Supabase (local-first). NE PAS OUBLIER.
 
-### Progression (à faire — local-first + sync queue)
+### Progression (à faire, local-first + sync queue)
 - [ ] Marquer un chapitre comme lu → reading_progress (local d'abord, sync Supabase)
 - [ ] Indicateur visuel chapitres déjà lus
 - [ ] Tester lecture offline (sans connexion) + sync au retour en ligne
 
-## 1.4 — AUDIO BIBLE (Pilier Immersion) 🚧 (streaming codé le 2026-06-26)
+## 1.4, AUDIO BIBLE (Pilier Immersion) 🚧 (streaming codé le 2026-06-26)
 
 ### Intégration BibleBrain ✅
 - [x] Clé reçue (VITE_BIBLEBRAIN_KEY) + filesets sondés (LSG FRNTLSN2DA/FRNTLSO2DA, KJV ENGKJVN2DA/ENGKJVO1DA)
@@ -941,7 +1009,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] À TESTER SUR APPAREIL : lecture background écran verrouillé + contrôles play/pause/seek (cap sync requis) ✅ validé appareil 2026-07-25
 
 ### Interface player ✅
-- [x] AudioPlayerBar (mini-barre persistante, montée GLOBALEMENT dans App.vue — survit à la navigation)
+- [x] AudioPlayerBar (mini-barre persistante, montée GLOBALEMENT dans App.vue, survit à la navigation)
 - [x] Bouton ▶️/⏸️ dans le header du chapitre (à côté du pill version + ⚙️)
 - [x] Synchronisation texte : verset actif surligné en or (classe .reading) selon timestamp
 - [x] Défilement automatique du texte pendant la lecture (scrollIntoView sur le verset actif)
@@ -952,22 +1020,22 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Bug pause=stop corrigé (music-controls-destroy émis au pause → ne plus appeler stop(), dismissable/hasClose=false)
 - [ ] ~~AudioPlayerView plein écran~~ → reporté (la mini-barre suffit pour le MVP)
 
-### Téléchargement offline 🚧 (codé le 2026-06-28 — style YouVersion)
+### Téléchargement offline 🚧 (codé le 2026-06-28, style YouVersion)
 - [x] Endpoint /download BibleBrain (seul autorisé) : getDownloadUrl() dans biblebrain.js
-- [x] @capacitor/filesystem@6 installé — MP3 + timestamps.json dans Directory.Data (audio/{version}/{livre}/)
+- [x] @capacitor/filesystem@6 installé, MP3 + timestamps.json dans Directory.Data (audio/{version}/{livre}/)
 - [x] stores/audioDownloads.js : downloadBook (séquentiel, reprise idempotente), deleteBook, estimateBookSize (HEAD), progression réactive
-- [x] Lecture locale d'abord dans useAudioPlayer (localChapterSource → convertFileSrc) — offline transparent
-- [x] AudioPlayerSheet.vue : panneau expansible (remplace AudioPlayerBar) — étendu (titre, copyright, cercle ⬇, contrôles complets, bille+temps, vitesse encerclée, bouton téléchargements) ↔ replié (mini-barre + bille + bouton agrandir)
+- [x] Lecture locale d'abord dans useAudioPlayer (localChapterSource → convertFileSrc), offline transparent
+- [x] AudioPlayerSheet.vue : panneau expansible (remplace AudioPlayerBar), étendu (titre, copyright, cercle ⬇, contrôles complets, bille+temps, vitesse encerclée, bouton téléchargements) ↔ replié (mini-barre + bille + bouton agrandir)
 - [x] DownloadCircle.vue : cercle ⬇+Mo / anneau SVG progression / ✓ téléchargé (clic → download ou suppression)
 - [x] AudioDownloadsModal.vue : store des téléchargements (total utilisé, liste, 🗑 suppression)
 - [x] Clic ▶️ header chapitre → panneau complet s'ouvre + lecture démarre
-- [x] Bille (thumb) sur la progression (input range stylé) — feedback appareil 2026-06-28
+- [x] Bille (thumb) sur la progression (input range stylé), feedback appareil 2026-06-28
 - [x] À TESTER SUR APPAREIL : télécharger un livre → anneau progression → ✓ → mode avion → lecture offline + surbrillance ✅ validé appareil 2026-07-25
-- [ ] Vérifier filesets OT/KJV autorisés sur /download (sonde coupée — NT LSG confirmé 200)
+- [ ] Vérifier filesets OT/KJV autorisés sur /download (sonde coupée, NT LSG confirmé 200)
 
 ### Musique de fond ✅ (codé le 2026-07-21, validé appareil)
 - [x] src/assets/audio/background-calm.mp3 empaqueté dans l'app (6,5 Mo, bundlé par Vite → offline)
-- [x] Store backgroundMusic.js : logique RÉCESSIVE — esclave de audio.isPlaying/currentUrl
+- [x] Store backgroundMusic.js : logique RÉCESSIVE, esclave de audio.isPlaying/currentUrl
       (play/pause/stop de l'audio Bible entraîne la musique ; jamais l'inverse)
 - [x] Bouton on/off dédié (persisté via @capacitor/preferences) : coupe la musique SEULE, l'audio Bible continue
 - [x] Pas de contrôle écran verrouillé pour la musique (simple <audio loop>, pas un player à part)
@@ -975,7 +1043,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Layout validé : cercle téléchargement CENTRÉ (grid 3 colonnes) + bouton musique à droite, espacé
 - [x] Volume 0.24 (ajusté après test appareil, ni trop discret ni trop couvrant)
 
-## 1.5 — ACCUEIL + PLAN DE LECTURE & STREAK 🚧 (codé le 2026-07-06)
+## 1.5, ACCUEIL + PLAN DE LECTURE & STREAK 🚧 (codé le 2026-07-06)
 
 ### Accueil (nouvel onglet, 1er) + restructuration barre
 - [x] Barre du bas réorganisée : **Accueil · Bible · L'Ancre · Plus** (Immersion renommé « Bible », route interne inchangée ; Sanctuaire retiré de la barre, route conservée)
@@ -984,7 +1052,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Route /tabs/home (invité OK, hors-ligne OK) + redirects / et /tabs → home + guard
 
 ### Plan de lecture ✅
-- [x] planGenerator.js (CANON 66 livres + buildSchedule, portées full/nt/psalms) — fonctions pures
+- [x] planGenerator.js (CANON 66 livres + buildSchedule, portées full/nt/psalms), fonctions pures
 - [x] plan.js store : loadActivePlan, createPlan (7j/30j/90j), todayItems, completeToday, progression (markRead/readChapters)
 - [x] Sauvegarde locale (user-db reading_plans) + sync best-effort Supabase (sync.js)
 - [x] DailyPlanCard : jour N/total, chapitres du jour (lire), barre progression, « Marquer comme lu »
@@ -999,7 +1067,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] StreakFireOverlay : animation Lottie (lottie-web + fire.json) au 1er streak du jour (flag date preferences)
 - [x] Messages d'encouragement par palier (i18n streak.msg.*)
 - [x] À TESTER SUR APPAREIL : lire → flamme + overlay ; tuer/rouvrir → conservé ; jour suivant → +1 ✅ validé appareil 2026-07-25
-- [ ] Déclenchement au chapitre ouvert (BibleChapterView.load : markRead + registerReadToday) — testé web, à confirmer appareil
+- [ ] Déclenchement au chapitre ouvert (BibleChapterView.load : markRead + registerReadToday), testé web, à confirmer appareil
 
 ### Plans enrichis (3 types) + Splash ✅ (codé le 2026-07-06)
 - [x] 3 types de plans : profil (règle locale par user_profile) / custom (contenu + durée libre + choix livre) / préétablis bundlés
@@ -1019,7 +1087,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Sync bidirectionnelle robuste (pull + file de sync + reading_progress par lots)
 - [ ] Petits restes Bible : marquer chapitre lu explicitement (déjà auto à l'ouverture)
 
-## 1.6 — NOTIFICATIONS
+## 1.6, NOTIFICATIONS
 
 - [ ] Installer @capacitor/push-notifications
 - [ ] Configurer FCM (Firebase) pour Android
@@ -1033,7 +1101,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Réglage heure de notification dans Settings
 - [ ] Tester réception notification iOS ET Android
 
-## 1.7 — PUBLICITÉS ADMOB 🚧 (codé le 2026-07-18, modèle YouVersion : interstitiels)
+## 1.7, PUBLICITÉS ADMOB 🚧 (codé le 2026-07-18, modèle YouVersion : interstitiels)
 
 > STRATÉGIE (2026-07-18) : PLUS de bannières. Uniquement des INTERSTITIELS plein écran
 > (parfois vidéo), façon YouVersion. Voir CLAUDE.md §AdMob pour la politique complète.
@@ -1046,7 +1114,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Déclencheur ouverture Guide IA (AncreTab onIonViewWillEnter, throttlé)
 - [x] Déclencheur « méditer sur un verset » (AncreTab, ?prefill → à chaque fois)
 - [x] Déclencheur quiz : lancement (BibleChapterView) + rejeu (ChapterQuizModal), à chaque fois
-- [x] AndroidManifest : APPLICATION_ID AdMob (⚠️ ID de TEST — à remplacer)
+- [x] AndroidManifest : APPLICATION_ID AdMob (⚠️ ID de TEST, à remplacer)
 - [x] Règle stricte !authStore.isPremium (appliquée dans le store, sans exception)
 - [x] Règle stricte : jamais pendant Bible/audio/prière/échange IA (exclusions router + design)
 - [x] Compte Google AdMob créé (2026-07-18) + app « Abide » Android déclarée
@@ -1064,14 +1132,14 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
       `landing/app-ads.txt` (ligne `google.com, pub-4844051778459996, DIRECT,
       f08c47fec0942fa0`) et déployé sur `https://toabide.online/app-ads.txt` via Vercel.
       Le crawler AdMob l'a validé en ~24 h.
-- [ ] ⚠️ ACTIVATION DES VRAIES PUBS — **à faire UNIQUEMENT juste avant la Production
+- [ ] ⚠️ ACTIVATION DES VRAIES PUBS, **à faire UNIQUEMENT juste avant la Production
       publique**, PAS pendant le test fermé : décommenter `VITE_ADMOB_INTERSTITIAL_ID`
       dans `.env.local`, puis rebuild + resync + nouvel AAB. Raison de ne pas le faire
       maintenant : pendant les 14 jours de test fermé, 12 testeurs utilisent l'app
-      intensivement — un seul clic (même accidentel) sur une vraie pub peut déclencher
+      intensivement, un seul clic (même accidentel) sur une vraie pub peut déclencher
       une suspension du compte AdMob pour trafic invalide, pour zéro revenu réel.
       Rester sur les IDs de TEST jusque-là. **NE JAMAIS cliquer ses propres vraies pubs.**
-- [ ] ⚠️ Le téléphone de test principal utilise un DNS bloqueur de pubs (AdGuard) — les
+- [ ] ⚠️ Le téléphone de test principal utilise un DNS bloqueur de pubs (AdGuard), les
       requêtes AdMob n'arrivent jamais, donc AUCUNE pub ne s'affiche tant qu'il est actif
       (comportement confirmé par l'utilisateur, pas un bug de l'app). Il avait été
       désactivé pour le test du 2026-07-25 (résultats fiables). **Refaire ce même geste
@@ -1081,7 +1149,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] iOS : ajouter GADApplicationIdentifier dans Info.plist + App ID iOS (build Mac)
 - [x] À TESTER SUR APPAREIL : pub à l'ouverture IA, au quiz, à la navigation (cooldown), jamais si premium ✅ validé appareil 2026-07-25 (AdGuard désactivé pour ce test)
 
-## 1.8 — SETTINGS & PROFIL 🚧 (codé le 2026-07-17)
+## 1.8, SETTINGS & PROFIL 🚧 (codé le 2026-07-17)
 
 - [x] SettingsView (structure, accessible invités + section Compte si connecté)
 - [x] Réglage langue de l'interface (fr/en, store preferences)
@@ -1089,15 +1157,15 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Réglage police + taille du texte Bible
 - [x] Modification mot de passe (→ flux OTP /auth/forgot)
 - [x] Déconnexion (avec confirmation)
-- [x] Suppression de compte — parcours exigeant (sous-page → avertissement détaillé →
+- [x] Suppression de compte, parcours exigeant (sous-page → avertissement détaillé →
       recopie du mot SUPPRIMER/DELETE) + Edge Function delete-account (RGPD, cascade profiles
       + auth.admin.deleteUser + purge locale clearAllLocalData). Déployée 2026-07-17.
 - [x] Lien Settings depuis l'onglet Plus (icône engrenage header)
-- [ ] Réglage heure de notification (rappels prière/streak configurables — reporté avec le lot notif)
-- [ ] Réglage version Bible préférée (le VersionSelector existe déjà dans le lecteur — à relier ?)
+- [ ] Réglage heure de notification (rappels prière/streak configurables, reporté avec le lot notif)
+- [ ] Réglage version Bible préférée (le VersionSelector existe déjà dans le lecteur, à relier ?)
 - [ ] Lien CGU + politique de confidentialité (clés i18n prêtes, manque les URLs/pages réelles)
 
-## 1.9 — INFRASTRUCTURE & LANCEMENT MVP
+## 1.9, INFRASTRUCTURE & LANCEMENT MVP
 
 - [ ] Landing page Nuxt 3 (hero + présentation + waitlist)
 - [ ] Formulaire liste d'attente (email → Supabase ou service email)
@@ -1112,23 +1180,23 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 
 ---
 
-# PHASE 2 — Premium (Semaines 7–12) | Objectif : Monétisation
+# PHASE 2, Premium (Semaines 7-12) | Objectif : Monétisation
 
-## 2.1 — PAIEMENTS
+## 2.1, PAIEMENTS
 
-### KKiaPay (Android — Mobile Money + cartes locales)
+### KKiaPay (Android, Mobile Money + cartes locales)
 - [ ] Créer compte KKiaPay développeur + clés API
 - [ ] Installer / intégrer le SDK KKiaPay
 - [ ] kkiapay.js : initPayment(), gestion callback succès/échec
 - [ ] Tester paiement Mobile Money en sandbox
 
-### FedaPay (Android — alternative béninoise)
+### FedaPay (Android, alternative béninoise)
 - [ ] Créer compte FedaPay + clés API
 - [ ] Intégrer le SDK FedaPay
 - [ ] fedapay.js : initPayment(), callback
 - [ ] Tester en sandbox
 
-### RevenueCat (iOS — IAP)
+### RevenueCat (iOS, IAP)
 - [ ] Créer compte RevenueCat + configurer les produits (mensuel/annuel)
 - [ ] Configurer les abonnements dans App Store Connect
 - [ ] Intégrer le SDK RevenueCat
@@ -1153,7 +1221,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Suppression AdMob dès is_premium = true
 - [ ] Tester le flux complet : paiement → webhook → activation → accès débloqué
 
-## 2.2 — GUIDE IA (Pilier L'Ancre) 🚧 (architecture faite 2026-07-07)
+## 2.2, GUIDE IA (Pilier L'Ancre) 🚧 (architecture faite 2026-07-07)
 
 > 🗺️ **VISION & ROADMAP COMPLÈTE : voir `docs/ai-roadmap.md`** (18 fonctionnalités évaluées,
 > plan en 4 vagues, la fonctionnalité phare « Dossier d'étude »). Principe : ne PAS faire un
@@ -1166,15 +1234,15 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > **C'est la Vague 0 de la roadmap : bloquant avant toute fonctionnalité IA coûteuse.**
 
 ### Préparation RAG ✅ (seed complet le 2026-07-08)
-- [x] scripts/seed-embeddings.js (embeddings via **Hugging Face** gratuit, PAS OpenAI — voir note clé)
+- [x] scripts/seed-embeddings.js (embeddings via **Hugging Face** gratuit, PAS OpenAI, voir note clé)
 - [x] Recherche vectorielle pgvector vérifiée : « aimer ses ennemis » → Matthieu 5.44 (sim 0.728) ✅
-- [x] **Seed COMPLET : 31 074 versets, 66 livres** (768 dims, multilingual-mpnet) — toute la Bible indexée
+- [x] **Seed COMPLET : 31 074 versets, 66 livres** (768 dims, multilingual-mpnet), toute la Bible indexée
 - [x] Sources = références CITÉES par le LLM, vérifiées contre la vraie Bible (hallucinations écartées + loggées)
 
 ### Edge Function ai-chat ✅ (déployée)
 - [x] Structure + auth JWT (vérif passerelle + getUser interne)
 - [ ] ~~Compteur sessions~~ → **reporté** (lot limites/paiement), `// TODO(limites)` dans le code
-- [x] Embedding question via **Hugging Face** (OpenRouter n'a PAS d'endpoint embeddings — voir lessons)
+- [x] Embedding question via **Hugging Face** (OpenRouter n'a PAS d'endpoint embeddings, voir lessons)
 - [x] Recherche Top 5 versets pertinents (RPC match_bible_embeddings)
 - [x] Prompt système par mode (enseignement/prédication/méditation/théologie)
 - [x] Appel OpenRouter (gpt-4o-mini)
@@ -1205,19 +1273,19 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [ ] Résumé + extraction versets clés (LLM)
 - [ ] Affichage structuré du résultat
 
-## 2.3 — SANCTUAIRE (Prière & Jeûne) ✅ (implémenté le 2026-07-14)
+## 2.3, SANCTUAIRE (Prière & Jeûne) ✅ (implémenté le 2026-07-14)
 
 ### Journal de prières ✅
 - [x] PrayerJournalView (liste + ajout)
 - [x] Ajout d'une prière (formulaire)
-- [x] Marquer comme exaucée (+ date) — sliding item
+- [x] Marquer comme exaucée (+ date), sliding item
 - [x] Timeline des exaucements (historique de gratitude)
 - [x] Persistance offline-first + sync Supabase (table prayers, migration 011 local_id)
-- [ ] PrayerDetailView (contenu + actions) — non retenu pour l'instant (liste + sliding suffisent)
+- [ ] PrayerDetailView (contenu + actions), non retenu pour l'instant (liste + sliding suffisent)
 
 ### Moments de prière ✅
 - [x] Prière du matin / du soir liée au verset du jour (PrayerMomentView)
-- [x] Pool local curé fr/en (src/data/prayerPool.js) — tirage déterministe par date
+- [x] Pool local curé fr/en (src/data/prayerPool.js), tirage déterministe par date
 - [x] Bouton « ✨ prière personnalisée » → Guide IA (prefill, mécanisme existant)
 - [x] Sujets de prière à cocher + bouton « Amen » → marque le moment fait
 - [x] Carte sur l'Accueil (matin/soir selon l'heure) + entrée onglet Plus
@@ -1227,18 +1295,18 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Calendrier mensuel navigable (FastingCalendar.vue, jours teintés par type + légende)
 - [x] Jeûnes calculés sans maintenance annuelle (Computus) : janvier 21j, Carême, Vendredi Saint, Avent
 - [x] Jeûne personnel libre (3/7/21/40 j) + progression jour X/N
-- [x] Méditations ciblées aux heures de faim (12h/16h) — notifications locales depuis le pool
+- [x] Méditations ciblées aux heures de faim (12h/16h), notifications locales depuis le pool
 - [x] Historique des jeûnes terminés
-- [ ] Sync Supabase du jeûne (local-only pour l'instant — à faire avec la file de sync)
+- [ ] Sync Supabase du jeûne (local-only pour l'instant, à faire avec la file de sync)
 
 ### Notifications locales ✅
 - [x] ~~Rappels de prière matin (7h) / soir (20h30), répétitifs~~ → REFONTE 2026-07-21 :
-      rappels MULTI-CRÉNEAUX conditionnels — matin 10h·12h, soir 18h·20h·22h. On relance
+      rappels MULTI-CRÉNEAUX conditionnels, matin 10h·12h, soir 18h·20h·22h. On relance
       TANT QUE le moment n'est pas accompli ; dès le « Amen », les rappels restants de ce
       moment sont annulés (cancelPrayerReminders). Textes variés : le créneau fixe le ton
       (douce → relance → nocturne), la date choisit la variante. Testé (Node) : créneaux
       restants selon l'heure, skip si déjà fait, ids sans collision, rotation sur 4 jours.
-- [x] Notifications DÉPLIABLES (largeBody + summaryText) — corrige le texte tronqué
+- [x] Notifications DÉPLIABLES (largeBody + summaryText), corrige le texte tronqué
       sans bouton d'expansion. Appliqué à prière, jeûne (verset+note) et streak.
 - [x] Accompagnement de jeûne : J-3, J-1, jour J, encouragements 12h/16h, ton « fin approche », félicitations
 - [x] Alerte streak en danger, 2 paliers (19h doux, 22h urgent, si Bible pas encore ouverte et série en cours)
@@ -1246,18 +1314,18 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] Textes variés par jour (src/data/streakMessages.js, 4 formulations/situation, jamais 2x de suite)
 - [x] Tap sur notification → ouvre l'écran concerné (extra.route + listener global App.vue)
 - [x] Idempotence : plages d'ids réservées, re-planification à chaque démarrage
-- [ ] Heures de rappel configurables (Settings — plus tard)
+- [ ] Heures de rappel configurables (Settings, plus tard)
 - [ ] Son de notification personnalisé (⚠️ en attente d'un fichier audio ~1-2s à fournir)
 
-## 2.4 — VERSIONS BIBLE SUPPLÉMENTAIRES
+## 2.4, VERSIONS BIBLE SUPPLÉMENTAIRES
 
 ### Mécanique de téléchargement ✅ (codée le 2026-06-25, KJV de test)
-- [x] scripts/generate-version.js — génère un .db de version depuis getbible.net (is_bundled=0)
+- [x] scripts/generate-version.js, génère un .db de version depuis getbible.net (is_bundled=0)
 - [x] KJV générée (dist-bibles/kjvSQLite.db, 31102 versets, domaine public)
-- [x] scripts/upload-version.js — upload R2 + manifeste JSON (clés secrètes locales)
+- [x] scripts/upload-version.js, upload R2 + manifeste JSON (clés secrètes locales)
 - [x] bible-db.js multi-versions : base active unique, switchVersion(), downloadVersion(), isVersionInstalled()
-- [x] store bibleVersions.js — catalogue (manifeste R2 + installées), download, activate, persistance
-- [x] BibleStoreView — page Store (liste, Télécharger, Choisir, badge Active)
+- [x] store bibleVersions.js, catalogue (manifeste R2 + installées), download, activate, persistance
+- [x] BibleStoreView, page Store (liste, Télécharger, Choisir, badge Active)
 - [x] VersionSelector → "Ajouter une version" ouvre /bible/store ; ne liste que les installées
 - [x] Changement de version garde livre+chapitre (ID canoniques partagés)
 - [x] SECURITY.md : séparation bucket R2 public / données Supabase documentée
@@ -1265,7 +1333,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 - [x] ✅ 7 VERSIONS SUR R2 (2026-06-26) : 3 FR complètes (LSG bundlé, Darby, Martin 1744) + 4 EN (KJV, WEB, ASV, YLT)
 - [x] À TESTER SUR APPAREIL : télécharger une version → couper réseau → lire offline → rebascule LSG ✅ validé appareil 2026-07-25
 
-### 📌 PLUS DE VERSIONS = PLUS TARD (décidé 2026-06-26 — on avance sur l'audio d'abord)
+### 📌 PLUS DE VERSIONS = PLUS TARD (décidé 2026-06-26, on avance sur l'audio d'abord)
 > SOURCES FR ÉPUISÉES : getbible.net = seulement 3 FR (toutes prises : darby, ls1910, martin).
 > BibleBrain texte : Ostervald (FRNO96) est NT-SEULEMENT (incomplet → exclu). Seules Darby/LSG
 > y sont complètes (déjà possédées). Le FR moderne (Segond 21, Semeur, NBS, BFC) est SOUS COPYRIGHT.
@@ -1279,27 +1347,27 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 
 ---
 
-# PHASE 3 — Croissance (Mois 3–6)
+# PHASE 3, Croissance (Mois 3-6)
 
-## 3.1 — Pilier Phare (Évangélisation)
+## 3.1, Pilier Phare (Évangélisation)
 - [ ] Parcours "Premiers Pas" gamifié (tunnel interactif)
 - [ ] Hub des chercheurs (questions anonymes)
 - [ ] Mise en relation mentor / chercheur
 - [ ] Ressources de partage (versets, outils)
 
-## 3.2 — Langues & Internationalisation
+## 3.2, Langues & Internationalisation
 - [ ] Partenariat FCBH pour Bible Fon + langues béninoises
 - [ ] Intégration Bible Fon (texte + audio)
 - [ ] Version anglaise de l'app (i18n complet)
 - [ ] KJV + audio BibleBrain EN
 
-## 3.3 — Croissance & Rétention
+## 3.3, Croissance & Rétention
 - [ ] Notifications géolocalisées (geofences Capacitor)
 - [ ] Partage de versets (génération image + réseaux sociaux)
 - [ ] Liens d'affiliation trackés (pasteurs, influenceurs)
 - [ ] Programme de parrainage
 
-## 3.4 — Optimisation Technique
+## 3.4, Optimisation Technique
 - [ ] Virtual scroll pour le lecteur Bible (perf)
 - [ ] Lazy loading des modules
 - [ ] Mode offline complet (sync queue robuste)
@@ -1328,7 +1396,7 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 > Plan détaillé : docs/sync-plan.md
 
 - [x] Migrations `sync_user_data_tables` : 7 tables créées (highlights, bookmarks,
-      notes, quiz_results, prayer_moments, fasting, activity_days) — RLS active +
+      notes, quiz_results, prayer_moments, fasting, activity_days), RLS active +
       4 policies chacune, UNIQUE(user_id, local_id), CASCADE sur profiles
 - [x] Migration `reading_plans_sync_columns` : + scope, title, template_id, source,
       local_id, updated_at. Index UNIQUE PARTIEL (WHERE local_id IS NOT NULL) car

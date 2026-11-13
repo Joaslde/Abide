@@ -189,7 +189,7 @@ const audio = useAudioStore()
 
 /**
  * Titres du lecteur : la taille suit la LONGUEUR du nom, pas la largeur d'écran.
- * La mini-barre partage sa ligne avec six contrôles — « Proverbes 21 » y était
+ * La mini-barre partage sa ligne avec six contrôles, « Proverbes 21 » y était
  * tronqué en « Proverbe… ». Re-mesuré à chaque changement de chapitre.
  */
 const fullTitleEl = ref(null)
@@ -281,7 +281,7 @@ function onSeekInput(e) {
   background: var(--navy2);
   border: 1px solid var(--gold-border-md);
   /* Arrondi sur les QUATRE coins : le lecteur flotte, il n'est plus ancré au
-     bas de l'écran — des angles droits en bas trahissaient l'ancien collage. */
+     bas de l'écran, des angles droits en bas trahissaient l'ancien collage. */
   border-radius: 22px;
   overflow: hidden;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
@@ -404,7 +404,7 @@ function onSeekInput(e) {
   text-align: center;
 }
 
-/* Range avec BILLE (thumb) — saisissable au doigt */
+/* Range avec BILLE (thumb), saisissable au doigt */
 .range {
   flex: 1;
   -webkit-appearance: none;

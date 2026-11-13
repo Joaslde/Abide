@@ -1,4 +1,4 @@
-/* English translations — Abide */
+/* English translations, Abide */
 export default {
   // Signature stamped at the bottom of shared images (verse of the day AND
   // shared verse). The name must MATCH the Play Store listing so that a search
@@ -46,14 +46,15 @@ export default {
     evening: 'Good evening',
     deleteConfirm: 'Delete this conversation? This cannot be undone.',
     error: 'Something went wrong. Please try again.',
-    // Daily quota reached: not an error — an invitation.
-    // We offer referral: inviting friends unlocks days of unlimited access.
-    quotaReached: 'We\'ve shared a lot today. Come back tomorrow — or invite your friends: every sign-up earns you days of unlimited access.',
-    quotaReachedNamed: '{name}, we\'ve shared a lot today. Come back tomorrow — or invite your friends: every sign-up earns you days of unlimited access.',
+    // Daily quota reached: not an error, an invitation.
+    // We offer referral: inviting friends unlocks days of premium.
+    quotaReached: 'We\'ve shared a lot today. Come back tomorrow, or invite your friends: every sign-up earns you days of premium.',
+    quotaReachedNamed: '{name}, we\'ve shared a lot today. Come back tomorrow, or invite your friends: every sign-up earns you days of premium.',
+    quotaReachedPremium: 'You’ve reached the 50-message limit for today. Come back tomorrow, the Guide will be here.',
     quotaCta: 'Invite friends',
     // Guest trying to message the Guide: a clear invitation, not a technical error.
     authRequiredTitle: 'An account is needed',
-    authRequiredMsg: 'The Guide needs to know who it’s talking to in order to walk with you and keep track of your conversations. Create your account in seconds — your question stays here, you’ll just need to send it.',
+    authRequiredMsg: 'The Guide needs to know who it’s talking to in order to walk with you and keep track of your conversations. Create your account in seconds: your question stays here, you’ll just need to send it.',
     authRequiredCta: 'Create my account',
     modes: {
       enseignement: 'Teaching',
@@ -73,8 +74,8 @@ export default {
     generating: 'Preparing your quiz…',
     offline: 'The quiz requires an internet connection.',
     error: 'Could not generate the quiz. Please try again.',
-    // Daily quota reached: not a failure — an invitation.
-    quotaReached: 'You\'ve done your quizzes for today. Come back tomorrow — or invite your friends: every sign-up earns you days of unlimited access.',
+    // Daily quota reached: not a failure, an invitation.
+    quotaReached: 'You\'ve done your quizzes for today. Come back tomorrow, or invite your friends: every sign-up earns you days of premium.',
     quotaCta: 'Invite friends',
     question: 'Question {current} / {total}',
     next: 'Next',
@@ -94,7 +95,7 @@ export default {
   referral: {
     title: 'Referral',
     heading: 'Invite your friends to Abide',
-    description: 'Share your link. When your friends install the app and create an account, you unlock premium — free of charge.',
+    description: 'Share your link. When your friends install the app and create an account, you unlock premium, free of charge.',
     share: 'Share my link',
     shareMessage: 'Join me on Abide, an app for reading the Bible and praying daily 🙏 {link}',
     linkCopied: 'Link copied to clipboard',
@@ -118,7 +119,7 @@ export default {
       eveningPrayer: 'Evening prayer',
       subjects: 'My prayer requests',
       aiPrayer: 'Personalized prayer',
-      aiPrefill: 'Help me pray from this verse: {reference} — “{verse}”',
+      aiPrefill: 'Help me pray from this verse: {reference}, “{verse}”',
       amen: 'Amen',
       doneToday: 'Prayed today',
       amenToast: 'May God’s peace go with you. 🙏'
@@ -174,11 +175,11 @@ export default {
       fastStartBody: 'Are you joining? Open the Sanctuary to take part.',
       fastOngoingTitle: '{fast} in progress',
       fastOngoingBody: 'There’s still time to join the fast.',
-      encourageTitle: 'Fast — day {day}/{total}',
-      nearEndTitle: 'The end is near — day {day}/{total}',
+      encourageTitle: 'Fast, day {day}/{total}',
+      nearEndTitle: 'The end is near: day {day}/{total}',
       completedTitle: 'Fast completed! 🎉',
       completedBody: 'You made it to the end. May God honor your perseverance.'
-      // Streak texts (soft / urgent / lost) live in src/data/streakMessages.js —
+      // Streak texts (soft / urgent / lost) live in src/data/streakMessages.js, 
       // several variants picked per day, no fixed i18n key here (never repeats).
     }
   },
@@ -260,7 +261,7 @@ export default {
     skipQuiz: 'No thanks, I don’t need an experience made for me',
     referral: {
       title: 'Were you invited by a friend?',
-      body: 'If someone shared Abide with you, you can enter their code here — otherwise, just skip this step.',
+      body: 'If someone shared Abide with you, you can enter their code here. Otherwise, just skip this step.',
       yes: 'Yes',
       no: 'No, continue',
       placeholder: 'Referral code',
@@ -408,11 +409,11 @@ export default {
       },
       marcheur: {
         name: 'The Walker',
-        description: 'You’ve been walking with Christ for a while, and you want to move forward steadily. Abide will help you turn your faith into a daily habit — not out of obligation, but out of desire. One step at a time, every day counts.'
+        description: 'You’ve been walking with Christ for a while, and you want to move forward steadily. Abide will help you turn your faith into a daily habit, not out of obligation, but out of desire. One step at a time, every day counts.'
       },
       explorateur: {
         name: 'The Explorer',
-        description: 'You don’t just read — you want to understand. The context, the meaning, the depth. Abide gives you a guide to dig into the Word, explore passages and discover treasures you hadn’t seen.'
+        description: 'You don’t just read: you want to understand. The context, the meaning, the depth. Abide gives you a guide to dig into the Word, explore passages and discover treasures you hadn’t seen.'
       },
       veilleur: {
         name: 'The Watchman',
@@ -450,6 +451,7 @@ export default {
     readerSettings: 'Reading settings',
     fontSize: 'Text size',
     font: 'Font',
+    fontDefault: 'Default',
     theme: 'Theme',
     themeSystem: 'System',
     themeLight: 'Light',
@@ -507,7 +509,7 @@ export default {
       collapse: 'Collapse player',
       download: 'Download this book',
       downloading: 'Downloading…',
-      downloaded: 'Downloaded — available offline',
+      downloaded: 'Downloaded, available offline',
       deleteDownload: 'Delete download',
       deleteConfirm: 'Delete the downloaded audio for this book? You can download it again anytime.',
       deleted: 'Download deleted',
@@ -516,7 +518,7 @@ export default {
       bgMusic: 'Background music',
       on: 'ON',
       off: 'OFF',
-      totalUsed: '{count} book(s) — {size}',
+      totalUsed: '{count} book(s) · {size}',
       noDownloads: 'No audio books downloaded. The ⬇ circle in the player lets you listen offline.',
       webOnly: 'Downloads are available in the mobile app.'
     },
@@ -560,7 +562,8 @@ export default {
     msg: {
       start: 'It’s a start. Come back tomorrow to keep the flame alive.',
       keep: 'Great consistency, keep it up!',
-      week: 'A whole week — your perseverance bears fruit.',
+      week: 'A whole week: your perseverance bears fruit.',
+      blaze: 'Your flame is burning bright: your faithfulness bears fruit, day after day.',
       month: 'A month of faithfulness. What consistency, well done!'
     }
   },
@@ -574,7 +577,7 @@ export default {
     dayOf: 'Day {day} / {total}',
     change: 'Change',
     markRead: 'Mark as read',
-    dayDone: 'Day done — see you tomorrow!',
+    dayDone: 'Day done, see you tomorrow!',
     duration: 'Duration',
     days: '{n} day | {n} day | {n} days',
     scope: 'Content',
@@ -617,11 +620,11 @@ export default {
       dayProgress: 'day {day} of {total}'
     },
     profileTitles: {
-      source: 'At the spring — the Gospel of John',
-      marcheur: 'The Walker — the whole New Testament',
-      explorateur: 'The Explorer — the letter to the Romans',
-      veilleur: 'The Watchman — the Psalms',
-      porteur: 'The Bearer — the Acts of the Apostles'
+      source: 'At the spring: the Gospel of John',
+      marcheur: 'The Walker: the whole New Testament',
+      explorateur: 'The Explorer: the letter to the Romans',
+      veilleur: 'The Watchman: the Psalms',
+      porteur: 'The Bearer: the Acts of the Apostles'
     },
     categories: {
       vie: 'For your life',
@@ -735,11 +738,38 @@ export default {
     french: 'French',
     english: 'English',
     noBibleInLanguage: {
-      title: 'No English Bible available',
-      message: 'The interface is now in English, but no Bible in this language is downloaded — reading stays in French. Would you like to download an English Bible?',
+      title: 'No Bible available in this language',
+      message: 'The interface language has changed, but no Bible in this language is downloaded, so reading stays in the previous language. Would you like to download one?',
       download: 'Download'
     },
     bibleReading: 'Bible reading',
+    notifications: 'Notifications',
+    reminders: {
+      title: 'Notifications',
+      intro: 'Choose when Abide reaches out to you. Each reminder can be adjusted or turned off.',
+      introNamed: '{name}, choose when Abide reaches out to you. Each reminder can be adjusted or turned off.',
+      groups: {
+        morning: 'Morning prayer',
+        evening: 'Evening prayer',
+        streak: 'Reading streak'
+      },
+      hints: {
+        morning: 'Reminders stop for the day as soon as your morning prayer is done.',
+        evening: 'Reminders stop for the day as soon as your evening prayer is done.',
+        streak: 'Only if you have a streak going and haven’t read yet today.'
+      },
+      slots: {
+        morning: { s0: 'First reminder', s1: 'Follow-up' },
+        evening: { s0: 'First reminder', s1: 'Follow-up', s2: 'Last reminder' },
+        streak: { s0: 'Evening reminder', s1: 'Last call' }
+      },
+      timeLabel: 'Time: {slot}',
+      reset: 'Restore default times',
+      saved: 'Reminders updated',
+      denied: 'Notifications are turned off for Abide on this phone. Turn them on in Android settings to get your reminders.',
+      openSystem: 'Open settings',
+      webOnly: 'Reminders work in the mobile app.'
+    },
     referral: 'Referral',
     bibleFont: 'Font',
     bibleFontSize: 'Text size',
@@ -757,13 +787,13 @@ export default {
     terms: 'Terms of use',
     privacy: 'Privacy policy',
     // Bug report (modal from Settings)
-    // Battery exemption — without it, aggressive ROMs kill scheduled reminders.
+    // Battery exemption, without it, aggressive ROMs kill scheduled reminders.
     batteryTitle: 'To receive your reminders',
     batteryMsg: 'Your phone puts Abide to sleep when the app is closed, which stops prayer and reading reminders from arriving. Allow Abide to stay active in the background to get them on time.',
     batteryAllow: 'Allow',
     batteryLater: 'Later',
     reportBug: 'Report a problem',
-    reportBugIntro: 'Something not working as expected? Describe what you did and what happened — the more precise, the faster we can fix it.',
+    reportBugIntro: 'Something not working as expected? Describe what you did and what happened. The more precise, the faster we can fix it.',
     reportBugPlaceholder: 'What I was trying to do, and what happened…',
     reportBugGuestHint: 'You’re not signed in: your message will reach us, but we won’t be able to reply directly.',
     reportBugSend: 'Send',

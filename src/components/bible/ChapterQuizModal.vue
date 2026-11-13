@@ -198,7 +198,7 @@ function onClose() {
 </script>
 
 <style scoped>
-/* Badge « IA » — signale que les questions sont GÉNÉRÉES à la volée à partir
+/* Badge « IA », signale que les questions sont GÉNÉRÉES à la volée à partir
    du chapitre, et non tirées d’une banque relue à l’avance. Discret (le quiz
    reste le sujet), mais toujours visible pendant la génération. */
 .ai-badge {

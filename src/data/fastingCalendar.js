@@ -1,5 +1,5 @@
 /**
- * Calendrier des jeûnes chrétiens — fonctions PURES (testables sans Vue).
+ * Calendrier des jeûnes chrétiens, fonctions PURES (testables sans Vue).
  *
  * Principe : AUCUNE maintenance annuelle. Les fêtes mobiles (Carême, Vendredi
  * Saint) sont calculées depuis la date de Pâques (algorithme du Computus) ;
@@ -12,7 +12,7 @@
  * personnel » (dates libres, même accompagnement).
  */
 
-/** Date locale 'YYYY-MM-DD' (aligné sur streak.js — pas d'UTC). */
+/** Date locale 'YYYY-MM-DD' (aligné sur streak.js, pas d'UTC). */
 export function isoDate(d) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -27,7 +27,7 @@ function addDays(iso, n) {
 }
 
 /**
- * Date de Pâques (dimanche) pour une année — algorithme de Meeus/Butcher
+ * Date de Pâques (dimanche) pour une année, algorithme de Meeus/Butcher
  * (Computus grégorien). Exact pour toutes les années grégoriennes.
  * @returns {string} 'YYYY-MM-DD'
  */

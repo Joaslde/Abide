@@ -115,7 +115,7 @@ const showPassword = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
 
-/** Évaluation simple de la force du mot de passe (UX — validation réelle côté Supabase). */
+/** Évaluation simple de la force du mot de passe (UX, validation réelle côté Supabase). */
 const strength = computed(() => {
   const pw = password.value
   let score = 0

@@ -67,14 +67,14 @@ const { t } = useI18n()
 const selection = useVerseSelectionStore()
 const actions = useVerseActions()
 // La feuille elle-même est montée UNE SEULE FOIS dans App.vue : Ionic garde
-// plusieurs BibleChapterView en cache, donc plusieurs VerseActionBar — chacune
+// plusieurs BibleChapterView en cache, donc plusieurs VerseActionBar, chacune
 // aurait monté sa propre feuille (constaté : 2 feuilles, 76 vignettes).
 const imageShare = useVerseImageShareStore()
 
 /**
  * Partage : on passe par une IMAGE quand la sélection s'y prête (≤ 3 versets
  * et pas trop longue), sinon on explique pourquoi et on retombe sur le
- * partage texte — plutôt que de produire une image illisible.
+ * partage texte, plutôt que de produire une image illisible.
  */
 async function onShare() {
   const plan = actions.prepareShare()

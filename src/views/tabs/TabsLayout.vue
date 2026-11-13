@@ -29,7 +29,7 @@
         <ion-tab-button tab="ancre" href="/tabs/ancre">
           <span class="pill">
             <nav-icon name="anchor" :active="active === 'ancre'" />
-            <ion-label>L'Ancre</ion-label>
+            <ion-label>{{ t('onboarding.pillars.ancre') }}</ion-label>
           </span>
         </ion-tab-button>
 
@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
   classObserver = null
 })
 
-// La pastille suit `tab-selected` — la SEULE source de vérité. `active` ne
+// La pastille suit `tab-selected`, la SEULE source de vérité. `active` ne
 // suffit pas : sur les sous-routes (un chapitre ouvert depuis l'onglet Bible)
 // il reste volontairement inchangé alors qu'Ionic, lui, déplace la classe.
 // D'où une pastille qui restait sur l'onglet précédent.
@@ -175,7 +175,7 @@ function onBibleTab() {
    PASTILLE PLEINE (et pas un simple changement de couleur) : c'est ce qui
    donne le repère visuel immédiat de la maquette de référence.              */
 .floating-bar {
-  /* Thème sombre (défaut) — navy translucide, liseré doré très discret. */
+  /* Thème sombre (défaut), navy translucide, liseré doré très discret. */
   --nav-bg: rgba(17, 30, 49, 0.82);
   --nav-border: rgba(201, 168, 76, 0.16);
   --nav-idle: rgba(245, 240, 230, 0.55);
@@ -216,7 +216,7 @@ function onBibleTab() {
   overflow: visible;
 }
 
-/* Thème clair — contraste inversé : pastille navy sur gélule ivoire. */
+/* Thème clair, contraste inversé : pastille navy sur gélule ivoire. */
 :global(html.light) .floating-bar,
 :global(html[data-theme='light']) .floating-bar {
   --nav-bg: rgba(255, 255, 255, 0.86);
@@ -270,7 +270,7 @@ ion-tab-button.tab-selected .pill {
   color: var(--nav-active-fg);
 }
 
-/* Pastille glissante — se déplace et s'étire vers l'onglet actif.
+/* Pastille glissante, se déplace et s'étire vers l'onglet actif.
    Courbe légèrement élastique (léger dépassement) pour un mouvement vivant
    plutôt qu'un glissement mécanique. */
 .pill-indicator {
@@ -340,7 +340,7 @@ html.player-visible ion-tabs ion-footer {
 }
 
 /* Pages À FOOTER (composer du Guide, navigation de chapitre) : le footer est
-   collé en bas de page, donc la barre flottante se posait DESSUS — le composer
+   collé en bas de page, donc la barre flottante se posait DESSUS, le composer
    du Guide devenait inutilisable et le fond du footer dépassait tout autour de
    la gélule (le « trait » visible sous la barre). On remonte le footer au-dessus.
    74px = 62 (hauteur de barre) + 12 (marge basse). */

@@ -38,7 +38,7 @@
            WhatsApp / Instagram / Facebook séparés : aucune de ces apps
            n'accepte qu'on lui impose une image depuis l'extérieur. La feuille
            du système les liste toutes et respecte les apps réellement
-           installées — c'est aussi ce que fait YouVersion. -->
+           installées, c'est aussi ce que fait YouVersion. -->
       <p class="hint">{{ t('home.share.hint') }}</p>
 
       <button class="cancel" @click="close">{{ t('common.cancel') }}</button>

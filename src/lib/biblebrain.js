@@ -1,9 +1,9 @@
 /**
  * Client BibleBrain / FCBH API (4.dbt.io)
- * Audio Bible exclusivement — jamais de TTS pour les textes sacrés.
+ * Audio Bible exclusivement, jamais de TTS pour les textes sacrés.
  *
  * Mode RÉEL (clé reçue le 2026-06-26). La clé vit dans .env.local
- * (VITE_BIBLEBRAIN_KEY) — jamais en dur.
+ * (VITE_BIBLEBRAIN_KEY), jamais en dur.
  *
  * Restrictions BibleBrain (email officiel) :
  *  - Audio = streaming libre ; téléchargement UNIQUEMENT via l'endpoint /download.
@@ -33,7 +33,7 @@ const NT_BOOKS = new Set([
 export const AUDIO_MAP = {
   LSG1910: {
     bibleId: 'FRNTLS',
-    copyright: '© Tresorsonore — Faith Comes By Hearing',
+    copyright: '© Tresorsonore · Faith Comes By Hearing',
     nt: 'FRNTLSN2DA',
     ot: 'FRNTLSO2DA',
     otTimestamps: false // l'AT LSG n'a pas de timestamps (sondé)
@@ -47,7 +47,7 @@ export const AUDIO_MAP = {
   },
   WEB: {
     bibleId: 'ENGWWH',
-    copyright: '© World English Bible (domaine public) — Faith Comes By Hearing',
+    copyright: '© World English Bible (domaine public) · Faith Comes By Hearing',
     nt: 'EN1WEBN2DA',
     ot: 'EN1WEBO2DA',
     otTimestamps: false // l'AT WEB n'a pas de timestamps (sondé)
@@ -66,7 +66,7 @@ export const AUDIO_MAP = {
 
 function getKey() {
   const key = import.meta.env.VITE_BIBLEBRAIN_KEY
-  if (!key) throw new Error('VITE_BIBLEBRAIN_KEY manquante — clé BibleBrain absente du .env.local')
+  if (!key) throw new Error('VITE_BIBLEBRAIN_KEY manquante : clé BibleBrain absente du .env.local')
   return key
 }
 
@@ -132,7 +132,7 @@ export async function getAudioUrl(filesetId, bookId, chapter) {
 }
 
 /**
- * URL MP3 pour TÉLÉCHARGEMENT offline — via l'endpoint /download, le SEUL
+ * URL MP3 pour TÉLÉCHARGEMENT offline, via l'endpoint /download, le SEUL
  * autorisé par BibleBrain pour stocker l'audio localement (email officiel).
  * L'URL retournée est signée/expirante : à consommer immédiatement
  * (Filesystem.downloadFile), jamais à persister.
@@ -146,7 +146,7 @@ export async function getDownloadUrl(filesetId, bookId, chapter) {
 
 /**
  * Timestamps par verset (synchronisation texte/audio).
- * Retourne [] si l'API n'en fournit pas (ex : AT LSG) — l'appelant gère l'absence.
+ * Retourne [] si l'API n'en fournit pas (ex : AT LSG), l'appelant gère l'absence.
  * `end` est laissé à 0 ici ; il est calculé par le player (start du verset suivant
  * / durée totale pour le dernier).
  * @returns {Promise<Array<{verse:number, start:number, end:number}>>}

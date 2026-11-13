@@ -18,7 +18,7 @@ import {
   bookOutline, bulbOutline, leafOutline, megaphoneOutline, libraryOutline
 } from 'ionicons/icons'
 
-// Source unique des modes — doit rester aligné sur VALID_MODES (Edge Function)
+// Source unique des modes, doit rester aligné sur VALID_MODES (Edge Function)
 // et sur la contrainte CHECK de ai_conversations.mode.
 export const MODES = ['enseignement', 'etude', 'meditation', 'predication', 'theologie']
 

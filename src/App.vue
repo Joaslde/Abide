@@ -4,14 +4,14 @@
     <!-- Lecteur audio global (panneau expansible + mini-barre) : survit à la
          navigation (comme une appli musique). Visible seulement pendant la lecture.
          MASQUÉ sur l'Ancre (Guide IA) : l'écran de conversation doit rester
-         dégagé — la lecture, elle, CONTINUE (on ne cache que l'interface). -->
+         dégagé, la lecture, elle, CONTINUE (on ne cache que l'interface). -->
     <audio-player-sheet v-if="!hidePlayer" />
     <!-- Splash animé d'ouverture (1× par démarrage à froid). -->
     <splash-overlay v-if="showSplash" />
 
     <!-- Partage d'un verset en image. Monté ICI et nulle part ailleurs :
          Ionic garde plusieurs BibleChapterView en cache, donc plusieurs
-         VerseActionBar — une feuille par barre aurait dupliqué le composant
+         VerseActionBar, une feuille par barre aurait dupliqué le composant
          (constaté le 2026-09-10 : 2 feuilles, 2 images générées en parallèle). -->
     <verse-image-sheet
       :open="imageShare.open"
@@ -94,7 +94,7 @@ onMounted(() => {
   // préchauffage la 1re ouverture de chapitre est quasi instantanée.
   // Restaure la version Bible choisie AVANT le préchauffage : sinon l'app
   // rouvrait toujours sur la LSG française, même après un passage en anglais
-  // (le verset du jour et le lecteur repartaient en FR — bug 2026-07-26).
+  // (le verset du jour et le lecteur repartaient en FR, bug 2026-07-26).
   warmUpBible().then(() => bible.restoreVersion())
   // Tap sur une notification (prière/jeûne) → ouvre directement l'écran concerné.
   registerNotificationTapHandler(router)
@@ -118,7 +118,7 @@ onMounted(() => {
     // ⚠️ Android ≥ 6 n'accorde plus rien à l'installation : toute permission
     // « dangereuse » (ici POST_NOTIFICATIONS, la seule de l'app) doit être
     // demandée à l'exécution. On le fait ici, dès le boot, plutôt que d'attendre
-    // qu'un écran en ait besoin — sinon la personne pourrait passer des jours
+    // qu'un écran en ait besoin, sinon la personne pourrait passer des jours
     // sans rappels sans jamais avoir vu la demande.
     await ensureNotificationPermission()
 

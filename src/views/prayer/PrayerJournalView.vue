@@ -6,7 +6,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <p class="ion-padding">Journal de prières — Phase 2</p>
+      <p class="ion-padding">Journal de prières (Phase 2)</p>
     </ion-content>
   </ion-page>
 </template>

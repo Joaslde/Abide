@@ -6,7 +6,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <p>Pilier Évangélisation — en construction</p>
+      <p>Pilier Évangélisation, en construction</p>
     </ion-content>
   </ion-page>
 </template>

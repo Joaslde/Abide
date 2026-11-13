@@ -323,8 +323,12 @@ const lastAiId = computed(() => {
  */
 async function presentChatError(e) {
   const quota = e?.code === 'quota_exceeded'
+  // Premium au plafond quotidien : pas d'invitation au parrainage (il l'a déjà).
+  const premiumCap = quota && e?.premium
   const tt = await toastController.create({
-    message: quota
+    message: premiumCap
+      ? t('ai.quotaReachedPremium')
+      : quota
       ? (auth.firstName
           ? t('ai.quotaReachedNamed', { name: auth.firstName })
           : t('ai.quotaReached'))
@@ -335,7 +339,7 @@ async function presentChatError(e) {
     color: quota ? 'warning' : 'danger',
     // Quota → raccourci vers le parrainage : inviter des proches débloque des
     // jours d'accès illimité (seul moyen d'être premium tant qu'il n'y a pas de paiement).
-    buttons: quota
+    buttons: quota && !premiumCap
       ? [{ text: t('ai.quotaCta'), handler: () => { router.push('/tabs/plus/referral') } }]
       : []
   })
@@ -432,7 +436,7 @@ async function confirmDelete(c) {
 function openRef(r) {
   // Deux formes possibles :
   //  - depuis les SOURCES (puces sous la réponse) : { ref: 'JHN 3.16' }
-  //  - depuis une référence INLINE : { code, chapter, verse } — verse peut
+  //  - depuis une référence INLINE : { code, chapter, verse }, verse peut
   //    être null quand l'IA renvoie vers un CHAPITRE entier (« Matthieu 6 »).
   let code = r.code
   let chapter = r.chapter
@@ -543,7 +547,7 @@ ion-footer:has(.composer.typing) { --background: var(--navy); background: var(--
 .composer {
   display: flex; align-items: flex-end; gap: var(--space-2);
   /* Plus de safe-area ici : c'est la marge basse du footer (TabsLayout) qui
-     positionne l'ensemble au-dessus de la barre flottante — sinon double marge. */
+     positionne l'ensemble au-dessus de la barre flottante, sinon double marge. */
   padding: var(--space-2) var(--space-3);
   /* Aucun fond : la pilule flotte sur la page de discussion. */
   background: transparent;
@@ -552,7 +556,7 @@ ion-footer:has(.composer.typing) { --background: var(--navy); background: var(--
 
 /* SAISIE EN COURS : le clavier fait remonter le composer par-dessus le contenu,
    qu'on voyait alors « à travers » la transparence. On pose un fond le temps de
-   la frappe — il redevient transparent dès que le clavier se ferme. */
+   la frappe, il redevient transparent dès que le clavier se ferme. */
 .composer.typing {
   background: var(--navy);
 }

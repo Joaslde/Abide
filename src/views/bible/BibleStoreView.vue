@@ -87,6 +87,7 @@ import { useI18n } from 'vue-i18n'
 import { useBibleVersionsStore } from '@/stores/bibleVersions'
 import { useBibleStore } from '@/stores/bible'
 import { audioForVersion } from '@/lib/biblebrain'
+import { LANGUAGE_NAMES } from '@/i18n'
 
 const { t, locale } = useI18n()
 const store = useBibleVersionsStore()
@@ -94,8 +95,6 @@ const bible = useBibleStore()
 
 const activeVersion = computed(() => bible.activeVersion)
 
-// Noms des langues dans leur propre langue (convention des sélecteurs de langue).
-const LANGUAGE_LABELS = { fr: 'Français', en: 'English', es: 'Español' }
 const LANGUAGE_ORDER = ['fr', 'en', 'es']
 
 /**
@@ -110,7 +109,7 @@ const groups = computed(() => {
     .filter((lang) => byLang[lang]?.length)
     .map((lang) => ({
       lang,
-      label: LANGUAGE_LABELS[lang] ?? lang.toUpperCase(),
+      label: LANGUAGE_NAMES[lang] ?? lang.toUpperCase(),
       versions: [...byLang[lang]].sort(
         (a, b) => Number(!!b.installed) - Number(!!a.installed) || a.name.localeCompare(b.name)
       )

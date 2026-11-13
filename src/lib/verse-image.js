@@ -13,7 +13,7 @@
 const W = 1080
 const H = 1350
 
-/** Palette — reprise de theme/variables.css pour rester dans la charte. */
+/** Palette, reprise de theme/variables.css pour rester dans la charte. */
 const NAVY = '#0B1624'
 const GOLD = '#C9A84C'
 const CREAM = '#F5F0E6'
@@ -61,7 +61,7 @@ function fitText(ctx, text, maxWidth, maxHeight, { max = 64, min = 30 } = {}) {
     }
   }
   // Repli : à la taille minimale on accepte le débordement plutôt que de
-  // renvoyer un rendu vide — mieux vaut une image imparfaite qu'aucune image.
+  // renvoyer un rendu vide, mieux vaut une image imparfaite qu'aucune image.
   ctx.font = `italic ${min}px ${FONT_SERIF}`
   return { size: min, lines: wrapText(ctx, text, maxWidth), lineHeight: min * 1.42 }
 }
@@ -104,7 +104,7 @@ export async function buildVerseImage({
   text,
   reference,
   background,
-  appName = 'Abide — Bible & Guide IA',
+  appName = 'Abide : Bible & Guide IA',
   storeLine = 'Sur Google Play',
   label = 'VERSET DU JOUR'
 }) {
@@ -124,7 +124,7 @@ export async function buildVerseImage({
     /* sans conséquence : le fond navy suffit */
   }
 
-  // Voile sombre — même logique que la carte à l'écran : le verset doit rester
+  // Voile sombre, même logique que la carte à l'écran : le verset doit rester
   // lisible quel que soit le paysage, y compris sur un ciel clair.
   const scrim = ctx.createLinearGradient(0, 0, 0, H)
   scrim.addColorStop(0, 'rgba(11, 22, 36, 0.68)')
@@ -161,7 +161,7 @@ export async function buildVerseImage({
   // sans laisser le grand vide qu'un textTop trop bas produisait.
   const textTop = 268
   // 738 (et non 760) : la signature occupe désormais deux lignes (nom + Store),
-  // la référence a donc été remontée — la zone de texte rend la place d'autant.
+  // la référence a donc été remontée, la zone de texte rend la place d'autant.
   const textMaxHeight = 738
   // ⚠️ Espace INSÉCABLE avant le guillemet fermant : sans elle, wrapText peut
   // renvoyer « » » seul sur la dernière ligne (constaté sur Jean 3:16), ce qui
@@ -196,7 +196,7 @@ export async function buildVerseImage({
   // Signature en DEUX niveaux : le nom (qu'on retrouve tel quel sur le Store,
   // donc cherchable) puis la mention du Store, plus effacée.
   // Volontairement discrète : une image de verset partagée est d'abord un
-  // geste personnel — trop d'insistance la ferait passer pour une publicité,
+  // geste personnel, trop d'insistance la ferait passer pour une publicité,
   // et les gens cesseraient de la partager.
   ctx.fillStyle = 'rgba(201, 168, 76, 0.34)'
   ctx.fillRect(margin, H - 148, 44, 2)
@@ -206,7 +206,7 @@ export async function buildVerseImage({
   ctx.letterSpacing = '1.5px'
   ctx.fillText(appName, margin, H - 100)
 
-  // Mention Store : plus petite, plus transparente — lisible si on la cherche,
+  // Mention Store : plus petite, plus transparente, lisible si on la cherche,
   // invisible si on regarde le verset.
   ctx.font = `400 19px ${FONT_SERIF}`
   ctx.fillStyle = 'rgba(245, 240, 230, 0.38)'

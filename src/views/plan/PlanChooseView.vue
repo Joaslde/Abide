@@ -99,7 +99,7 @@ function preview(templateId) {
 
 /** Crée un plan (confirmation si un plan est déjà actif). */
 /**
- * Plan « Pour toi » — exige le profil spirituel (onboarding terminé).
+ * Plan « Pour toi », exige le profil spirituel (onboarding terminé).
  *
  * ⚠️ Sans cette barrière, createPlan({source:'profile'}) lève 'no_profile' :
  * on générerait sinon un plan présenté comme adapté alors qu'aucun profil

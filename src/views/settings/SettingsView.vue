@@ -47,7 +47,7 @@
               <span>{{ t('settings.language') }}</span>
             </div>
             <div class="item-trail">
-              <span class="value">{{ prefs.locale === 'fr' ? t('settings.french') : t('settings.english') }}</span>
+              <span class="value">{{ LANGUAGE_NAMES[prefs.locale] }}</span>
               <ion-icon class="chev" :icon="chevronForward" />
             </div>
           </button>
@@ -62,11 +62,18 @@
             </div>
             <ion-icon class="chev" :icon="chevronForward" />
           </button>
+          <button class="item tappable" @click="go('/settings/notifications')">
+            <div class="item-lead">
+              <ion-icon :icon="notificationsOutline" />
+              <span>{{ t('settings.notifications') }}</span>
+            </div>
+            <ion-icon class="chev" :icon="chevronForward" />
+          </button>
         </div>
 
         <!-- ── Bloc parrainage (nécessite un compte) ── -->
         <div v-if="auth.isAuthenticated" class="group">
-          <button class="item tappable" @click="go('/tabs/plus/referral')">
+          <button class="item tappable" @click="go('/settings/referral')">
             <div class="item-lead">
               <ion-icon :icon="giftOutline" />
               <span>{{ t('settings.referral') }}</span>
@@ -128,10 +135,11 @@ import {
 import {
   chevronForward, personOutline, moonOutline, languageOutline,
   bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline, bugOutline,
-  giftOutline
+  giftOutline, notificationsOutline
 } from 'ionicons/icons'
 import { Browser } from '@capacitor/browser'
 import { usePreferencesStore } from '@/stores/preferences'
+import { LANGUAGE_NAMES } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import BugReportModal from '@/components/settings/BugReportModal.vue'
 
@@ -153,7 +161,7 @@ function onToggleDark(ev) {
   prefs.toggleDark(dark.value)
 }
 
-// Landing statique (dossier landing/, déployée sur Vercel — cf. landing/README.md).
+// Landing statique (dossier landing/, déployée sur Vercel, cf. landing/README.md).
 const LEGAL_URLS = {
   faq: 'https://toabide.online/faq.html',
   terms: 'https://toabide.online/terms.html',

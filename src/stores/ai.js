@@ -4,11 +4,11 @@ import { supabase } from '@/lib/supabase'
 import { i18n } from '@/i18n'
 
 /**
- * Guide IA (L'Ancre) — conversations enregistrées + chat via Edge Function.
+ * Guide IA (L'Ancre), conversations enregistrées + chat via Edge Function.
  *
  * Le chat (OpenRouter) et le RAG (recherche de versets) vivent dans l'Edge
  * Function `ai-chat` : le client n'appelle JAMAIS OpenRouter/HF directement
- * (aucune clé côté client — SECURITY.md). Les conversations/messages sont dans
+ * (aucune clé côté client, SECURITY.md). Les conversations/messages sont dans
  * Supabase (tables ai_conversations / ai_messages, RLS par utilisateur).
  *
  * ⚠️ Le compteur de sessions (quota gratuit/premium) n'est PAS encore branché
@@ -163,12 +163,12 @@ export const useAIStore = defineStore('ai', () => {
    * Retourne { limit } si c'est bien un quota, sinon null.
    */
   async function readQuotaError(error, data) {
-    if (data?.error === 'quota_exceeded') return { limit: data.limit }
+    if (data?.error === 'quota_exceeded') return { limit: data.limit, premium: !!data.premium }
     const res = error?.context
     if (!res || res.status !== 429) return null
     try {
       const body = await res.json()
-      return body?.error === 'quota_exceeded' ? { limit: body.limit } : null
+      return body?.error === 'quota_exceeded' ? { limit: body.limit, premium: !!body.premium } : null
     } catch {
       return { limit: null } // 429 confirmé par le statut, détail illisible
     }
@@ -216,6 +216,7 @@ export const useAIStore = defineStore('ai', () => {
         const err = new Error('quota_exceeded')
         err.code = 'quota_exceeded'
         err.limit = quota.limit
+        err.premium = quota.premium
         throw err
       }
 

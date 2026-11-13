@@ -39,7 +39,7 @@ export const useUserDataStore = defineStore('userData', () => {
 
   /**
    * Applique (ou retire si color=null) une couleur aux versets donnés.
-   * verses = [{verse, text}] — le texte sert de snapshot pour la liste Surlignés.
+   * verses = [{verse, text}], le texte sert de snapshot pour la liste Surlignés.
    */
   async function applyHighlight(ctx, verses, color) {
     if (color) {

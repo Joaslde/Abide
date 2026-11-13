@@ -4,16 +4,16 @@ import { useAuthStore } from '@/stores/auth'
 import { QUIZ_QUESTIONS, QUIZ_BLOCKS } from '@/data/onboardingQuiz'
 import {
   computeBibleLevel,
-  computeLandmarks,
   computeProfile,
   pillarForProfile,
   notifTimeForSlot
 } from '@/data/onboardingScoring'
+import { applyPreferredSlot } from '@/lib/reminder-settings'
 
 /**
  * Pilote le parcours de quiz d'onboarding.
  * Les réponses sont gardées EN MÉMOIRE pendant tout le quiz ; on n'écrit
- * dans Supabase qu'une seule fois à la fin (finish()) — cohérent avec la
+ * dans Supabase qu'une seule fois à la fin (finish()), cohérent avec la
  * stratégie local-first et permet le retour-arrière libre.
  */
 export const useOnboardingStore = defineStore('onboarding', () => {
@@ -81,9 +81,6 @@ export const useOnboardingStore = defineStore('onboarding', () => {
       } else if (q.type === 'church') {
         if (v.church_name) update.church_name = v.church_name
         if (v.church_denomination) update.church_denomination = v.church_denomination
-      } else if (q.id === 'q8') {
-        // Q8 : on stocke le NOMBRE de repères (0-5), pas le tableau.
-        update.bible_landmarks = computeLandmarks(a)
       } else if (q.field) {
         update[q.field] = v
       }
@@ -126,6 +123,14 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     const auth = useAuthStore()
     const update = buildProfileUpdate(consent)
     await auth.updateProfile(update)
+    // Q12 règle le premier rappel du jour (modifiable dans Réglages →
+    // Notifications). Jamais bloquant pour la fin de l'onboarding.
+    if (answers.value.q12) {
+      applyPreferredSlot(answers.value.q12)
+        .then(() => import('@/lib/notifications'))
+        .then(({ rescheduleFromStores }) => rescheduleFromStores())
+        .catch((e) => console.warn('[onboarding] réglage des rappels impossible', e))
+    }
     return result.value
   }
 

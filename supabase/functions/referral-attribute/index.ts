@@ -6,7 +6,7 @@
 // si un code de parrainage a été reçu par AppsFlyer au premier lancement.
 //
 // Règles (cf. SECURITY.md + pattern delete-account/index.ts) :
-//   1. L'identité du FILLEUL vient EXCLUSIVEMENT du JWT — jamais du body.
+//   1. L'identité du FILLEUL vient EXCLUSIVEMENT du JWT, jamais du body.
 //   2. Le code de parrainage est un input hostile : validé par whitelist de format.
 //   3. Idempotent : un même filleul déjà attribué (contrainte UNIQUE referred_id)
 //      → no-op silencieux, pas d'erreur.
@@ -26,7 +26,7 @@ const CORS = {
 }
 
 // Paliers de récompense : [nombre de filleuls requis, jours de premium accordés].
-// Codés en dur côté serveur — jamais transmis ni décidés par le client.
+// Codés en dur côté serveur, jamais transmis ni décidés par le client.
 // Révisés le 2026-07-27 (les précédents : 5/10/15 → 7/14/30j étaient trop
 // faciles à atteindre pour un vrai effort de croissance).
 // ⚠️ Doivent rester alignés avec TIERS dans src/views/plus/ReferralView.vue.
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-    // — Auth : l'identité du filleul vient EXCLUSIVEMENT du JWT —
+    // Auth : l'identité du filleul vient EXCLUSIVEMENT du JWT, 
     const authHeader = req.headers.get('Authorization') ?? ''
     const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } }
@@ -62,14 +62,14 @@ Deno.serve(async (req) => {
     const referredUser = userData?.user
     if (!referredUser) return json({ error: 'unauthorized' }, 401)
 
-    // — Input hostile : whitelist de format stricte —
+    // Input hostile : whitelist de format stricte, 
     const body = await req.json()
     const referralCode = String(body?.referralCode ?? '').toUpperCase().trim()
     if (!CODE_RE.test(referralCode)) return json({ error: 'bad_request' }, 400)
 
     const admin = createClient(supabaseUrl, serviceKey)
 
-    // — Retrouver le parrain par son code —
+    // Retrouver le parrain par son code, 
     const { data: referrer } = await admin
       .from('profiles')
       .select('id')
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     if (!referrer) return json({ error: 'code_not_found' }, 404)
     if (referrer.id === referredUser.id) return json({ error: 'self_referral' }, 400)
 
-    // — Enregistrer l'attribution (idempotent via UNIQUE referred_id) —
+    // Enregistrer l'attribution (idempotent via UNIQUE referred_id), 
     const { error: insertError } = await admin
       .from('referrals')
       .insert({ referrer_id: referrer.id, referred_id: referredUser.id })
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       return json({ error: 'attribution_failed' }, 500)
     }
 
-    // — Recalculer le palier du parrain (nouvelle attribution réussie) —
+    // Recalculer le palier du parrain (nouvelle attribution réussie), 
     await applyReferralTier(admin, referrer.id)
 
     return json({ success: true })

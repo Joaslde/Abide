@@ -21,7 +21,7 @@ const props = defineProps({
   text: { type: String, required: true },
   /** Délai entre chaque mot (ms). */
   stagger: { type: Number, default: 75 },
-  /** Délai avant le tout premier mot (ms) — utile pour chaîner plusieurs blocs. */
+  /** Délai avant le tout premier mot (ms), utile pour chaîner plusieurs blocs. */
   startDelay: { type: Number, default: 0 },
   /** Durée du fondu d'un mot (ms). */
   fadeDuration: { type: Number, default: 500 },

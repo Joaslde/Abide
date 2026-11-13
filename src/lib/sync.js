@@ -4,14 +4,14 @@
  * PROMESSE PRODUIT : tout ce que l'utilisateur crée localement doit remonter
  * dans le cloud dès qu'il y a du réseau, et redescendre à l'identique sur un
  * nouvel appareil. Avant le 2026-09-07, seules 3 tables sur 11 étaient
- * poussées — d'où une perte définitive de surlignages/notes/signets lors d'un
+ * poussées, d'où une perte définitive de surlignages/notes/signets lors d'un
  * effacement des données. Voir docs/sync-plan.md et tasks/lessons.md.
  *
  * ARCHITECTURE
  * - Local-first : SQLite reste la source d'affichage. La sync ne bloque JAMAIS
  *   l'interface et échoue en silence (on réessaie au prochain déclenchement).
  * - Idempotence : chaque ligne cloud porte `local_id` (l'id SQLite) avec un
- *   UNIQUE (user_id, local_id). On fait donc des UPSERT, jamais des INSERT —
+ *   UNIQUE (user_id, local_id). On fait donc des UPSERT, jamais des INSERT, 
  *   c'est ce qui manquait et qui a produit 1069 lignes de plans pour 2 users.
  * - Sens :
  *     pushUserData() → local vers cloud (au retour du réseau, après modification)
@@ -38,7 +38,7 @@ import {
 let syncing = false
 let pulling = false
 
-/** Découpe un tableau en lots — évite les requêtes géantes (644 chapitres lus). */
+/** Découpe un tableau en lots, évite les requêtes géantes (644 chapitres lus). */
 function chunk(arr, size = 200) {
   const out = []
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
@@ -80,7 +80,7 @@ export async function pushUserData() {
       listAllFasting(), listAllActivityDays(), listAllPlans()
     ])
 
-    // — Streak (une seule ligne par utilisateur) —
+    // Streak (une seule ligne par utilisateur), 
     await supabase.from('streaks').upsert({
       user_id: userId,
       current_streak: streak.current_streak ?? 0,
@@ -88,7 +88,7 @@ export async function pushUserData() {
       last_active: streak.last_active ?? null
     }, { onConflict: 'user_id' })
 
-    // — Prières —
+    // Prières, 
     await upsertAll('prayers', prayers.map((p) => ({
       user_id: userId, local_id: p.id,
       content: p.content,
@@ -96,7 +96,7 @@ export async function pushUserData() {
       answered_at: p.answered_at ?? null
     })), 'user_id,local_id')
 
-    // — Surlignages —
+    // Surlignages, 
     await upsertAll('highlights', highlights.map((h) => ({
       user_id: userId, local_id: h.id,
       version_id: h.version_id, book_id: h.book_id, book_name: h.book_name ?? null,
@@ -104,7 +104,7 @@ export async function pushUserData() {
       created_at: h.created_at ?? null
     })), 'user_id,local_id')
 
-    // — Signets —
+    // Signets, 
     await upsertAll('bookmarks', bookmarks.map((b) => ({
       user_id: userId, local_id: b.id,
       version_id: b.version_id, book_id: b.book_id, book_name: b.book_name ?? null,
@@ -112,7 +112,7 @@ export async function pushUserData() {
       created_at: b.created_at ?? null
     })), 'user_id,local_id')
 
-    // — Notes —
+    // Notes, 
     await upsertAll('notes', notes.map((n) => ({
       user_id: userId, local_id: n.id,
       title: n.title ?? null, body: n.body ?? null,
@@ -120,7 +120,7 @@ export async function pushUserData() {
       created_at: n.created_at ?? null, updated_at: n.updated_at ?? new Date().toISOString()
     })), 'user_id,local_id')
 
-    // — Progression de lecture — la table existait mais n'était JAMAIS alimentée.
+    // Progression de lecture, la table existait mais n'était JAMAIS alimentée.
     //   Sa clé primaire est (user_id, version, book_id, chapter) : pas de local_id.
     await upsertAll('reading_progress', progress.map((r) => ({
       user_id: userId,
@@ -128,20 +128,20 @@ export async function pushUserData() {
       read_at: r.read_at ?? null
     })), 'user_id,version,book_id,chapter')
 
-    // — Résultats de quiz —
+    // Résultats de quiz, 
     await upsertAll('quiz_results', quizzes.map((q) => ({
       user_id: userId, local_id: q.id,
       book_id: q.book_id, chapter: q.chapter,
       score: q.score, stars: q.stars, taken_at: q.taken_at ?? null
     })), 'user_id,local_id')
 
-    // — Moments de prière —
+    // Moments de prière, 
     await upsertAll('prayer_moments', moments.map((m) => ({
       user_id: userId, local_id: m.id,
       date: m.date, type: m.type, done_at: m.done_at ?? null
     })), 'user_id,local_id')
 
-    // — Jeûnes — `start`/`end` sont des mots réservés SQL : renommés côté cloud.
+    // Jeûnes, `start`/`end` sont des mots réservés SQL : renommés côté cloud.
     await upsertAll('fasting', fasts.map((f) => ({
       user_id: userId, local_id: f.id,
       type: f.type ?? null, start_date: f.start ?? null, end_date: f.end ?? null,
@@ -149,12 +149,12 @@ export async function pushUserData() {
       status: f.status ?? 'joined'
     })), 'user_id,local_id')
 
-    // — Jours d'activité (clé naturelle : le jour lui-même) —
+    // Jours d'activité (clé naturelle : le jour lui-même), 
     await upsertAll('activity_days', days.map((d) => ({
       user_id: userId, day: d.day, first_at: d.first_at ?? null
     })), 'user_id,day')
 
-    // — Plans de lecture —
+    // Plans de lecture, 
     // ⚠️ UPSERT sur local_id, pas INSERT : l'ancien code réinsérait le plan actif
     //    à CHAQUE sync, d'où 1069 lignes pour 2 utilisateurs.
     await upsertAll('reading_plans', plans.map((p) => ({
@@ -208,7 +208,7 @@ export async function pullUserData() {
       q('fasting'), q('activity_days'), q('reading_plans')
     ])
 
-    // — Streak : on garde la MEILLEURE valeur des deux côtés. Le cloud peut être
+    // Streak : on garde la MEILLEURE valeur des deux côtés. Le cloud peut être
     //   en retard (sync ratée) ; écraser aveuglément ferait perdre une série.
     const cloudStreak = streakRes.data
     if (cloudStreak) {

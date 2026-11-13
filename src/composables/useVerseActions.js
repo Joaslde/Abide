@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 import { useVerseSelectionStore } from '@/stores/verseSelection'
 import { useUserDataStore } from '@/stores/userData'
 import { checkVerseImageLimits, buildImageText, MAX_VERSES } from '@/lib/verse-image-limits'
+import { versionShortLabel } from '@/lib/version-label'
 
 /**
  * Actions applicables à la sélection de versets : copier, surligner (persisté),
@@ -31,14 +32,15 @@ export function useVerseActions() {
   /**
    * Construit le texte à copier : les versets (numérotés) entre guillemets,
    * suivis de la référence et de la version.
-   * Ex : « ¹ Au commencement… ² … » — Genèse 1:1-2 (LSG 1910)
+   * Ex : « ¹ Au commencement… ² … », Genèse 1:1-2 (LSG 1910)
    */
   function buildCopyText() {
     const sel = selection
     const lines = sel.sortedVerses.map((n) => `${n}. ${sel.selected.get(n)}`)
-    const versionLabel =
-      sel.context?.versionId === 'LSG1910' ? 'LSG 1910' : (sel.context?.versionId ?? '')
-    return `« ${lines.join('\n')} »\n— ${sel.reference} (${versionLabel})`
+    // Libellé lisible (« BES », « RV 1909 ») plutôt que l'id technique (« BES_ES »).
+    const versionLabel = versionShortLabel(sel.context?.versionId)
+    const suffix = versionLabel ? ` (${versionLabel})` : ''
+    return `« ${lines.join('\n')} »\n${sel.reference}${suffix}`
   }
 
   /** Copie la sélection dans le presse-papier (natif via Capacitor). */
@@ -91,7 +93,7 @@ export function useVerseActions() {
         await toast(t('bible.actions.copied'))
       }
     } catch {
-      /* l'utilisateur a annulé le partage — rien à signaler */
+      /* l'utilisateur a annulé le partage, rien à signaler */
     }
   }
 

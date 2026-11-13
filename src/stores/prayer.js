@@ -9,7 +9,7 @@ import { pushUserData } from '@/lib/sync'
 import { cancelPrayerReminders } from '@/lib/notifications'
 
 /**
- * Sanctuaire — journal de prières + moments quotidiens (matin/soir).
+ * Sanctuaire, journal de prières + moments quotidiens (matin/soir).
  * Local-first : marche en invité et hors ligne ; sync Supabase best-effort.
  */
 export const usePrayerStore = defineStore('prayer', () => {

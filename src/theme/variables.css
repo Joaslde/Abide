@@ -1,12 +1,12 @@
 /* =========================================================================
-   variables.css — Design System Abide
+   variables.css, Design System Abide
    Source : design-pattern.md (charte officielle navy/gold)
-   Règle : ne jamais hardcoder de couleur ailleurs — toujours via ces variables.
+   Règle : ne jamais hardcoder de couleur ailleurs, toujours via ces variables.
    ========================================================================= */
 
 :root {
   /* === FONDS === */
-  --navy:      #0B1624;   /* Fond principal — nuit profonde */
+  --navy:      #0B1624;   /* Fond principal, nuit profonde */
   --navy2:     #111E31;   /* Fond sections alternées */
   --navy3:     #162340;   /* Fond intermédiaire */
   --card-bg:   #14213A;   /* Fond des cards et surfaces élevées */

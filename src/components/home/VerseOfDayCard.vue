@@ -20,7 +20,7 @@
           <span>{{ t('home.meditateWithGuide') }}</span>
         </button>
         <!-- Partage : génère une image du verset sur le paysage DU JOUR.
-             Icône seule — l'action est secondaire et un libellé mangerait la
+             Icône seule, l'action est secondaire et un libellé mangerait la
              place de « Méditer », qui reste l'action principale de la carte. -->
         <button
           class="vod-share"
@@ -60,9 +60,9 @@ const router = useRouter()
 const bible = useBibleStore()
 
 /**
- * Paysages de fond — bundlés par Vite (donc disponibles 100 % HORS LIGNE).
+ * Paysages de fond, bundlés par Vite (donc disponibles 100 % HORS LIGNE).
  * `eager` + `as: 'url'` : on ne récupère que les URLs (les fichiers sont émis
- * tels quels, rien n'est inliné), et la liste est connue dès le chargement —
+ * tels quels, rien n'est inliné), et la liste est connue dès le chargement, 
  * pas d'attente réseau ni de chargement asynchrone à l'affichage.
  * On trie pour garantir un ordre STABLE : sans ça l'ordre du glob pourrait
  * varier entre deux builds et changer l'image d'un même jour.
@@ -82,7 +82,7 @@ const bookName = ref(ref_.book_id)
  * Image du jour. Le quantième de l'année fait tourner la collection : on
  * parcourt TOUTES les images avant d'en revoir une (avec 38 paysages, un même
  * fond ne revient qu'après 38 jours). Déterministe : le fond ne change pas si
- * l'utilisateur rouvre l'app dans la journée — l'écran reste « le sien ».
+ * l'utilisateur rouvre l'app dans la journée, l'écran reste « le sien ».
  */
 const background = computed(() => {
   if (!BACKGROUNDS.length) return ''
@@ -100,7 +100,7 @@ const reference = computed(() => {
 
 /**
  * (Re)charge le texte dans la version ACTIVE. Rejoué à chaque changement de
- * version — pas seulement au montage — car la Bible peut basculer de langue
+ * version, pas seulement au montage, car la Bible peut basculer de langue
  * en cours de vie (ex : bascule auto quand l'utilisateur change la langue de
  * l'app et qu'une version dans cette langue est déjà installée, cf. preferences.js).
  */
@@ -123,7 +123,7 @@ function open() {
 
 /** Ouvre le Guide IA en mode MÉDITATION, avec ce verset déjà dans le champ. */
 function meditate() {
-  const prefill = `« ${text.value} »\n— ${reference.value}\n\n`
+  const prefill = `« ${text.value} »\n${reference.value}\n\n`
   router.push({ path: '/tabs/ancre', query: { prefill, mode: 'meditation' } })
 }
 </script>

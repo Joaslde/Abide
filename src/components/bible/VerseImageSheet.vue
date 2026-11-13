@@ -75,7 +75,7 @@ const emit = defineEmits(['close'])
 const { t } = useI18n()
 
 /**
- * Paysages bundlés par Vite — donc disponibles 100 % HORS LIGNE, comme pour la
+ * Paysages bundlés par Vite, donc disponibles 100 % HORS LIGNE, comme pour la
  * carte du verset du jour. Même glob, même tri stable.
  */
 const backgrounds = Object.entries(

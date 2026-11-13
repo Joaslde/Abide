@@ -66,7 +66,7 @@
               min="1"
               max="365"
               class="days-input"
-              :placeholder="'—'"
+              :placeholder="'-'"
             />
           </div>
         </section>

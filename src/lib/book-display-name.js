@@ -3,7 +3,7 @@
  *
  * POURQUOI : « Cantique des Cantiques 8 » fait 24 caractères. Dans une barre
  * partagée avec la flèche de retour, le bouton lecture, le badge de version et
- * les réglages, il ne reste qu'une centaine de pixels — même réduit à 11px
+ * les réglages, il ne reste qu'une centaine de pixels, même réduit à 11px
  * (limite de lisibilité), le titre restait tronqué en « Cantique des Canti… ».
  *
  * Réduire encore la police n'est pas une option : en dessous de 11px le texte
@@ -18,7 +18,7 @@
 /**
  * Abréviations usuelles, par identifiant de livre (codes USFM, stables quelle
  * que soit la version installée). Seuls les noms qui débordent réellement
- * figurent ici — un nom qui tient ne doit jamais être abrégé.
+ * figurent ici, un nom qui tient ne doit jamais être abrégé.
  */
 const SHORT_NAMES = {
   fr: {

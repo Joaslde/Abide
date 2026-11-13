@@ -67,6 +67,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { dateLocale } from '@/i18n'
 import { alertController } from '@ionic/vue'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonIcon,
@@ -75,7 +76,7 @@ import {
 import { chevronForward, logOutOutline, trashOutline, arrowForward } from 'ionicons/icons'
 import { useAuthStore } from '@/stores/auth'
 
-const { t, te } = useI18n()
+const { t, te, locale } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -88,7 +89,7 @@ const memberSince = computed(() => {
   const iso = auth.profile?.created_at
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleDateString(auth.profile?.preferred_lang || undefined, {
+  return d.toLocaleDateString(dateLocale(locale.value), {
     year: 'numeric', month: 'long'
   })
 })

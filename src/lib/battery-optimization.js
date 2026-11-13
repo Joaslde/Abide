@@ -4,7 +4,7 @@
  * POURQUOI C'EST CRITIQUE : les ROM constructeur agressives (Infinix/XOS,
  * Xiaomi/MIUI, Huawei, Oppo, Vivo…) tuent le processus de l'app à sa fermeture
  * ET SUPPRIMENT ses alarmes programmées. Résultat : les rappels de prière, de
- * lecture et de jeûne n'arrivent JAMAIS tant que l'app n'est pas ouverte —
+ * lecture et de jeûne n'arrivent JAMAIS tant que l'app n'est pas ouverte, 
  * exactement l'inverse de leur raison d'être (diagnostic 2026-07-30 : 201
  * alarmes bien planifiées, aucune notification reçue).
  *
@@ -65,4 +65,17 @@ export async function resetBatteryAskFlag() {
   try {
     await Preferences.remove({ key: ASKED_KEY })
   } catch { /* sans conséquence */ }
+}
+
+/**
+ * Ouvre les réglages de notifications d'Abide (Android). Utile quand
+ * l'utilisateur a coupé les notifications : l'app ne peut plus les redemander.
+ */
+export async function openNotificationSettings() {
+  if (!isAndroid) return
+  try {
+    await BatteryOptimization.openNotificationSettings()
+  } catch (e) {
+    console.warn('[notif] ouverture des réglages impossible', e)
+  }
 }

@@ -4,7 +4,7 @@
  *   node scripts/fetch-plan-thumbs.js
  *
  * Source : Unsplash (licence gratuite, usage commercial autorisé, sans
- * attribution obligatoire — https://unsplash.com/license).
+ * attribution obligatoire, https://unsplash.com/license).
  *
  * Contrairement aux fonds du « Verset du jour » (paysages génériques), ces
  * images sont DESCRIPTIVES : chacune doit évoquer le thème de son plan
@@ -41,7 +41,7 @@ const QUALITY = 70
  * lors de la revue visuelle, et de consigne si l'image doit être remplacée.
  */
 const PLAN_PHOTOS = {
-  // — Parcours bibliques —
+  // Parcours bibliques, 
   // ⚠️ know-jesus / life-of-david / women-of-the-bible : aucune photo libre
   // vraiment ILLUSTRATIVE trouvée (croix, berger, figure féminine) sans tomber
   // sur du hors-sujet. On retombe volontairement sur des paysages ÉVOCATEURS et
@@ -53,13 +53,13 @@ const PLAN_PHOTOS = {
   'women-of-the-bible': 'photo-1490750967868-88aa4486c946', // champ de fleurs, lumière douce
   'creation-to-covenant': 'photo-1419242902214-272b3f66ee7a', // voie lactée (« compte les étoiles ») ✔ vérifié
 
-  // — Thèmes de vie —
+  // Thèmes de vie, 
   'peace-over-anxiety': 'photo-1473186578172-c141e6798cf4', // chaises face à la mer, calme ✔ vérifié
   'grief-and-comfort': 'photo-1494972308805-463bc619d34e',  // roses (recueillement) ✔ vérifié
   'path-of-forgiveness': 'photo-1490578474895-699cd4e2cf59', // amis assis côte à côte, de dos ✔ vérifié
   'identity-in-christ': 'photo-1499209974431-9dddcece7f88',  // bras ouverts au soleil levant ✔ vérifié
 
-  // — Disciplines spirituelles —
+  // Disciplines spirituelles, 
   'learn-to-pray': 'photo-1478147427282-58a87a120781',      // mains levées dans la lumière ✔ vérifié
   'cultivating-gratitude': 'photo-1490730141103-6cac27aaab94', // silhouette bras ouverts, plage ✔ vérifié
   'study-the-bible': 'photo-1504052434569-70ad5836ab65',    // Bible ouverte, lecture ✔ vérifié
@@ -99,7 +99,7 @@ async function main() {
     } catch (e) {
       // Une photo retirée d'Unsplash ne doit pas interrompre le reste.
       failed.push(planId)
-      console.warn(`✗ ${planId} (${photoId}) — ${e.message}`)
+      console.warn(`✗ ${planId} (${photoId}), ${e.message}`)
     }
   }
 

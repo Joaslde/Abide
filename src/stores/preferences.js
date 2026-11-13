@@ -14,7 +14,7 @@ import { setLocale, detectDeviceLocale } from '@/i18n'
  *
  * Persistance : @capacitor/preferences (natif sur mobile, localStorage sur web).
  * La police de l'app suit celle du téléphone (system-ui), fallback Roboto Serif
- * — géré entièrement en CSS dans variables.css, pas ici.
+ * géré entièrement en CSS dans variables.css, pas ici.
  */
 const KEY = 'abide.preferences'
 
@@ -38,7 +38,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
         const saved = JSON.parse(value)
         locale.value = saved.locale ?? detectDeviceLocale()
         theme.value = saved.theme ?? 'system'
-        bibleFont.value = saved.bibleFont ?? null
+        bibleFont.value = migrateFont(saved.bibleFont ?? null)
         bibleFontSize.value = saved.bibleFontSize ?? 18
         firstLaunchDone.value = saved.firstLaunchDone ?? false
         lastReadPath.value = saved.lastReadPath ?? null
@@ -107,11 +107,11 @@ export const usePreferencesStore = defineStore('preferences', () => {
 
   /**
    * Change la langue de l'INTERFACE. Si une version de Bible dans cette langue
-   * est DÉJÀ téléchargée localement, on bascule aussi la Bible active dessus —
+   * est DÉJÀ téléchargée localement, on bascule aussi la Bible active dessus, 
    * sans jamais déclencher de téléchargement (offline-first : pas de surprise
    * de données mobiles). Sinon, la version Bible active ne change pas (LSG reste
    * le seul contenu garanti disponible) et on le SIGNALE à l'appelant (voir
-   * `noBibleVersion` dans le retour) pour qu'il propose le téléchargement —
+   * `noBibleVersion` dans le retour) pour qu'il propose le téléchargement, 
    * cette fonction ne montre elle-même aucune UI (pas d'accès à alertController).
    * Import dynamique : preferences.js ne dépend pas de bible.js au chargement
    * (même pattern que auth.js → user-db pour deleteAccount).
@@ -189,18 +189,33 @@ export const usePreferencesStore = defineStore('preferences', () => {
   /**
    * Polices proposées pour la lecture de la Bible. `id` = valeur stockée,
    * `stack` = font-family CSS appliquée à --font-bible-user. La 1re (défaut)
-   * suit la police de l'app. Les autres sont des familles largement dispo
-   * (system fonts) pour rester offline-safe — pas de Google Fonts à charger.
+   * suit la police de l'app ; `labelKey` = libellé traduit, sinon `label`
+   * (nom propre de la police, identique dans toutes les langues).
+   *
+   * Les polices nommées sont EMBARQUÉES (assets/fonts/bible, hors ligne).
+   * Avant la v1.5, la liste reposait sur des polices système (Georgia,
+   * Palatino, Garamond, Courier) qui n'existent pas sur Android : toutes
+   * retombaient sur le même serif et semblaient identiques.
    */
   const BIBLE_FONTS = [
-    { id: null, label: 'Par défaut', stack: 'var(--font-app)' },
-    { id: 'serif', label: 'Serif', stack: "Georgia, 'Times New Roman', serif" },
-    { id: 'sans', label: 'Sans', stack: "system-ui, 'Segoe UI', Roboto, sans-serif" },
-    { id: 'georgia', label: 'Georgia', stack: "Georgia, serif" },
-    { id: 'palatino', label: 'Palatino', stack: "'Palatino Linotype', 'Book Antiqua', Palatino, serif" },
-    { id: 'garamond', label: 'Garamond', stack: "Garamond, 'EB Garamond', serif" },
-    { id: 'mono', label: 'Mono', stack: "'Courier New', ui-monospace, monospace" }
+    { id: null, labelKey: 'bible.fontDefault', stack: 'var(--font-app)' },
+    { id: 'literata', label: 'Literata', stack: "'Literata', serif" },
+    { id: 'merriweather', label: 'Merriweather', stack: "'Merriweather', serif" },
+    { id: 'lora', label: 'Lora', stack: "'Lora', serif" },
+    { id: 'garamond', label: 'EB Garamond', stack: "'EB Garamond', serif" },
+    { id: 'crimson', label: 'Crimson Pro', stack: "'Crimson Pro', serif" },
+    { id: 'source-serif', label: 'Source Serif', stack: "'Source Serif 4', serif" },
+    { id: 'atkinson', label: 'Atkinson Hyperlegible', stack: "'Atkinson Hyperlegible', sans-serif" },
+    { id: 'sans', label: 'Sans', stack: "system-ui, 'Segoe UI', Roboto, sans-serif" }
   ]
+
+  /** Anciennes polices système retirées en v1.5 → équivalent le plus proche. */
+  const LEGACY_FONTS = { serif: 'literata', georgia: 'merriweather', palatino: 'lora', mono: null }
+
+  function migrateFont(id) {
+    if (id in LEGACY_FONTS) return LEGACY_FONTS[id]
+    return BIBLE_FONTS.some((f) => f.id === id) ? id : null
+  }
 
   /** Applique la police choisie à la variable CSS lue par le texte biblique. */
   function applyBibleFont() {

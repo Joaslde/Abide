@@ -58,10 +58,10 @@
           @tap="onVerseTap"
         />
       <!-- Actions du chapitre : POSÉES EN FIN DE TEXTE, pas dans une barre fixe.
-           Elles se découvrent quand on a fini de lire — c'est le moment naturel
+           Elles se découvrent quand on a fini de lire, c'est le moment naturel
            où l'on marque comme lu, met un signet ou lance le quiz. Une banderole
            collée en bas mangeait de la hauteur de lecture en permanence. -->
-      <div class="chap-actions">
+      <div ref="chapEndEl" class="chap-actions">
         <button
           class="action-btn"
           :class="{ active: userData.currentBookmarked }"
@@ -75,15 +75,17 @@
         <!-- Marquer explicitement ce chapitre comme lu (progression globale). -->
         <button
           class="action-btn"
-          :class="{ active: isRead }"
+          :class="{ active: isRead, 'just-read': justRead }"
           :aria-label="t('bible.markRead')"
           @click="toggleRead"
         >
-          <ion-icon :icon="isRead ? checkmarkCircle : checkmarkCircleOutline" />
+          <span class="read-icon">
+            <ion-icon :icon="isRead ? checkmarkCircle : checkmarkCircleOutline" />
+          </span>
           <span>{{ isRead ? t('bible.readDone') : t('bible.markRead') }}</span>
         </button>
 
-        <!-- Quiz du chapitre (IA — connexion requise). -->
+        <!-- Quiz du chapitre (IA, connexion requise). -->
         <button
           class="action-btn"
           :class="{ active: chapterStars > 0 }"
@@ -139,7 +141,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useFitText } from '@/composables/useFitText'
+import { versionShortLabel } from '@/lib/version-label'
 import { displayBookName } from '@/lib/book-display-name'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -160,6 +164,7 @@ import { usePlanStore } from '@/stores/plan'
 import { useStreakStore } from '@/stores/streak'
 import { useAudioStore } from '@/stores/audio'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { useChapterEndReached } from '@/composables/useChapterEndReached'
 import { getVerses, getBookName, getChapterCount } from '@/lib/bible-db'
 import { isChapterRead, unmarkChapterRead, getQuizResult } from '@/lib/user-db'
 import { isOnline } from '@/lib/network'
@@ -194,7 +199,7 @@ const chapterCount = ref(0)
 /**
  * Titre du chapitre : la taille s'adapte à la LONGUEUR du nom, pas à la largeur
  * d'écran. Sans ça, « Deutéronome 21 » était tronqué là où « Job 3 » tenait
- * largement — une taille unique ne peut pas convenir aux deux.
+ * largement, une taille unique ne peut pas convenir aux deux.
  * Re-mesuré quand le livre ou le chapitre change (on peut naviguer de chapitre
  * en chapitre sans quitter la vue).
  */
@@ -224,12 +229,20 @@ const showQuiz = ref(false)
 const openingQuiz = ref(false)
 const chapterStars = ref(0)
 
-// Libellé court de la version active (ex : "LSG 1910" → "LSG").
-const versionLabel = computed(() => {
-  const v = versionsStore.installed.find((x) => x.id === store.activeVersion)
-  if (store.activeVersion === 'LSG1910') return 'LSG'
-  return v?.id ?? store.activeVersion
+// Fin de chapitre atteinte → marqué comme lu automatiquement, avec une courte
+// animation (< 1 s) sur le bouton « Lu ». Un « démarquer » explicite pendant la
+// visite est respecté : on ne remarque pas derrière l'utilisateur.
+const chapEndEl = ref(null)
+const justRead = ref(false)
+let userUnmarked = false
+const endReached = useChapterEndReached(chapEndEl, {
+  canTrigger: () => !loading.value && verses.value.length > 0 && !isRead.value && !userUnmarked,
+  textLength: () => verses.value.reduce((n, v) => n + (v.text?.length ?? 0), 0),
+  onReached: autoMarkRead
 })
+
+// Libellé court de la version active (ex : « BES_ES » → « BES »).
+const versionLabel = computed(() => versionShortLabel(store.activeVersion))
 
 // Le chapitre affiché est-il celui qui joue actuellement ?
 const isThisChapterPlaying = computed(() =>
@@ -264,6 +277,8 @@ async function onToggleAudio() {
 
 async function load() {
   loading.value = true
+  endReached.stop()
+  userUnmarked = false
   // Changer de chapitre annule la sélection en cours.
   selection.clear()
   store.setBook(bookId)
@@ -286,6 +301,7 @@ async function load() {
   // Étoiles déjà obtenues au quiz de ce chapitre (offline-safe, local).
   const qr = await getQuizResult(bookId, chapter.value)
   chapterStars.value = qr?.stars ?? 0
+  endReached.start()
 }
 
 /**
@@ -319,7 +335,7 @@ async function runOpenQuiz() {
   // rien ne bouge pendant la pub et l'utilisateur croit que son clic n'a pas pris.
   showQuiz.value = true
   // Pub vidéo avant le quiz (à chaque fois, sauf premium). Attend sa fermeture
-  // puis génère — l'échec de la pub ne bloque jamais l'accès.
+  // puis génère, l'échec de la pub ne bloque jamais l'accès.
   await ads.onStartQuiz()
   try {
     await quiz.generateQuiz({
@@ -358,10 +374,23 @@ async function toggleRead() {
   if (isRead.value) {
     await unmarkChapterRead(bookId, chapter.value)
     isRead.value = false
+    userUnmarked = true
   } else {
     await plan.markRead(store.activeVersion, bookId, chapter.value)
     isRead.value = true
   }
+}
+
+/** Fin du chapitre atteinte : marque comme lu et joue l'animation. */
+async function autoMarkRead() {
+  const markedChapter = chapter.value
+  await plan.markRead(store.activeVersion, bookId, chapter.value)
+  // Le lecteur a pu changer de chapitre pendant l'écriture.
+  if (markedChapter !== chapter.value) return
+  isRead.value = true
+  justRead.value = true
+  setTimeout(() => { justRead.value = false }, 900)
+  try { await Haptics.impact({ style: ImpactStyle.Light }) } catch { /* web */ }
 }
 
 /**
@@ -456,7 +485,7 @@ function isInViewport(el) {
 onMounted(async () => {
   await load()
   flashTargetVerse()
-  // Versions installées (pour le sélecteur du header) — offline-safe.
+  // Versions installées (pour le sélecteur du header), offline-safe.
   await versionsStore.loadInstalled()
 })
 
@@ -512,13 +541,13 @@ function onTouchEnd(e) {
 
 <style scoped>
 ion-toolbar { --background: var(--navy2); }
-/* Titre du chapitre — DOIT tenir en entier.
+/* Titre du chapitre, DOIT tenir en entier.
    Ionic réserve par défaut ~90px de marge de chaque côté d'un ion-title pour
    ses boutons, ce qui tronquait « Proverbes 21 » en « Proverb… » alors que la
    place existait. On reprend la main : le titre part juste après la flèche de
    retour et s'étend jusqu'aux boutons de droite.
    `clamp()` réduit la police proportionnellement à la largeur d'écran plutôt
-   que de couper le texte — un nom long reste lisible en entier. */
+   que de couper le texte, un nom long reste lisible en entier. */
 ion-title {
   font-family: var(--font-app);
   font-weight: 600;
@@ -621,7 +650,7 @@ ion-content { --background: var(--navy); }
 .nav-bubble ion-icon { font-size: 22px; }
 .nav-bubble:active { background: var(--card-bg); }
 
-/* Actions du chapitre — posées EN FIN DE TEXTE (plus de barre fixe en bas).
+/* Actions du chapitre, posées EN FIN DE TEXTE (plus de barre fixe en bas).
    Aucun fond ni bordure pleine largeur : elles reposent sur le fond du chapitre.
    Un simple filet court les sépare du dernier verset. */
 .chap-actions {
@@ -657,6 +686,41 @@ ion-content { --background: var(--navy); }
 }
 .action-btn ion-icon { font-size: 22px; }
 .action-btn.active { color: var(--gold); }
+
+/* Chapitre marqué comme lu en arrivant à la fin : l'icône rebondit et une
+   onde dorée s'en échappe. Moins d'une seconde, puis tout redevient calme. */
+.read-icon {
+  position: relative;
+  display: inline-flex;
+}
+.read-icon::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  opacity: 0;
+  pointer-events: none;
+}
+.action-btn.just-read .read-icon ion-icon {
+  animation: read-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.action-btn.just-read .read-icon::after {
+  animation: read-ring 800ms ease-out;
+}
+@keyframes read-pop {
+  0% { transform: scale(0.6); }
+  55% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+@keyframes read-ring {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-btn.just-read .read-icon ion-icon,
+  .action-btn.just-read .read-icon::after { animation: none; }
+}
 
 /* Badge version dans le header */
 .version-pill {

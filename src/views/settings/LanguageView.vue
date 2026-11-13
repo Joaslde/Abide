@@ -28,7 +28,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -37,21 +36,20 @@ import {
 } from '@ionic/vue'
 import { checkmark } from 'ionicons/icons'
 import { usePreferencesStore } from '@/stores/preferences'
+import { SUPPORTED_LOCALES, LANGUAGE_NAMES } from '@/i18n'
 
 const { t } = useI18n()
 const router = useRouter()
 const prefs = usePreferencesStore()
 
-const options = computed(() => [
-  { code: 'fr', label: t('settings.french') },
-  { code: 'en', label: t('settings.english') }
-])
+// Chaque langue affichée dans sa propre langue (cf. LANGUAGE_NAMES).
+const options = SUPPORTED_LOCALES.map((code) => ({ code, label: LANGUAGE_NAMES[code] }))
 
 /**
  * Change la langue. Si aucune version de Bible dans cette langue n'est
  * installée (donc la lecture reste dans l'ancienne langue), on le PROPOSE
  * explicitement plutôt que de laisser la personne le découvrir seule dans
- * le lecteur — cf. lessons.md 2026-07-26.
+ * le lecteur, cf. lessons.md 2026-07-26.
  */
 async function choose(code) {
   const { noBibleVersion } = await prefs.setLocalePref(code)

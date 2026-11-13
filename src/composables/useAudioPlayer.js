@@ -11,7 +11,7 @@ import { getAudioUrl, getTimestamps, filesetForBook } from '@/lib/biblebrain'
 import { getChapterCount, getBookName } from '@/lib/bible-db'
 
 /**
- * Lecteur audio Bible (streaming) — SINGLETON au niveau module.
+ * Lecteur audio Bible (streaming), SINGLETON au niveau module.
  *
  * Un unique élément <audio> sert toute l'app : la lecture survit à la
  * navigation (mini-barre montée globalement). Les contrôles natifs de l'écran
@@ -118,7 +118,7 @@ function t(key) {
 /* ───────────────────────── music-controls (natif) ───────────────────────── */
 
 /**
- * Plugin music-controls (import STATIQUE — l'import dynamique gelait sur natif
+ * Plugin music-controls (import STATIQUE, l'import dynamique gelait sur natif
  * et bloquait toute la suite de playChapter). Renvoie le plugin sur natif, null
  * sur web. Branche les listeners d'events une seule fois.
  */
@@ -212,7 +212,7 @@ async function createControls(store) {
     })
     controlsReady = true
   } catch {
-    /* le plugin peut échouer sur certains appareils — la lecture continue */
+    /* le plugin peut échouer sur certains appareils, la lecture continue */
   }
 }
 
@@ -288,7 +288,7 @@ async function playChapter({ versionId, bookId, bookName, chapter }) {
   store.setLoading(true)
   try {
     // 0) OFFLINE D'ABORD : si le livre est téléchargé, on lit les fichiers
-    //    locaux (MP3 + timestamps) — aucun réseau nécessaire.
+    //    locaux (MP3 + timestamps), aucun réseau nécessaire.
     const downloadsStore = useAudioDownloadsStore()
     await downloadsStore.load()
     const local = await downloadsStore.localChapterSource(versionId, bookId, chapter)
@@ -316,7 +316,7 @@ async function playChapter({ versionId, bookId, bookName, chapter }) {
     await el.play()
 
     // 2) Timestamps : locaux déjà posés ci-dessus ; sinon chargés EN ARRIÈRE-PLAN
-    //    (avec réessais) — lancés AVANT les contrôles natifs pour qu'aucun souci
+    //    (avec réessais), lancés AVANT les contrôles natifs pour qu'aucun souci
     //    de plugin ne les bloque.
     if (local?.timestamps?.length) {
       finalizeTimestamps(store)

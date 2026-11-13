@@ -22,7 +22,7 @@
           <div class="item code-item">
             <div class="item-lead">
               <ion-icon :icon="linkOutline" />
-              <span>{{ loading ? t('common.loading') : (referralCode || '—') }}</span>
+              <span>{{ loading ? t('common.loading') : (referralCode || '-') }}</span>
             </div>
           </div>
           <button class="item tappable" :disabled="!shareLink" @click="onShare">
@@ -69,6 +69,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { dateLocale } from '@/i18n'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton,
   IonContent, IonIcon, toastController
@@ -81,10 +82,10 @@ import { Clipboard } from '@capacitor/clipboard'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 
-// Paliers affichés — DOIVENT rester alignés sur TIERS de l'Edge Function
+// Paliers affichés, DOIVENT rester alignés sur TIERS de l'Edge Function
 // referral-attribute (source de vérité serveur). Purement décoratif ici : la
 // vraie logique de récompense est calculée et appliquée côté serveur.
 // Révisés le 2026-07-27 (5/10/15 → 7/14/30j jugés trop faciles).
@@ -119,7 +120,7 @@ const nextTier = computed(() => {
 const premiumExpiryLabel = computed(() => {
   const expires = auth.profile?.premium_expires
   if (!expires) return ''
-  return new Date(expires).toLocaleDateString()
+  return new Date(expires).toLocaleDateString(dateLocale(locale.value))
 })
 
 onMounted(async () => {

@@ -158,7 +158,7 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Programme de parrainage : tente l'attribution d'un filleul à SON parrain,
    * une seule fois, UNIQUEMENT si le compte vient d'être créé (jamais sur une
-   * reconnexion — sinon un compte existant pourrait être ré-attribué si un code
+   * reconnexion, sinon un compte existant pourrait être ré-attribué si un code
    * traîne en local). Signal de « nouveau compte » : created_at === last_sign_in_at
    * (identique à la première seconde près, standard Supabase Auth, valable aussi
    * pour OAuth/Google). Non bloquant : un échec (offline, pas de code en attente)
@@ -175,7 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       await supabase.functions.invoke('referral-attribute', { body: { referralCode } })
     } catch {
-      // Échec réseau/serveur : on n'insiste pas (SECURITY.md — non bloquant pour
+      // Échec réseau/serveur : on n'insiste pas (SECURITY.md, non bloquant pour
       // une fonctionnalité non critique au parcours). Le code reste en attente
       // en local si la tentative n'a même pas pu partir.
       return

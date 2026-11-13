@@ -7,7 +7,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <p class="ion-padding">Player audio — Phase 1</p>
+      <p class="ion-padding">Player audio (Phase 1)</p>
     </ion-content>
   </ion-page>
 </template>

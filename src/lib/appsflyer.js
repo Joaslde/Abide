@@ -1,15 +1,15 @@
 /**
- * AppsFlyer — attribution d'installations pour le programme de PARRAINAGE.
+ * AppsFlyer, attribution d'installations pour le programme de PARRAINAGE.
  *
  * Rôle unique de ce module : au premier lancement de l'app après une install
  * venue d'un lien de parrainage (OneLink), récupérer le code du parrain transmis
  * en paramètre custom du lien, et le stocker LOCALEMENT (Preferences) le temps
  * que l'utilisateur crée son compte. C'est le CLIENT qui déclenche ensuite
- * l'attribution côté serveur (Edge Function `referral-attribute`) — ce module ne
+ * l'attribution côté serveur (Edge Function `referral-attribute`), ce module ne
  * décide jamais rien côté premium (SECURITY.md : le client ne décide jamais de
  * rien d'important).
  *
- * No-op sur web (le SDK est natif uniquement, comme AdMob — cf. lib/admob.js).
+ * No-op sur web (le SDK est natif uniquement, comme AdMob, cf. lib/admob.js).
  */
 
 import { Capacitor } from '@capacitor/core'
@@ -58,9 +58,9 @@ export async function initAppsFlyer() {
 /**
  * Enregistre un code de parrainage en attente d'attribution. Exportée pour
  * la saisie MANUELLE à l'onboarding (contournement temporaire tant que le
- * lien OneLink n'est pas fonctionnel — app pas encore publiée) : même
+ * lien OneLink n'est pas fonctionnel, app pas encore publiée) : même
  * mécanisme que l'attribution automatique via AppsFlyer, donc même garanties
- * (idempotent, tenté une seule fois, jamais bloquant — cf. auth.js).
+ * (idempotent, tenté une seule fois, jamais bloquant, cf. auth.js).
  */
 export async function storePendingReferralCode(code) {
   try {
@@ -78,7 +78,7 @@ export async function getPendingReferralCode() {
   }
 }
 
-/** Efface le code en attente (attribution tentée, succès ou échec — une seule fois). */
+/** Efface le code en attente (attribution tentée, succès ou échec, une seule fois). */
 export async function clearPendingReferralCode() {
   try {
     await Preferences.remove({ key: PENDING_REFERRAL_KEY })

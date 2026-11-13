@@ -9,7 +9,9 @@
 import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
+import { useI18n } from 'vue-i18n'
 import { splitByRefs } from '@/lib/bible-refs'
+import { withoutLongDashes } from '@/lib/typography'
 
 const props = defineProps({
   content: { type: String, required: true }
@@ -17,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['openRef'])
 
 const root = ref(null)
+const { locale } = useI18n()
 
 const md = new MarkdownIt({
   html: false, // le LLM n'a AUCUNE raison d'écrire du HTML → on l'interdit
@@ -26,7 +29,8 @@ const md = new MarkdownIt({
 
 /** Markdown → HTML, puis sanitisation stricte. */
 const html = computed(() => {
-  const raw = md.render(props.content ?? '')
+  // Le modèle produit des tirets cadratin : retirés avant rendu (typographie maison).
+  const raw = md.render(withoutLongDashes(props.content ?? '', locale.value))
   return DOMPurify.sanitize(raw, {
     ALLOWED_TAGS: [
       'p', 'br', 'strong', 'em', 'del', 'blockquote',

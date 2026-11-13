@@ -87,8 +87,8 @@ const VERSIONS = {
     apiKey: 'sse',
     names: NAMES_ES
   }
-  // Note : 'tyndale' (apiKey getbible.net) est partiel — seulement NT + quelques livres AT.
-  // Les livres 6–39 retournent 404. Ne pas uploader : mauvaise expérience utilisateur.
+  // Note : 'tyndale' (apiKey getbible.net) est partiel, seulement NT + quelques livres AT.
+  // Les livres 6-39 retournent 404. Ne pas uploader : mauvaise expérience utilisateur.
   // bbe, neg1979, nbs : introuvables sur getbible.net (404 sur le livre 1).
 }
 

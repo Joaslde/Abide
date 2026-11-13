@@ -7,7 +7,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <p class="ion-padding">Détail prière — Phase 2</p>
+      <p class="ion-padding">Détail prière (Phase 2)</p>
     </ion-content>
   </ion-page>
 </template>

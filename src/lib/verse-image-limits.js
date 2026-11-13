@@ -3,7 +3,7 @@
  *
  * POURQUOI CES LIMITES : une image carrée lue sur un fil Instagram ou un statut
  * WhatsApp se regarde deux secondes. Au-delà de ~300 caractères, le texte doit
- * tellement rétrécir qu'il devient illisible sur téléphone — l'image perd tout
+ * tellement rétrécir qu'il devient illisible sur téléphone, l'image perd tout
  * son intérêt. Mieux vaut refuser clairement que produire une image ratée.
  *
  * On refuse sur DEUX critères indépendants, parce qu'ils ne se recoupent pas :

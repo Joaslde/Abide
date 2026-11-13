@@ -5,9 +5,9 @@
  * peut être < nb de chapitres (plusieurs chapitres/jour) ou = (1 chapitre/jour).
  *
  * `category` regroupe les plans dans l'écran de choix :
- *   'vie'        — thèmes de vie courants (anxiété, deuil, pardon, identité…)
- *   'biblique'   — parcours bibliques thématiques (David, paraboles, Genèse…)
- *   'discipline' — disciplines spirituelles (prier, gratitude, étudier…)
+ *   'vie', thèmes de vie courants (anxiété, deuil, pardon, identité…)
+ *   'biblique', parcours bibliques thématiques (David, paraboles, Genèse…)
+ *   'discipline', disciplines spirituelles (prier, gratitude, étudier…)
  *
  * ⚠️ Toutes les références ont été VALIDÉES contre le CANON de planGenerator.js
  * (livre existant + chapitre <= nb réel de chapitres, aucun doublon par plan).
@@ -24,7 +24,7 @@ import { buildScheduleFromChapters } from '@/data/planGenerator'
 export const PLAN_CATEGORIES = ['vie', 'biblique', 'discipline']
 
 /**
- * Vignettes des plans — bundlées par Vite (donc 100 % HORS LIGNE).
+ * Vignettes des plans, bundlées par Vite (donc 100 % HORS LIGNE).
  * Le nom du fichier est l'id du plan (`src/assets/plans/<id>.webp`), généré par
  * `scripts/fetch-plan-thumbs.js`. `eager` + `as: 'url'` : on ne récupère que les
  * URLs, disponibles dès le chargement (pas d'attente réseau à l'affichage).

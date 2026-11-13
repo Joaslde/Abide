@@ -1,5 +1,5 @@
 /**
- * OpenAI TTS — Uniquement pour vocaliser les réponses du guide IA.
+ * OpenAI TTS, Uniquement pour vocaliser les réponses du guide IA.
  * JAMAIS utilisé pour les textes bibliques (BibleBrain uniquement).
  * Les requêtes TTS passent par l'Edge Function Supabase pour cacher la clé.
  * Les fichiers générés sont mis en cache sur Cloudflare R2.

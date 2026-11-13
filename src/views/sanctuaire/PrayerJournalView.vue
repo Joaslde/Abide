@@ -68,6 +68,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { dateLocale } from '@/i18n'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonContent,
   IonInput, IonList, IonItem, IonItemSliding, IonItemOptions, IonItemOption,
@@ -107,7 +108,7 @@ async function remove(id) {
 
 function formatDate(iso) {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR', {
+  return new Date(iso).toLocaleDateString(dateLocale(locale.value), {
     day: 'numeric', month: 'long', year: 'numeric'
   })
 }

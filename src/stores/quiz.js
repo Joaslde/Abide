@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { i18n } from '@/i18n'
+import { withoutLongDashes } from '@/lib/typography'
 import { isOnline } from '@/lib/network'
 import { getQuizResult, saveQuizResult, quizResultsFor } from '@/lib/user-db'
 
 /**
- * Quiz de fin de chapitre (L'Ancre — idée 13, version chapitre).
+ * Quiz de fin de chapitre (L'Ancre, idée 13, version chapitre).
  *
  * Un QCM de 5 questions est GÉNÉRÉ par l'Edge Function `quiz-chapter` à partir
  * du vrai texte du chapitre (connexion requise). Le RÉSULTAT (score + étoiles)
@@ -15,7 +17,7 @@ import { getQuizResult, saveQuizResult, quizResultsFor } from '@/lib/user-db'
  *   < 3 bonnes → échec (0 étoile, quiz à refaire)
  *     3 bonnes → ★     4 bonnes → ★★     5 bonnes → ★★★
  *
- * Le client N'appelle JAMAIS OpenRouter directement (aucune clé côté client —
+ * Le client N'appelle JAMAIS OpenRouter directement (aucune clé côté client, 
  * SECURITY.md). Tout passe par l'Edge Function.
  */
 
@@ -30,7 +32,7 @@ export function starsForScore(score) {
 }
 
 export const useQuizStore = defineStore('quiz', () => {
-  // — Session de quiz en cours —
+  // Session de quiz en cours, 
   const questions = ref([]) // [{ question, options[4], correctIndex }]
   const currentIndex = ref(0) // question affichée
   const answers = ref([]) // index choisi par question (null tant que non répondu)
@@ -82,7 +84,7 @@ export const useQuizStore = defineStore('quiz', () => {
     ctx.value = context
     try {
       const { data, error } = await supabase.functions.invoke('quiz-chapter', {
-        body: { bookId: context.bookId, chapter: context.chapter }
+        body: { bookId: context.bookId, chapter: context.chapter, uiLocale: i18n.global.locale.value }
       })
 
       // Quota de quiz du jour atteint (429). ⚠️ invoke() ne parse PAS le corps
@@ -92,7 +94,13 @@ export const useQuizStore = defineStore('quiz', () => {
       if (error || data?.error || !Array.isArray(data?.questions)) {
         throw new Error('failed')
       }
-      questions.value = data.questions
+      // Texte généré : on retire les tirets cadratin (typographie maison).
+      const loc = i18n.global.locale.value
+      questions.value = data.questions.map((q) => ({
+        ...q,
+        question: withoutLongDashes(q.question, loc),
+        options: Array.isArray(q.options) ? q.options.map((o) => withoutLongDashes(o, loc)) : q.options
+      }))
       answers.value = new Array(data.questions.length).fill(null)
       currentIndex.value = 0
       finished.value = false

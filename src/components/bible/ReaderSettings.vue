@@ -31,7 +31,7 @@
             :style="{ fontFamily: f.stack }"
             @click="prefs.setBibleFont(f.id)"
           >
-            {{ f.label }}
+            {{ f.labelKey ? t(f.labelKey) : f.label }}
           </button>
         </div>
       </section>

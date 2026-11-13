@@ -22,7 +22,7 @@ import {
  * télécharge des .db publics. L'upload vers R2 se fait hors app (scripts).
  */
 
-// Métadonnées complètes des versions installées (id, name, language, size) —
+// Métadonnées complètes des versions installées (id, name, language, size), 
 // PAS juste les ids : il faut pouvoir afficher une version installée HORS LIGNE,
 // même quand le manifeste distant n'est pas chargé.
 const INSTALLED_KEY = 'abide.bible.installed.v2'

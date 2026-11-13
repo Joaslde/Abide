@@ -14,7 +14,7 @@ import anim5 from '@/assets/lottie/splash/anim5.json'
 
 export const SPLASH_ANIMATIONS = [anim1, anim2, anim3, anim4, anim5]
 
-/** Messages du splash (fr + en). Courts, encourageants, spirituels. */
+/** Messages du splash (fr, en, es). Courts, encourageants, spirituels. */
 export const SPLASH_MESSAGES = {
   fr: [
     'Demeurez en moi, et je demeurerai en vous.',
@@ -39,6 +39,18 @@ export const SPLASH_MESSAGES = {
     'Seek first the kingdom of God.',
     'Take heart, he walks with you.',
     'A moment to hear his voice.'
+  ],
+  es: [
+    'Permaneced en mí, y yo en vosotros.',
+    'Lámpara es a mis pies tu palabra.',
+    'Nuevo día, nueva gracia.',
+    'Estad quietos, y conoced que yo soy Dios.',
+    'Nuevas son sus misericordias cada mañana.',
+    'Acércate a Dios, y él se acercará a ti.',
+    'Que la paz de Cristo gobierne tu corazón.',
+    'Busca primero el reino de Dios.',
+    'Ánimo, él camina contigo.',
+    'Un momento para escuchar su voz.'
   ]
 }
 

@@ -1,5 +1,5 @@
 /**
- * État réseau — source de vérité unique pour tout le projet.
+ * État réseau, source de vérité unique pour tout le projet.
  *
  * Utilise @capacitor/network (fiable sur natif iOS/Android, fallback
  * navigator.onLine sur web). Réutilisable partout : décision offline-first

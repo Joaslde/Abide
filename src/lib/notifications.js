@@ -12,7 +12,7 @@
  * (contrainte OS : ~64 en attente max sur iOS, limite similaire selon Android).
  *
  * Plages d'ids :
- *   3..4        alerte streak en danger CE SOIR (3 = doux 19h, 4 = urgent 22h)
+ *   3..4        alerte streak en danger CE SOIR (3 = doux, 4 = urgent ; 19h et 22h par défaut)
  *   100..169    rappels de prière du MATIN  (7 jours × 10 ids/jour)
  *   200..269    rappels de prière du SOIR   (7 jours × 10 ids/jour)
  *   10..15      relance série perdue, matin(10h) + soir(19h) × J+1/J+2/J+3
@@ -26,6 +26,7 @@ import { i18n } from '@/i18n'
 import { fastingEncouragement, prayerReminder } from '@/data/prayerPool'
 import { streakMessage } from '@/data/streakMessages'
 import { fastDays } from '@/data/fastingCalendar'
+import { activeSlots, reminderFingerprint } from '@/lib/reminder-settings'
 
 const isNative = Capacitor.isNativePlatform()
 
@@ -33,17 +34,15 @@ const isNative = Capacitor.isNativePlatform()
 // du moment est faite. Ids réservés : matin 20..29, soir 30..39.
 const PRAYER_MORNING_BASE = 100
 const PRAYER_EVENING_BASE = 200
-const PRAYER_HOURS = {
-  morning: [10, 12], // relances tant que la prière du matin n'est pas faite
-  evening: [18, 20, 22] // idem pour le soir
-}
+// Heures des créneaux : réglables par l'utilisateur (Réglages → Notifications),
+// voir lib/reminder-settings.js. Par défaut matin 7h/12h, soir 18h/20h/22h.
 // Horizon de planification : les rappels doivent continuer même si l'utilisateur
 // n'ouvre pas l'app pendant plusieurs jours (c'est justement leur rôle).
 // 7 jours × 3 créneaux max × 2 moments = 42 notifications, sous la limite OS (~64).
 const PRAYER_DAYS_AHEAD = 7
 const PRAYER_SLOTS_PER_DAY = 10 // pas d'ids : réserve large, évite toute collision
 
-// Jeûne — bases d'ids (conformes aux plages documentées en tête de fichier).
+// Jeûne, bases d'ids (conformes aux plages documentées en tête de fichier).
 // ⚠️ Ces deux constantes étaient UTILISÉES (7 fois) mais JAMAIS DÉCLARÉES :
 // `rescheduleAll` levait un ReferenceError à chaque démarrage, ce qui coupait
 // TOUTE la planification. Cause racine du « je ne reçois aucune notification »
@@ -64,7 +63,7 @@ function t(key, params) {
  * Canal de notification Android (obligatoire depuis Android 8).
  * ⚠️ Sans canal EXPLICITE, le plugin en crée un par défaut dont l'importance est
  * trop basse : pas de son, pas de vibration, et surtout la notification s'affiche
- * REPLIÉE sans pouvoir être dépliée — c'est ce qui tronquait nos textes malgré
+ * REPLIÉE sans pouvoir être dépliée, c'est ce qui tronquait nos textes malgré
  * `largeBody`. On prend importance 5 (MAX) : son + bandeau flottant + dépliable.
  * L'importance d'un canal est FIGÉE à sa création : pour la changer il faut un
  * nouvel id de canal (d'où le suffixe `-v2`), sinon Android ignore la mise à jour.
@@ -72,7 +71,7 @@ function t(key, params) {
 // ⚠️ Le son d'un canal est FIGÉ à sa création : Android ignore toute
 // modification ultérieure (c'est volontaire, pour qu'une app ne puisse pas
 // écraser le choix de l'utilisateur). Ajouter un son impose donc un NOUVEAU
-// canal — d'où le passage en v3. L'ancien est supprimé au démarrage.
+// canal, d'où le passage en v3. L'ancien est supprimé au démarrage.
 export const CHANNEL_ID = 'abide-reminders-v3'
 
 /** Canaux des versions précédentes, à supprimer pour ne pas polluer les réglages. */
@@ -89,7 +88,7 @@ async function ensureChannel() {
       visibility: 1, // public (visible sur écran verrouillé)
       vibration: true,
       lights: true,
-      // Fichier dans android/app/src/main/res/raw/ — SANS extension ici.
+      // Fichier dans android/app/src/main/res/raw/ SANS extension ici.
       // res/raw n'accepte que [a-z0-9_], d'où le renommage du fichier source.
       sound: 'abide_notification'
     })
@@ -150,6 +149,21 @@ export async function ensureNotificationPermission() {
   return granted
 }
 
+/**
+ * État de la permission, SANS la demander (pour l'écran des réglages).
+ * @returns {Promise<'granted'|'denied'|'unsupported'>}
+ */
+export async function notificationPermissionState() {
+  if (!isNative) return 'unsupported'
+  try {
+    const status = await LocalNotifications.checkPermissions()
+    // Seul un refus explicite compte (cf. ensureNotificationPermission).
+    return status?.display === 'denied' ? 'denied' : 'granted'
+  } catch {
+    return 'granted'
+  }
+}
+
 /** Annule une plage d'ids (silencieux si rien à annuler). */
 async function cancelRange(from, to) {
   try {
@@ -179,7 +193,7 @@ export async function cancelPrayerReminders(type, todayOnly = false) {
   if (!isNative) return
   const base = prayerBase(type)
   // todayOnly : on n'annule QUE les créneaux du jour (ids base..base+9). Les
-  // rappels des jours suivants doivent survivre — prier ce matin ne doit pas
+  // rappels des jours suivants doivent survivre, prier ce matin ne doit pas
   // supprimer le rappel de demain matin.
   const to = todayOnly
     ? base + PRAYER_SLOTS_PER_DAY - 1
@@ -189,7 +203,7 @@ export async function cancelPrayerReminders(type, todayOnly = false) {
 
 /**
  * Planifie les rappels d'UN moment de prière pour AUJOURD'HUI, uniquement si
- * la prière n'est pas déjà faite. Plusieurs créneaux (voir PRAYER_HOURS) avec
+ * la prière n'est pas déjà faite. Plusieurs créneaux (heures réglables, voir reminder-settings.js) avec
  * un ton qui monte : on relance tant que le moment n'est pas accompli.
  *
  * Notifications DATÉES (pas répétitives) : c'est ce qui permet de les annuler
@@ -209,22 +223,23 @@ export async function schedulePrayerMoment(type, done) {
   const locale = i18n.global.locale.value
   const now = new Date()
   const base = prayerBase(type)
+  const slots = await activeSlots(type) // créneaux activés, heures choisies
   const list = []
 
   // ⚠️ On planifie sur PRAYER_DAYS_AHEAD jours, pas seulement aujourd'hui.
   // Avant, tout était planifié pour le jour même à l'ouverture de l'app : si
   // l'utilisateur ne l'ouvrait pas un jour, il ne recevait plus AUCUN rappel les
-  // jours suivants — alors que le rappel de prière doit justement le ramener.
+  // jours suivants, alors que le rappel de prière doit justement le ramener.
   // (Bug constaté le 2026-07-26 : « ça a sonné une fois, puis plus rien ».)
   // On garde des notifications DATÉES (et non répétitives) pour pouvoir annuler
   // celles du jour dès que la prière est faite. rescheduleAll() au démarrage
   // repousse l'horizon à chaque ouverture.
   for (let day = 0; day < PRAYER_DAYS_AHEAD; day++) {
     if (day === 0 && done) continue // prière du jour déjà faite → rien aujourd'hui
-    PRAYER_HOURS[type].forEach((hour, slot) => {
+    slots.forEach(({ slot, hour, minute }) => {
       const when = new Date()
       when.setDate(when.getDate() + day)
-      when.setHours(hour, 0, 0, 0)
+      when.setHours(hour, minute, 0, 0)
       if (when <= now) return // créneau déjà passé
 
       const msg = prayerReminder(type, slot, locale, when)
@@ -261,12 +276,12 @@ export async function schedulePrayerReminders({ morningDone = false, eveningDone
 
 /**
  * Planifie l'alerte du soir en 2 PALIERS si la Bible n'a pas encore été lue
- * aujourd'hui — sinon annule tout. Les local-notifications étant "tire et
+ * aujourd'hui, sinon annule tout. Les local-notifications étant "tire et
  * oublie" (pas de condition évaluée par l'OS au déclenchement), on republifie
  * ce check à chaque ouverture d'app (App.vue) : si l'utilisateur lit un
  * chapitre après coup, les deux alertes sont annulées aussitôt.
- *   19h — doux  : simple rappel, ton mesuré.
- *   22h — urgent: seulement si TOUJOURS pas lu, ton plus pressant (2h avant minuit).
+ *   19h par défaut, doux  : simple rappel, ton mesuré.
+ *   22h par défaut, urgent : seulement si TOUJOURS pas lu, ton plus pressant (2h avant minuit).
  * @param {boolean} readToday  un chapitre a-t-il déjà été lu aujourd'hui ?
  * @param {number} streak      streak actuel (0 = pas de série à perdre → pas d'alerte)
  */
@@ -274,7 +289,7 @@ export async function schedulePrayerReminders({ morningDone = false, eveningDone
  * Verrou de concurrence : streak.load() et l'enregistrement d'activité
  * appellent tous deux cette fonction, parfois en parallèle au démarrage.
  * Sans verrou, les rappels 19h/22h sont planifiés en double (constaté dans
- * logcat le 2026-09-08) — ce qui alimente le filtre anti-spam Android.
+ * logcat le 2026-09-08), ce qui alimente le filtre anti-spam Android.
  */
 let streakWarningPromise = null
 
@@ -298,11 +313,20 @@ async function doScheduleStreakWarning(readToday, streak) {
 
   const now = new Date()
   const locale = i18n.global.locale.value
-  const soft = new Date(); soft.setHours(19, 0, 0, 0)
-  const urgent = new Date(); urgent.setHours(22, 0, 0, 0)
+  // Heures réglables (Réglages → Notifications). Créneau 0 = rappel doux,
+  // créneau 1 = dernier appel ; un créneau désactivé n'est pas planifié.
+  const slots = await activeSlots('streak')
+  const at = (slot) => {
+    const s = slots.find((x) => x.slot === slot)
+    if (!s) return null
+    const d = new Date(); d.setHours(s.hour, s.minute, 0, 0)
+    return d
+  }
+  const soft = at(0)
+  const urgent = at(1)
 
   const list = []
-  if (soft > now) {
+  if (soft && soft > now) {
     const msg = streakMessage('soft', locale, { streak }, now)
     list.push({
       id: STREAK_SOFT_ID,
@@ -317,7 +341,7 @@ async function doScheduleStreakWarning(readToday, streak) {
       extra: { route: '/tabs/immersion' }
     })
   }
-  if (urgent > now) {
+  if (urgent && urgent > now) {
     const msg = streakMessage('urgent', locale, { streak }, now)
     list.push({
       id: STREAK_URGENT_ID,
@@ -338,10 +362,10 @@ async function doScheduleStreakWarning(readToday, streak) {
 /**
  * Planifie une RELANCE quand une série vient de se casser (ton direct, façon
  * Duolingo) : un rappel MATIN (10h) + SOIR (19h) chaque jour, pendant
- * STREAK_LOST_DAYS jours (J+1 à J+3), puis on arrête — insistant sans harceler.
+ * STREAK_LOST_DAYS jours (J+1 à J+3), puis on arrête, insistant sans harceler.
  * Textes variés à chaque notification (streakMessages.js), jamais deux fois la
  * même formulation consécutive. Appelée UNE fois au moment précis où load()
- * détecte la casse (hier une série existait, aujourd'hui elle est à 0) — pas à
+ * détecte la casse (hier une série existait, aujourd'hui elle est à 0), pas à
  * chaque démarrage, pour ne pas re-décaler les dates à chaque ouverture d'app.
  * @param {number} lostStreak  la série qui vient de se casser (doit être > 0)
  */
@@ -560,7 +584,7 @@ export async function rescheduleAll({
 /**
  * Reconstruit l'état courant depuis les stores puis re-planifie TOUT
  * (rescheduleAll). Toutes nos notifications sont générées via `t()` au moment
- * de la planification (pas de la lecture) — si la personne change la langue de
+ * de la planification (pas de la lecture), si la personne change la langue de
  * l'app, tout ce qui est déjà programmé reste dans l'ANCIENNE langue tant que
  * ça n'est pas re-planifié. Appeler cette fonction à chaque changement de
  * langue (cf. stores/preferences.js → setLocalePref) règle ce cas, en plus du
@@ -601,14 +625,17 @@ async function doRescheduleFromStores(force) {
       activeFast: fasting.isParticipating ? fasting.participation : null,
       upcomingFast: fasting.upcomingFast,
       morningDone: prayer.morningDone,
-      eveningDone: prayer.eveningDone
+      eveningDone: prayer.eveningDone,
+      // Les heures choisies dans les réglages font partie de l'état : les
+      // changer doit replanifier, malgré le garde anti-spam ci-dessous.
+      reminders: await reminderFingerprint()
     }
 
     // ⚠️ ANTI-SPAM : une replanification complète re-poste jusqu'à 181
     // notifications. Rejouée à CHAQUE ouverture de l'app, Android finit par
     // classer l'app comme spammeuse et MUTE tout : 7752 notifications postées
     // en une journée, dont 7751 muted/demoted (constaté le 2026-09-08). Les
-    // rappels partaient bien, mais sans son ni bandeau — d'où « je ne reçois
+    // rappels partaient bien, mais sans son ni bandeau, d'où « je ne reçois
     // rien ». On ne replanifie donc que si l'état a RÉELLEMENT changé (la date
     // du jour fait partie de l'empreinte : l'horizon de 7 jours glisse chaque jour).
     if (!force && !(await stateChanged(state))) return
@@ -631,21 +658,22 @@ function stateFingerprint(s) {
   // ⚠️ Date LOCALE, pas toISOString() : celui-ci renvoie l'heure UTC, si bien
   // qu'à 00h48 en heure locale (UTC+1) l'empreinte portait encore la date de la
   // VEILLE. Résultat : au passage de minuit, on considérait l'état inchangé et
-  // on ne replanifiait pas — les rappels du jour n'existaient plus (constaté
+  // on ne replanifiait pas, les rappels du jour n'existaient plus (constaté
   // le 2026-09-08 : seules 2 alarmes de streak restaient sur 67 attendues).
   const d = new Date()
   const localDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   return JSON.stringify({
     // Le canal fait partie de l'empreinte : changer de canal (nouveau son,
     // nouvelle importance) doit FORCER une replanification, sinon les
-    // notifications déjà programmées restent attachées à l'ancien canal —
-    // supprimé au démarrage — et perdent son et bandeau.
+    // notifications déjà programmées restent attachées à l'ancien canal, 
+    // supprimé au démarrage, et perdent son et bandeau.
     ch: CHANNEL_ID,
     day: localDay,
     fast: s.activeFast?.id ?? null,
     next: s.upcomingFast?.id ?? null,
     m: !!s.morningDone,
-    e: !!s.eveningDone
+    e: !!s.eveningDone,
+    r: s.reminders ?? null
   })
 }
 
@@ -655,7 +683,7 @@ function stateFingerprint(s) {
  *
  * ⚠️ POURQUOI C'EST INDISPENSABLE : `getPending()` ne lit PAS AlarmManager,
  * il renvoie le cache interne du plugin. Or Android efface toutes les alarmes
- * d'une app quand son processus est tué — « fermer » depuis les applis
+ * d'une app quand son processus est tué, « fermer » depuis les applis
  * récentes, force-stop, ou nettoyeur de RAM (fréquent sur les ROM Transsion,
  * Xiaomi, Huawei). Au redémarrage, le plugin annonce toujours ses 43
  * notifications alors que le système n'en a plus AUCUNE : le garde-fou
@@ -688,7 +716,7 @@ async function stateChanged(s) {
     // pas, ce qui n'arrive que quelques fois par jour, pas à chaque passage au
     // premier plan (`freshProcess` est une variable de module, remise à true
     // uniquement quand le processus est recréé). Le filtre anti-spam d'Android
-    // reste donc loin — c'est le RE-POSTAGE EN BOUCLE qui l'avait déclenché,
+    // reste donc loin, c'est le RE-POSTAGE EN BOUCLE qui l'avait déclenché,
     // pas quelques replanifications quotidiennes.
     return true
   }

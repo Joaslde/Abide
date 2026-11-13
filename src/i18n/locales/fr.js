@@ -1,4 +1,4 @@
-/* Traductions françaises — Abide */
+/* Traductions françaises, Abide */
 export default {
   // Signature apposée en bas des images partagées (verset du jour ET partage
   // d'un verset choisi). Le nom doit être IDENTIQUE au nom Play Store pour
@@ -47,13 +47,14 @@ export default {
     deleteConfirm: 'Supprimer cette discussion ? Cette action est définitive.',
     error: 'Une erreur est survenue. Réessaie.',
     // Quota quotidien atteint : ce n'est pas une erreur, c'est une invitation.
-    // On propose le parrainage — inviter des proches offre des jours d'accès illimité.
-    quotaReached: 'Nous avons beaucoup échangé aujourd\'hui. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
-    quotaReachedNamed: '{name}, nous avons beaucoup échangé aujourd\'hui. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
+    // On propose le parrainage, inviter des proches offre des jours de premium.
+    quotaReached: 'Nous avons beaucoup échangé aujourd\'hui. Reviens demain, ou invite tes proches : chaque inscription t\'offre des jours de premium.',
+    quotaReachedNamed: '{name}, nous avons beaucoup échangé aujourd\'hui. Reviens demain, ou invite tes proches : chaque inscription t\'offre des jours de premium.',
+    quotaReachedPremium: 'Tu as atteint la limite de 50 messages pour aujourd’hui. Reviens demain, le Guide sera là.',
     quotaCta: 'Inviter mes proches',
     // Invité qui tente d'écrire au Guide : invitation claire, pas d'erreur technique.
     authRequiredTitle: 'Un compte est nécessaire',
-    authRequiredMsg: 'Le Guide a besoin de savoir à qui il parle pour t’accompagner et garder le fil de vos échanges. Crée ton compte en quelques secondes — ta question reste là, tu n’auras plus qu’à l’envoyer.',
+    authRequiredMsg: 'Le Guide a besoin de savoir à qui il parle pour t’accompagner et garder le fil de vos échanges. Crée ton compte en quelques secondes : ta question reste là, tu n’auras plus qu’à l’envoyer.',
     authRequiredCta: 'Créer mon compte',
     modes: {
       enseignement: 'Enseignement',
@@ -74,7 +75,7 @@ export default {
     offline: 'Le quiz nécessite une connexion internet.',
     error: 'Impossible de générer le quiz. Réessaie.',
     // Quota quotidien atteint : ce n'est pas une panne, c'est une invitation.
-    quotaReached: 'Tu as fait tes quiz du jour. Reviens demain — ou invite tes proches : chaque inscription t\'offre des jours d\'accès illimité.',
+    quotaReached: 'Tu as fait tes quiz du jour. Reviens demain, ou invite tes proches : chaque inscription t\'offre des jours de premium.',
     quotaCta: 'Inviter mes proches',
     question: 'Question {current} / {total}',
     next: 'Suivant',
@@ -94,7 +95,7 @@ export default {
   referral: {
     title: 'Parrainage',
     heading: 'Invite tes proches à Abide',
-    description: 'Partage ton lien. Quand tes proches installent l’app et créent un compte, tu débloques du premium — sans rien payer.',
+    description: 'Partage ton lien. Quand tes proches installent l’app et créent un compte, tu débloques du premium, sans rien payer.',
     share: 'Partager mon lien',
     shareMessage: 'Rejoins-moi sur Abide, une app pour lire la Bible et prier au quotidien 🙏 {link}',
     linkCopied: 'Lien copié dans le presse-papier',
@@ -118,7 +119,7 @@ export default {
       eveningPrayer: 'Prière du soir',
       subjects: 'Mes sujets de prière',
       aiPrayer: 'Prière personnalisée',
-      aiPrefill: 'Aide-moi à prier à partir de ce verset : {reference} — « {verse} »',
+      aiPrefill: 'Aide-moi à prier à partir de ce verset : {reference}, « {verse} »',
       amen: 'Amen',
       doneToday: 'Prière faite aujourd’hui',
       amenToast: 'Que la paix de Dieu t’accompagne. 🙏'
@@ -174,12 +175,12 @@ export default {
       fastStartBody: 'Participes-tu ? Ouvre le Sanctuaire pour te joindre au jeûne.',
       fastOngoingTitle: '{fast} en cours',
       fastOngoingBody: 'Il est encore temps de te joindre au jeûne.',
-      encourageTitle: 'Jeûne — jour {day}/{total}',
-      nearEndTitle: 'La fin approche — jour {day}/{total}',
+      encourageTitle: 'Jeûne, jour {day}/{total}',
+      nearEndTitle: 'La fin approche : jour {day}/{total}',
       completedTitle: 'Jeûne accompli ! 🎉',
       completedBody: 'Tu es allé jusqu’au bout. Que Dieu honore ta persévérance.'
       // Les textes de streak (doux / urgent / série perdue) vivent dans
-      // src/data/streakMessages.js — plusieurs variantes tirées par jour,
+      // src/data/streakMessages.js, plusieurs variantes tirées par jour,
       // pas de clé i18n fixe ici (pour ne jamais répéter la même phrase).
     }
   },
@@ -261,7 +262,7 @@ export default {
     skipQuiz: 'Non merci, je n’ai pas besoin d’une expérience faite pour moi',
     referral: {
       title: 'As-tu été invité par un ami ?',
-      body: 'Si quelqu’un t’a partagé Abide, tu peux entrer son code ici — sinon, passe simplement cette étape.',
+      body: 'Si quelqu’un t’a partagé Abide, tu peux entrer son code ici. Sinon, passe simplement cette étape.',
       yes: 'Oui',
       no: 'Non, continuer',
       placeholder: 'Code de parrainage',
@@ -409,11 +410,11 @@ export default {
       },
       marcheur: {
         name: 'Le Marcheur',
-        description: 'Tu marches avec Christ depuis un moment, et tu veux avancer avec constance. Abide va t’aider à transformer ta foi en habitude quotidienne — pas par obligation, mais par désir. Un pas après l’autre, chaque jour compte.'
+        description: 'Tu marches avec Christ depuis un moment, et tu veux avancer avec constance. Abide va t’aider à transformer ta foi en habitude quotidienne, pas par obligation, mais par désir. Un pas après l’autre, chaque jour compte.'
       },
       explorateur: {
         name: 'L’Explorateur',
-        description: 'Tu ne te contentes pas de lire — tu veux comprendre. Le contexte, le sens, la profondeur. Abide met à ta disposition un guide pour creuser la Parole, explorer les passages et découvrir des trésors que tu n’avais pas vus.'
+        description: 'Tu ne te contentes pas de lire : tu veux comprendre. Le contexte, le sens, la profondeur. Abide met à ta disposition un guide pour creuser la Parole, explorer les passages et découvrir des trésors que tu n’avais pas vus.'
       },
       veilleur: {
         name: 'Le Veilleur',
@@ -452,6 +453,7 @@ export default {
     readerSettings: 'Réglages de lecture',
     fontSize: 'Taille du texte',
     font: 'Police',
+    fontDefault: 'Par défaut',
     theme: 'Thème',
     themeSystem: 'Système',
     themeLight: 'Clair',
@@ -511,7 +513,7 @@ export default {
       collapse: 'Réduire le lecteur',
       download: 'Télécharger ce livre',
       downloading: 'Téléchargement en cours…',
-      downloaded: 'Téléchargé — lisible hors ligne',
+      downloaded: 'Téléchargé, lisible hors ligne',
       deleteDownload: 'Supprimer le téléchargement',
       deleteConfirm: 'Supprimer l’audio téléchargé de ce livre ? Tu pourras le retélécharger à tout moment.',
       deleted: 'Téléchargement supprimé',
@@ -520,7 +522,7 @@ export default {
       bgMusic: 'Musique de fond',
       on: 'ON',
       off: 'OFF',
-      totalUsed: '{count} livre(s) — {size}',
+      totalUsed: '{count} livre(s) · {size}',
       noDownloads: 'Aucun livre audio téléchargé. Le cercle ⬇ dans le lecteur permet d’écouter hors ligne.',
       webOnly: 'Le téléchargement est disponible sur l’application mobile.'
     },
@@ -566,7 +568,8 @@ export default {
     msg: {
       start: 'C’est un début. Reviens demain pour entretenir la flamme.',
       keep: 'Belle régularité, continue comme ça !',
-      week: 'Une semaine entière — ta persévérance porte du fruit.',
+      week: 'Une semaine entière : ta persévérance porte du fruit.',
+      blaze: 'Ta flamme brûle fort : ta fidélité porte du fruit, jour après jour.',
       month: 'Un mois de fidélité. Quelle constance, bravo !'
     }
   },
@@ -580,7 +583,7 @@ export default {
     dayOf: 'Jour {day} / {total}',
     change: 'Changer',
     markRead: 'Marquer comme lu',
-    dayDone: 'Jour validé — à demain !',
+    dayDone: 'Jour validé, à demain !',
     duration: 'Durée',
     days: '{n} jour | {n} jour | {n} jours',
     scope: 'Contenu',
@@ -623,11 +626,11 @@ export default {
       dayProgress: 'jour {day} sur {total}'
     },
     profileTitles: {
-      source: 'À la source — l’Évangile de Jean',
-      marcheur: 'Le Marcheur — tout le Nouveau Testament',
-      explorateur: 'L’Explorateur — l’épître aux Romains',
-      veilleur: 'Le Veilleur — les Psaumes',
-      porteur: 'Le Porteur — les Actes des Apôtres'
+      source: 'À la source : l’Évangile de Jean',
+      marcheur: 'Le Marcheur : tout le Nouveau Testament',
+      explorateur: 'L’Explorateur : l’épître aux Romains',
+      veilleur: 'Le Veilleur : les Psaumes',
+      porteur: 'Le Porteur : les Actes des Apôtres'
     },
     categories: {
       vie: 'Pour ta vie',
@@ -741,11 +744,38 @@ export default {
     french: 'Français',
     english: 'Anglais',
     noBibleInLanguage: {
-      title: 'Bible en anglais indisponible',
-      message: 'L’interface est maintenant en anglais, mais aucune Bible dans cette langue n’est téléchargée — la lecture reste en français. Veux-tu télécharger une Bible en anglais ?',
+      title: 'Bible indisponible dans cette langue',
+      message: 'L’interface a changé de langue, mais aucune Bible dans cette langue n’est téléchargée : la lecture reste dans l’ancienne langue. Veux-tu en télécharger une ?',
       download: 'Télécharger'
     },
     bibleReading: 'Lecture de la Bible',
+    notifications: 'Notifications',
+    reminders: {
+      title: 'Notifications',
+      intro: 'Choisis à quelle heure Abide te fait signe. Chaque rappel peut être réglé ou coupé.',
+      introNamed: '{name}, choisis à quelle heure Abide te fait signe. Chaque rappel peut être réglé ou coupé.',
+      groups: {
+        morning: 'Prière du matin',
+        evening: 'Prière du soir',
+        streak: 'Série de lecture'
+      },
+      hints: {
+        morning: 'Les rappels s’arrêtent pour la journée dès que ta prière du matin est faite.',
+        evening: 'Les rappels s’arrêtent pour la journée dès que ta prière du soir est faite.',
+        streak: 'Seulement si tu as une série en cours et que tu n’as pas encore lu aujourd’hui.'
+      },
+      slots: {
+        morning: { s0: 'Premier rappel', s1: 'Relance' },
+        evening: { s0: 'Premier rappel', s1: 'Relance', s2: 'Dernier rappel' },
+        streak: { s0: 'Rappel du soir', s1: 'Dernier appel' }
+      },
+      timeLabel: 'Heure : {slot}',
+      reset: 'Rétablir les heures par défaut',
+      saved: 'Rappels mis à jour',
+      denied: 'Les notifications sont désactivées pour Abide sur ce téléphone. Active-les dans les réglages Android pour recevoir tes rappels.',
+      openSystem: 'Ouvrir les réglages',
+      webOnly: 'Les rappels fonctionnent dans l’application mobile.'
+    },
     referral: 'Parrainage',
     bibleFont: 'Police',
     bibleFontSize: 'Taille du texte',
@@ -763,13 +793,13 @@ export default {
     terms: 'Conditions d’utilisation',
     privacy: 'Politique de confidentialité',
     // Signalement de bug (modale depuis les Réglages)
-    // Exemption batterie — sans elle, les ROM constructeur tuent les rappels.
+    // Exemption batterie, sans elle, les ROM constructeur tuent les rappels.
     batteryTitle: 'Pour recevoir tes rappels',
     batteryMsg: 'Ton téléphone met Abide en veille quand l’app est fermée, ce qui empêche les rappels de prière et de lecture d’arriver. Autorise Abide à rester active en arrière-plan pour les recevoir à l’heure.',
     batteryAllow: 'Autoriser',
     batteryLater: 'Plus tard',
     reportBug: 'Signaler un problème',
-    reportBugIntro: 'Quelque chose ne fonctionne pas comme prévu ? Décris ce que tu as fait et ce qui s’est passé — plus c’est précis, plus vite on pourra corriger.',
+    reportBugIntro: 'Quelque chose ne fonctionne pas comme prévu ? Décris ce que tu as fait et ce qui s’est passé. Plus c’est précis, plus vite on pourra corriger.',
     reportBugPlaceholder: 'Ce que j’essayais de faire, et ce qui s’est passé…',
     reportBugGuestHint: 'Tu n’es pas connecté : ton message nous parviendra bien, mais nous ne pourrons pas te répondre directement.',
     reportBugSend: 'Envoyer',
