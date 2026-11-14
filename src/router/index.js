@@ -273,6 +273,9 @@ const router = createRouter({
   routes
 })
 
+/** L'attente bornée de l'init auth a-t-elle déjà eu lieu ? (une seule par lancement) */
+let bootWaitDone = false
+
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
   const prefs = usePreferencesStore()
@@ -285,11 +288,19 @@ router.beforeEach(async (to) => {
   // restaurée, ce guard doit être SYNCHRONE : un `await` (même déjà résolu)
   // reporte la décision au microtask suivant, ce qui suffisait à désordonner
   // deux clics d'onglet rapprochés (Ionic n'attend pas le guard pour animer).
-  if (!authStore.ready) {
+  //
+  // ⚠️ Cette attente n'a lieu qu'UNE FOIS par lancement (bootWaitDone). Avant,
+  // tant que l'init restait bloquée (getSession qui réessaie un refresh de
+  // jeton sans Internet), CHAQUE navigation repayait les 3,5 s : les onglets
+  // semblaient figés pendant plusieurs minutes (bug du 2026-11-13). Passé ce
+  // premier délai, on décide avec l'état connu ; onAuthStateChange mettra la
+  // session à jour dès qu'elle arrive.
+  if (!authStore.ready && !bootWaitDone) {
     await Promise.race([
       authStore.init(),
       new Promise((resolve) => setTimeout(resolve, 3500))
     ])
+    bootWaitDone = true
   }
 
   // On laisse toujours passer les écrans d'auth/onboarding eux-mêmes (sinon boucle).

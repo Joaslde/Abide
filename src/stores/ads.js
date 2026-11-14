@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useAuthStore } from './auth'
 import { showInterstitial } from '@/lib/admob'
 import { isAdProtectedPath, currentPath } from '@/lib/ad-rules'
+import { isOnlineCached } from '@/lib/network'
 
 /**
  * Pilotage des publicités (modèle YouVersion : interstitiels uniquement).
@@ -18,12 +19,18 @@ import { isAdProtectedPath, currentPath } from '@/lib/ad-rules'
 // Les pubs « fortes » (quiz, méditer-sur-verset) ne sont PAS throttlées : elles
 // sont attendues à chaque action explicite de l'utilisateur.
 const SOFT_COOLDOWN_MS = 4 * 60 * 1000 // 4 minutes
+// Après un chargement de pub ÉCHOUÉ (réseau faible, pas d'inventaire), on
+// attend avant de réessayer : sans ça, chaque navigation relançait un
+// chargement voué à l'échec (le cooldown ne démarre que sur une pub VUE).
+const FAILURE_BACKOFF_MS = 60 * 1000
 
 export const useAdsStore = defineStore('ads', () => {
   // Horodatage du dernier interstitiel affiché (throttling des pubs « soft »).
   const lastShownAt = ref(0)
   // Empêche deux pubs simultanées (une action rapide pourrait en déclencher 2).
   const showing = ref(false)
+  // Horodatage du dernier échec de chargement (voir FAILURE_BACKOFF_MS).
+  let lastFailureAt = 0
 
   /**
    * Les pubs sont-elles autorisées maintenant ? Jamais pour un premium, et
@@ -42,9 +49,15 @@ export const useAdsStore = defineStore('ads', () => {
    *   onboarding…). Les autres pubs (Guide IA, quiz, méditer) suivent une action
    *   explicite et s'affichent sur un écran lui-même « protégé » de la pub de
    *   navigation : on n'y contrôle que le premium et l'onboarding.
+   * @param {boolean} soft  pub throttlée (navigation, ouverture du Guide) : soumise à la pause après échec
    */
-  async function present(checkScreen = false) {
+  async function present(checkScreen = false, soft = false) {
     if (!adsAllowed() || showing.value) return
+    // Hors ligne : aucune pub ne peut se charger, inutile de solliciter AdMob.
+    if (!isOnlineCached()) return
+    // Pause après échec : seulement pour les pubs « soft » (les pubs du quiz
+    // et de « méditer » restent tentées à chaque action, comme prévu).
+    if (soft && Date.now() - lastFailureAt < FAILURE_BACKOFF_MS) return
     showing.value = true
     try {
       const shown = await showInterstitial(
@@ -52,6 +65,7 @@ export const useAdsStore = defineStore('ads', () => {
       )
       // Le cooldown ne démarre que si une pub a vraiment été vue.
       if (shown) lastShownAt.value = Date.now()
+      else lastFailureAt = Date.now()
     } finally {
       showing.value = false
     }
@@ -64,7 +78,7 @@ export const useAdsStore = defineStore('ads', () => {
   async function presentSoft(checkScreen) {
     if (!adsAllowed()) return
     if (Date.now() - lastShownAt.value < SOFT_COOLDOWN_MS) return
-    await present(checkScreen)
+    await present(checkScreen, true)
   }
 
   /* ── Points d'entrée sémantiques appelés par les vues ── */

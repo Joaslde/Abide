@@ -91,11 +91,12 @@ export const useAuthStore = defineStore('auth', () => {
         //    réseau lent ne rende un profil vide → onboarding qui réapparaît alors
         //    qu'il est fait. Le fetch réseau ne fait ensuite que rafraîchir.
         await loadCachedProfile()
-        try {
-          await fetchProfile()
-        } catch {
-          // Hors ligne / lent : on garde la copie locale déjà chargée.
-        }
+        // 2) Rafraîchissement réseau EN ARRIÈRE-PLAN, jamais attendu : avec un
+        //    réseau « connecté mais sans Internet », la requête pend jusqu'à
+        //    60 s (DNS). L'attendre gardait l'init inachevée (ready = false)
+        //    pendant des minutes, et chaque tap d'onglet attendait alors 3,5 s
+        //    dans le guard du router (bug « navigation figée » du 2026-11-13).
+        fetchProfile().catch(() => { /* hors ligne : copie locale conservée */ })
       }
 
       supabase.auth.onAuthStateChange(async (event, newSession) => {
