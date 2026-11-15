@@ -1466,7 +1466,20 @@ sur ROM Transsion/Infinix, Xiaomi, Huawei, Oppo). Mesuré le 2026-09-08 :
 
 ---
 
-## 🔁 REPRISE DE SESSION (écrit le 2026-11-13)
+## 🔁 REPRISE DE SESSION (mis à jour le 2026-11-15)
+
+> NUIT DU 14 AU 15/11 : branche `feat/capacitor-8-paiement` (4 commits, NON poussée).
+> master distant = ef14df7 (v1.5 poussée le 14/11). Le commit local 1d223c3 (notes)
+> n'est pas poussé.
+> - Migration Capacitor 8 + paiement codés et compilés (APK debug OK, permission
+>   BILLING présente). Détail : lot C0 et C1 plus haut.
+> - RIEN n'est appliqué ni déployé sur Supabase (migration 014, 3 Edge Functions).
+> - ⚠️ android/ est dans .gitignore : le retrait du correctif Kotlin jvmTarget 17
+>   (android/build.gradle) n'existe que sur ce PC.
+> - Prochaine étape : TESTS SUR LE TÉLÉPHONE de la migration Cap 8 (liste dans C0),
+>   en installant par-dessus la v1.5 sans désinstaller.
+
+### Notes du 2026-11-13
 
 > État : v1.5 COMMITÉE (ef14df7, « Version 1.5 espagnol et corrections »), NON poussée.
 > Tout le lot A (espagnol, Bibles) et B (bugs, onboarding à 8 questions) est validé sur
