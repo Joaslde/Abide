@@ -17,7 +17,7 @@
 // Secrets requis (déjà présents pour ai-chat / delete-account) :
 //   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
  * Idempotent : peut être rappelée sans dupliquer d'effet (recalcul complet, pas
  * d'incrément). Ne raccourcit JAMAIS un premium existant plus lointain (payé ou non).
  */
-async function applyReferralTier(admin: ReturnType<typeof createClient>, referrerId: string) {
+async function applyReferralTier(admin: SupabaseClient, referrerId: string) {
   const { count } = await admin
     .from('referrals')
     .select('id', { count: 'exact', head: true })
@@ -121,28 +121,29 @@ async function applyReferralTier(admin: ReturnType<typeof createClient>, referre
   }
   if (daysGranted === 0) return // aucun palier atteint, rien à faire
 
+  // Depuis la migration 014, le parrainage écrit SA propre date
+  // (referral_premium_until), séparée de l'abonnement payé (table subscriptions).
+  // recompute_premium() fixe ensuite le statut affiché sur la plus lointaine des
+  // deux : un abonnement payé n'est jamais écrasé, et un remboursement ne
+  // supprime jamais les jours gagnés par parrainage.
   const { data: profile } = await admin
     .from('profiles')
-    .select('premium_expires')
+    .select('referral_premium_until')
     .eq('id', referrerId)
     .maybeSingle()
 
-  const now = Date.now()
-  const tierExpiry = now + daysGranted * 24 * 60 * 60 * 1000
-  const existingExpiry = profile?.premium_expires ? new Date(profile.premium_expires).getTime() : 0
+  const tierExpiry = Date.now() + daysGranted * 24 * 60 * 60 * 1000
+  const existingReferral = profile?.referral_premium_until
+    ? new Date(profile.referral_premium_until).getTime()
+    : 0
 
-  // On garde toujours la date la plus lointaine (ne raccourcit jamais un premium
-  // existant, payé ou issu d'un palier de parrainage précédent).
-  const finalExpiry = Math.max(tierExpiry, existingExpiry)
+  // On garde toujours la date de parrainage la plus lointaine.
+  const finalReferral = Math.max(tierExpiry, existingReferral)
 
   await admin
     .from('profiles')
-    .update({
-      is_premium: true,
-      premium_expires: new Date(finalExpiry).toISOString(),
-      // Ne change la source que si le palier de parrainage est celui qui a fixé
-      // la date finale la plus lointaine (sinon on n'écrase pas un abonnement payé).
-      ...(finalExpiry === tierExpiry ? { premium_source: 'referral' } : {})
-    })
+    .update({ referral_premium_until: new Date(finalReferral).toISOString() })
     .eq('id', referrerId)
+
+  await admin.rpc('recompute_premium', { p_user_id: referrerId })
 }

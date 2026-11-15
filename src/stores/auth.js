@@ -22,7 +22,17 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!session.value)
   const user = computed(() => session.value?.user ?? null)
-  const isPremium = computed(() => profile.value?.is_premium ?? false)
+  // Premium ACTIF = is_premium ET date de fin non dépassée (même règle que les
+  // Edge Functions ai-chat / quiz-chapter). Rien ne repasse is_premium à false
+  // à l'échéance : sans ce test de date, un parrainage ou un abonnement terminé
+  // laissait l'app sans pub pour toujours (bug corrigé le 2026-11-15).
+  // premium_expires null = premium sans échéance.
+  const isPremium = computed(() => {
+    const p = profile.value
+    if (p?.is_premium !== true) return false
+    if (!p.premium_expires) return true
+    return new Date(p.premium_expires).getTime() > Date.now()
+  })
   const onboardingDone = computed(() => profile.value?.onboarding_done ?? false)
   /**
    * L'onboarding est-il « en sommeil » ? (bouton « Non merci » → report 3 mois).
