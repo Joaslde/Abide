@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, onMounted } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonApp, IonRouterOutlet, alertController } from '@ionic/vue'
 import { useI18n } from 'vue-i18n'
@@ -40,6 +40,8 @@ import VerseImageSheet from '@/components/bible/VerseImageSheet.vue'
 import { rescheduleFromStores, registerNotificationTapHandler, ensureNotificationPermission } from '@/lib/notifications'
 import { initAdMob } from '@/lib/admob'
 import { initAppsFlyer } from '@/lib/appsflyer'
+import { syncPurchasesUser } from '@/lib/purchases'
+import { useAuthStore } from '@/stores/auth'
 import { shouldAskBatteryExemption, requestIgnoreBatteryOptimizations } from '@/lib/battery-optimization'
 import AudioPlayerSheet from '@/components/bible/AudioPlayerSheet.vue'
 import SplashOverlay from '@/components/SplashOverlay.vue'
@@ -72,6 +74,13 @@ const plan = usePlanStore()
 const bgMusic = useBackgroundMusicStore()
 const imageShare = useVerseImageShareStore()
 const verseSelection = useVerseSelectionStore()
+const auth = useAuthStore()
+
+// Boutique Abide Plus (RevenueCat) : l'utilisateur RevenueCat suit l'utilisateur
+// Supabase connecté (configure à la 1re connexion, logIn / logOut ensuite).
+// C'est cet identifiant qui permet au webhook de créditer le bon profil.
+// No-op sur web ou tant qu'aucune clé RevenueCat n'est configurée.
+watch(() => auth.user?.id ?? null, (id) => { syncPurchasesUser(id) }, { immediate: true })
 
 /**
  * Fermeture de la feuille de partage : on vide AUSSI la sélection de versets.

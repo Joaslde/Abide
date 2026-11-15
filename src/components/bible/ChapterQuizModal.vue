@@ -176,13 +176,13 @@ async function runRetry() {
       duration: kind === 'quota' ? 9000 : 2500,
       position: 'bottom',
       color: kind === 'quota' ? 'warning' : kind === 'offline' ? undefined : 'danger',
-      // Quota → raccourci vers le parrainage (jours d'accès illimité offerts).
+      // Quota → raccourci vers Abide Plus (quiz sans limite).
       buttons: kind === 'quota'
         ? [{
             text: t('quiz.quotaCta'),
-            // Fermer le modal AVANT de naviguer : sinon la page de parrainage
+            // Fermer le modal AVANT de naviguer : sinon l'écran Abide Plus
             // s'ouvrirait derrière le quiz resté superposé.
-            handler: () => { emit('close'); router.push('/tabs/plus/referral') }
+            handler: () => { emit('close'); router.push('/premium') }
           }]
         : []
     })

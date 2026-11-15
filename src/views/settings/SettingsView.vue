@@ -71,8 +71,15 @@
           </button>
         </div>
 
-        <!-- ── Bloc parrainage (nécessite un compte) ── -->
+        <!-- ── Bloc Abide Plus + parrainage (nécessite un compte) ── -->
         <div v-if="auth.isAuthenticated" class="group">
+          <button class="item tappable" @click="go('/premium')">
+            <div class="item-lead">
+              <ion-icon :icon="sparklesOutline" />
+              <span>{{ t('premium.title') }}</span>
+            </div>
+            <ion-icon class="chev" :icon="chevronForward" />
+          </button>
           <button class="item tappable" @click="go('/settings/referral')">
             <div class="item-lead">
               <ion-icon :icon="giftOutline" />
@@ -135,7 +142,7 @@ import {
 import {
   chevronForward, personOutline, moonOutline, languageOutline,
   bookOutline, helpCircleOutline, documentTextOutline, shieldCheckmarkOutline, bugOutline,
-  giftOutline, notificationsOutline
+  giftOutline, notificationsOutline, sparklesOutline
 } from 'ionicons/icons'
 import { Browser } from '@capacitor/browser'
 import { usePreferencesStore } from '@/stores/preferences'

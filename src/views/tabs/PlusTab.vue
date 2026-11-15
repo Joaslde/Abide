@@ -12,6 +12,15 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
+      <!-- Abide Plus : seulement pour un compte connecté non premium. -->
+      <section v-if="auth.isAuthenticated && !auth.isPremium" class="block">
+        <button class="plus-banner" @click="go('/premium')">
+          <ion-icon :icon="sparklesOutline" />
+          <span>{{ t('premium.discover') }}</span>
+          <ion-icon class="chev" :icon="chevronForward" />
+        </button>
+      </section>
+
       <!-- Sanctuaire : prière + jeûne (accès permanent). -->
       <section class="block">
         <p class="block-label">{{ t('sanctuaire.title') }}</p>
@@ -72,11 +81,14 @@ import {
 } from '@ionic/vue'
 import {
   createOutline, bookmarkOutline, colorWandOutline,
-  heartOutline, bookOutline, flameOutline, settingsOutline, mapOutline
+  heartOutline, bookOutline, flameOutline, settingsOutline, mapOutline,
+  sparklesOutline, chevronForward
 } from 'ionicons/icons'
+import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 const router = useRouter()
+const auth = useAuthStore()
 
 function go(path) {
   router.push(path)
@@ -119,4 +131,26 @@ ion-title { font-family: var(--font-app); font-weight: 600; }
 }
 .card:active { border-color: var(--gold); }
 .card ion-icon { font-size: 26px; color: var(--gold); }
+
+.plus-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 0 var(--space-4);
+  background: var(--card-bg);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  color: var(--cream);
+  font-family: var(--font-app);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.plus-banner:active { background: var(--navy2); }
+.plus-banner span { flex: 1; }
+.plus-banner ion-icon { font-size: 22px; color: var(--gold); flex-shrink: 0; }
+.plus-banner .chev { font-size: 18px; color: var(--muted); }
 </style>

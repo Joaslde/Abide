@@ -213,33 +213,49 @@
       désinstaller) : Bible hors ligne + notes/surlignages conservés, connexion Google,
       connexion email, audio écran verrouillé, notifications, pubs, affichage des écrans
 
-#### C1. Paiement (après validation de C0)
-- [ ] Play Console : créer le COMPTE MARCHAND (profil de paiement Google, vérification
-      de plusieurs jours, à lancer en premier)
-- [ ] Play Console : créer les produits d'abonnement (mensuel, annuel) et leurs prix
-- [ ] RevenueCat : projet, app Android liée, accès API Play (compte de service Google
-      Cloud), entitlement « premium », offering
-- [ ] Plugin `@revenuecat/purchases-capacitor` : version compatible Capacitor 6 à
-      vérifier avant installation (règle CLAUDE.md)
-- [ ] Edge Function `payment-webhook` : vérification de l'authentification du webhook
-      RevenueCat, mise à jour is_premium / premium_expires / premium_source='google_iap',
-      gestion achat, renouvellement, annulation, expiration, remboursement. Ajouter
-      'google_iap' à la contrainte CHECK de premium_source si absent.
-- [ ] Cohabitation avec le premium de PARRAINAGE : garder la date la plus lointaine,
-      ne jamais raccourcir un abonnement payé (même règle que le parrainage)
-- [ ] ⚠️ Plafond Guide IA premium : DÉCIDÉ 50 messages/jour (utilisateur, 2026-11-07).
-      Aujourd'hui le premium est ILLIMITÉ (ai-chat et quiz-chapter) : appliquer ce
-      plafond côté serveur pour maîtriser les coûts OpenRouter.
-- [ ] Écran Paywall (`PaywallView`) : offres, prix réels lus depuis Google Play,
-      bouton d'achat, « Restaurer mes achats », liens CGU et confidentialité, gestion
-      de l'abonnement (lien vers Google Play)
-- [ ] Points d'entrée vers le paywall : quota IA atteint, quiz épuisé, Réglages, Plus
+#### C1. Paiement (code écrit la nuit du 14 au 15/11, branche feat/capacitor-8-paiement)
+> Architecture : app → RevenueCat (Google Play Billing 9.1) ; RevenueCat → webhook
+> `payment-webhook` ; l'app appelle aussi `premium-sync` juste après l'achat. Les DEUX
+> relisent l'état réel chez RevenueCat (API REST) avant d'écrire quoi que ce soit.
+> Identifiant RevenueCat = id Supabase (pas d'achat en invité).
+- [x] Compte marchand Play Console (voir plus haut)
+- [x] Plugin `@revenuecat/purchases-capacitor` 14.1.0 (Cap 8, Play Billing Library 9.1.0)
+- [x] Migration `014_subscriptions.sql` : table subscriptions, journal payment_events,
+      referral_premium_until (protégée par le trigger), fonction recompute_premium.
+      Testée en local (PGlite, 12 scénarios OK). ⏳ NON APPLIQUÉE : accord requis
+- [x] Edge Functions `payment-webhook` (secret d'en-tête, idempotent, déployer avec
+      --no-verify-jwt) et `premium-sync` (JWT) + `_shared/premium-sync.ts`.
+      `referral-attribute` écrit sa propre date. `deno check` OK. ⏳ NON DÉPLOYÉES
+- [x] Cohabitation parrainage / abonnement : date la plus lointaine, un remboursement
+      ne retire jamais les jours de parrainage (testé)
+- [x] Plafond Guide IA premium 50/jour (déjà en place dans ai-chat)
+- [x] Client : isPremium tient compte de premium_expires (bug : un premium expiré
+      gardait l'app sans pub pour toujours) ; usePremium réactif
+- [x] `src/lib/purchases.js` + store `subscription.js` + `PaywallView` (prix réel lu chez
+      Google Play, achat, restaurer, gérer l'abonnement, CGU, confidentialité, prénom)
+- [x] Points d'entrée : quota IA, quota quiz (2 écrans), Réglages, bannière onglet Plus.
+      Les messages de quota renvoient vers Abide Plus (plus vers le parrainage)
+- [x] Pas de pub de navigation sur /premium (ad-rules)
+- [ ] ⏳ Play Console : créer l'abonnement `abide_plus` (mensuel, sans essai) :
+      1 500 FCFA (zone XOF), 5 USD / 5 EUR. Nécessite d'abord un AAB AVEC la
+      facturation envoyé en test interne
+- [ ] ⏳ RevenueCat : projet, app Android (com.toabide.app), compte de service Google
+      Cloud, entitlement `premium`, offering « default » avec le package mensuel,
+      webhook vers payment-webhook avec un en-tête Authorization secret
+- [ ] ⏳ Secrets / variables : `VITE_REVENUECAT_ANDROID_KEY` (.env.local, clé publique
+      goog_...) ; secrets Supabase `REVENUECAT_SECRET_API_KEY` et
+      `REVENUECAT_WEBHOOK_AUTH` (accord requis)
+- [ ] ⏳ Appliquer 014 puis déployer payment-webhook, premium-sync, referral-attribute
+      (DANS CET ORDRE, referral-attribute dépend de la colonne de 014). Accord requis
 - [ ] Tests : comptes testeurs de licence Play Console (achats sans débit réel),
-      cycle complet achat → webhook → premium → pubs coupées → expiration
+      cycle complet achat → webhook → premium → pubs coupées → résiliation → expiration,
+      remboursement, restauration, parrainage + abonnement
 - [ ] Conformité : questionnaire IARC à refaire (achats numériques = OUI), formulaire
       Sécurité des données (historique d'achats), CGU (abonnement, renouvellement,
       résiliation, remboursement) et politique de confidentialité (RevenueCat, Google
       Play) à mettre à jour sur toabide.online
+- [ ] Suppression de compte : l'abonnement Google Play n'est PAS résilié par la
+      suppression du compte Abide ; à dire dans l'écran de suppression et les CGU
 - [ ] Fiche Play Store : mention « Achats intégrés » apparaîtra automatiquement
 
 ### D. Nouvelles fonctionnalités (à décider)

@@ -353,9 +353,9 @@ async function runOpenQuiz() {
       duration: kind === 'quota' ? 9000 : 2500,
       position: 'bottom',
       color: kind === 'quota' ? 'warning' : kind === 'offline' ? undefined : 'danger',
-      // Quota → raccourci vers le parrainage (jours d'accès illimité offerts).
+      // Quota → raccourci vers Abide Plus (quiz sans limite).
       buttons: kind === 'quota'
-        ? [{ text: t('quiz.quotaCta'), handler: () => { router.push('/tabs/plus/referral') } }]
+        ? [{ text: t('quiz.quotaCta'), handler: () => { router.push('/premium') } }]
         : []
     })
     await tt.present()

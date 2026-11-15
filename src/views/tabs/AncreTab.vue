@@ -337,10 +337,10 @@ async function presentChatError(e) {
     duration: quota ? 9000 : 2000,
     position: 'bottom',
     color: quota ? 'warning' : 'danger',
-    // Quota → raccourci vers le parrainage : inviter des proches débloque des
-    // jours d'accès illimité (seul moyen d'être premium tant qu'il n'y a pas de paiement).
+    // Quota → raccourci vers l'écran Abide Plus (abonnement). Le parrainage
+    // reste accessible depuis l'onglet Plus.
     buttons: quota && !premiumCap
-      ? [{ text: t('ai.quotaCta'), handler: () => { router.push('/tabs/plus/referral') } }]
+      ? [{ text: t('ai.quotaCta'), handler: () => { router.push('/premium') } }]
       : []
   })
   await tt.present()

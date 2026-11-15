@@ -12,6 +12,7 @@ export const AD_PROTECTED_PREFIXES = [
   '/tabs/immersion/book/', // lecture d'un livre ou d'un chapitre (texte biblique)
   '/tabs/sanctuaire/moment', // prière guidée du matin/soir
   '/tabs/ancre', // Guide IA : pub gérée à l'ouverture, pas via la navigation
+  '/premium', // écran Abide Plus : jamais de pub par-dessus l'offre sans pub
   '/auth', '/onboarding', '/welcome'
 ]
 
