@@ -9,7 +9,11 @@
       "showSpinner": false
     },
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     },
     "CapacitorSQLite": {
       "iosDatabaseLocation": "Library/CapacitorDatabase",
@@ -19,10 +23,13 @@
     "CapacitorHttp": {
       "enabled": true
     },
-    "GoogleAuth": {
-      "scopes": ["profile", "email"],
-      "serverClientId": "34894391883-sn5akdqig9b66jun8t3bgb0h36hdlpmq.apps.googleusercontent.com",
-      "androidClientId": "34894391883-bemreedn3dq8htpuuv7viqeqp4o2d0v2.apps.googleusercontent.com"
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "facebook": false,
+        "apple": false,
+        "twitter": false
+      }
     }
   },
   "android": {

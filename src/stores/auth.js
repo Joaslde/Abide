@@ -245,8 +245,8 @@ export const useAuthStore = defineStore('auth', () => {
     // de compte ne réapparaît pas à la reconnexion (il reconnecte en silence).
     if (Capacitor.isNativePlatform()) {
       try {
-        const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
-        await GoogleAuth.signOut()
+        const { SocialLogin } = await import('@capgo/capacitor-social-login')
+        await SocialLogin.logout({ provider: 'google' })
       } catch { /* pas connecté via Google, ou plugin indisponible */ }
     }
     session.value = null
@@ -268,19 +268,26 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function loginWithGoogle() {
     if (Capacitor.isNativePlatform()) {
-      const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
-      // On passe le clientId EXPLICITEMENT (le WEB client id : c'est lui que
-      // Google doit mettre dans l'audience de l'idToken pour que Supabase
-      // l'accepte). Ne pas se reposer uniquement sur capacitor.config.json :
-      // selon les versions du plugin, initialize() sans argument peut ne pas
-      // propager serverClientId → idToken absent et flux avorté (code 12501).
-      await GoogleAuth.initialize({
-        clientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID,
-        scopes: ['profile', 'email'],
-        grantOfflineAccess: true
+      // @capgo/capacitor-social-login (Credential Manager Android). Il remplace
+      // @codetrix-studio/capacitor-google-auth, abandonné et bloqué sur
+      // Capacitor 6 (migration Cap 8 du 2026-11-14).
+      // webClientId = le client WEB : c'est lui que Google met dans l'audience
+      // de l'idToken pour que Supabase l'accepte. Le client Android (nom de
+      // paquet + SHA-1) reste déclaré dans Google Cloud, jamais passé ici.
+      // skipAuthOnlyAuthorizationAfterSignIn : on n'a besoin QUE de l'idToken
+      // (pas d'accessToken Google) ; évite le blocage de l'étape
+      // « authorize » sur une BridgeActivity standard (doc du plugin).
+      const { SocialLogin } = await import('@capgo/capacitor-social-login')
+      await SocialLogin.initialize({
+        google: {
+          webClientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID,
+          skipAuthOnlyAuthorizationAfterSignIn: true
+        }
       })
-      const googleUser = await GoogleAuth.signIn()
-      const idToken = googleUser?.authentication?.idToken
+      // Pas de « scopes » : email et profile sont inclus par défaut, et les
+      // passer est rejeté sur une BridgeActivity standard.
+      const res = await SocialLogin.login({ provider: 'google', options: {} })
+      const idToken = res?.result?.idToken
       if (!idToken) throw new Error('google_no_id_token')
 
       const { data, error } = await supabase.auth.signInWithIdToken({

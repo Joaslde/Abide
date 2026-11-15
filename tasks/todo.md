@@ -177,8 +177,43 @@
 > Supabase. Le client ne décide jamais du premium (SECURITY.md) : seul le webhook
 > serveur écrit is_premium / premium_expires / premium_source (trigger
 > protect_premium_columns déjà en place).
-- [ ] DÉCISIONS à prendre avec l'utilisateur : prix mensuel / annuel (devise XOF et EUR),
-      essai gratuit ou non, contenu exact du premium
+- [x] DÉCISIONS (2026-11-14) : abonnement MENSUEL uniquement, 1 500 FCFA en Afrique,
+      5 $ (ou 5 €) Europe et États-Unis, PAS d'essai gratuit. Contenu premium enrichi :
+      à rediscuter plus tard (lancement avec zéro pub + IA 50/jour + quiz illimité)
+- [x] Play Console : profil de paiement marchand créé (nom public « Abide », entreprise
+      « STKS Creation », libellé relevé « ABIDE »), groupe de comptes créé, programme
+      frais de service 15 % accepté (2026-11-14). Compte bancaire VOLONTAIREMENT repoussé.
+- [ ] Déclaration du statut de professionnel (DSA) : échéance février 2027
+
+#### C0. Migration Capacitor 6 → 8 (PRÉALABLE OBLIGATOIRE au paiement)
+> Constat du 2026-11-14 : le dernier plugin RevenueCat compatible Capacitor 6 (9.2.2)
+> embarque Play Billing Library 7.1.1, refusée par Google pour les mises à jour depuis
+> le 31/08/2026. PBL 8 n'arrive qu'avec RevenueCat 11.x (Capacitor 7+). Décision
+> utilisateur : Capacitor 8 directement (même effort, pas de 2e migration avant
+> l'échéance PBL 8 d'août 2027). Branche `feat/capacitor-8-paiement`.
+> Le projet Android est DÉJÀ configuré au niveau Cap 8 (SDK 36, Gradle 8.14.3, AGP 8.13).
+- [x] Paquets officiels `@capacitor/*` 6 → 8.x (+ cli 8.6.2). `npx cap migrate` inutile :
+      android/ était déjà au niveau Cap 8 (configChanges density, syntaxe Gradle `=`)
+- [x] AdMob 6.2.0 → 8.3.0 (API utilisée inchangée, SDK pub 25.x)
+- [x] SQLite 6.0.2 + patch 16 Ko → 8.1.1, patch supprimé (API inchangée). ⚠️ PRIORITÉ : les bases
+      existantes (Bible bundlée, user-db) doivent survivre à la mise à jour par-dessus la v1.5
+- [x] capacitor-music-controls-plugin 6.1 → 8.0.0 (API inchangée). AppsFlyer 6.16 → 6.18.0
+      (compatible Cap 8, MÊME API ; la 7.x réécrit toute l'API, inutile pour nous)
+- [x] Connexion Google : `@codetrix-studio/capacitor-google-auth` abandonné (Cap 6 max)
+      → remplacé par `@capgo/capacitor-social-login` 8.7.11 (auth.js, capacitor.config.json :
+      seul le fournisseur google est embarqué). Même Web Client ID, même client Android
+      Google Cloud (paquet + SHA-1) : aucune config Google à changer en principe
+- [x] Affichage : index.html a `viewport-fit=cover` → sur WebView 140+ Cap 8 laisse le
+      plein écran et les env(safe-area-inset-*) ; WebView plus ancienne → Cap 8 décale
+      lui-même le contenu. Pas de code à changer, À VÉRIFIER visuellement
+- [x] `vite build` + `cap sync` + `assembleDebug` OK (2026-11-15). Correctif Kotlin
+      « jvmTarget 17 » retiré de android/build.gradle (les plugins ciblent Java 21).
+      ⚠️ android/ est dans .gitignore : ce changement n'est PAS versionné
+- [ ] ⏳ TESTS UTILISATEUR sur téléphone, en INSTALLANT PAR-DESSUS la v1.5 (sans
+      désinstaller) : Bible hors ligne + notes/surlignages conservés, connexion Google,
+      connexion email, audio écran verrouillé, notifications, pubs, affichage des écrans
+
+#### C1. Paiement (après validation de C0)
 - [ ] Play Console : créer le COMPTE MARCHAND (profil de paiement Google, vérification
       de plusieurs jours, à lancer en premier)
 - [ ] Play Console : créer les produits d'abonnement (mensuel, annuel) et leurs prix
