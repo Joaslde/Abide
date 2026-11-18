@@ -229,7 +229,8 @@
       (accord utilisateur), vérifiée : colonne, 2 tables RLS, verrou, droits recompute
 - [x] Edge Functions `payment-webhook` (secret d'en-tête, idempotent, déployer avec
       --no-verify-jwt) et `premium-sync` (JWT) + `_shared/premium-sync.ts`.
-      `referral-attribute` écrit sa propre date. `deno check` OK. ⏳ NON DÉPLOYÉES
+      `referral-attribute` écrit sa propre date. `deno check` OK. ✅ DÉPLOYÉES le 2026-11-18 (accord utilisateur),
+      refus 401 vérifiés sans mot de passe / sans connexion
 - [x] Cohabitation parrainage / abonnement : date la plus lointaine, un remboursement
       ne retire jamais les jours de parrainage (testé)
 - [x] Plafond Guide IA premium 50/jour (déjà en place dans ai-chat)
@@ -254,7 +255,9 @@
 - [ ] ⏳ RevenueCat : projet, app Android (com.toabide.app), compte de service Google
       Cloud, entitlement `premium`, offering « default » avec le package mensuel,
       webhook vers payment-webhook avec un en-tête Authorization secret
-- [ ] ⏳ Secrets / variables : `VITE_REVENUECAT_ANDROID_KEY` (.env.local, clé publique
+- [x] 2026-11-18 Secrets Supabase REVENUECAT_SECRET_API_KEY + REVENUECAT_WEBHOOK_AUTH posés
+      (valeurs dans .env.local, jamais affichées). Ancienne note :
+- [ ] ~~Secrets / variables~~ : `VITE_REVENUECAT_ANDROID_KEY` (.env.local, clé publique
       goog_...) ; secrets Supabase `REVENUECAT_SECRET_API_KEY` et
       `REVENUECAT_WEBHOOK_AUTH` (accord requis)
 - [ ] ⏳ Appliquer 014 puis déployer payment-webhook, premium-sync, referral-attribute
