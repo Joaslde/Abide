@@ -225,7 +225,8 @@
 - [x] Plugin `@revenuecat/purchases-capacitor` 14.1.0 (Cap 8, Play Billing Library 9.1.0)
 - [x] Migration `014_subscriptions.sql` : table subscriptions, journal payment_events,
       referral_premium_until (protégée par le trigger), fonction recompute_premium.
-      Testée en local (PGlite, 12 scénarios OK). ⏳ NON APPLIQUÉE : accord requis
+      Testée en local (PGlite, 15 scénarios OK). ✅ APPLIQUÉE en prod le 2026-11-18
+      (accord utilisateur), vérifiée : colonne, 2 tables RLS, verrou, droits recompute
 - [x] Edge Functions `payment-webhook` (secret d'en-tête, idempotent, déployer avec
       --no-verify-jwt) et `premium-sync` (JWT) + `_shared/premium-sync.ts`.
       `referral-attribute` écrit sa propre date. `deno check` OK. ⏳ NON DÉPLOYÉES
