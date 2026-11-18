@@ -209,6 +209,9 @@
 - [x] `vite build` + `cap sync` + `assembleDebug` OK (2026-11-15). Correctif Kotlin
       « jvmTarget 17 » retiré de android/build.gradle (les plugins ciblent Java 21).
       ⚠️ android/ est dans .gitignore : ce changement n'est PAS versionné
+- [x] 2026-11-15 Pixel 8 Pro, APK installé PAR-DESSUS la v1.5 (firstInstallTime
+      conservé) : démarrage OK, données locales OK, Bible OK, affichage OK (hors ligne)
+- [x] 2026-11-17 Connexion Google OK avec @capgo/capacitor-social-login (validé utilisateur)
 - [ ] ⏳ TESTS UTILISATEUR sur téléphone, en INSTALLANT PAR-DESSUS la v1.5 (sans
       désinstaller) : Bible hors ligne + notes/surlignages conservés, connexion Google,
       connexion email, audio écran verrouillé, notifications, pubs, affichage des écrans
@@ -236,6 +239,14 @@
 - [x] Points d'entrée : quota IA, quota quiz (2 écrans), Réglages, bannière onglet Plus.
       Les messages de quota renvoient vers Abide Plus (plus vers le parrainage)
 - [x] Pas de pub de navigation sur /premium (ad-rules)
+- [x] 2026-11-18 Play Console : abonnement `abide_plus`, forfait `monthly` ACTIF (175 pays,
+      1 500 XOF/XAF en zone CFA, 4,99 EUR zone euro, 5,49 USD États-Unis, délai de grâce 3 j,
+      pas d'essai), avantages en anglais. TODO : traductions FR/ES des avantages
+- [x] 2026-11-18 Google Cloud (projet abide-499910) : compte de service revenuecat, APIs Play
+      Android Developer + Reporting + Pub/Sub activées, rôles Administrateur Pub/Sub + Lecteur
+      Monitoring. Play Console : droits au niveau COMPTE (voir lessons 2026-11-18)
+- [x] 2026-11-18 RevenueCat : app Play Store créée, identifiants JSON valides, notifications
+      temps réel connectées (test reçu). Clé publique goog_ dans .env.local
 - [ ] ⏳ Play Console : créer l'abonnement `abide_plus` (mensuel, sans essai) :
       1 500 FCFA (zone XOF), 5 USD / 5 EUR. Nécessite d'abord un AAB AVEC la
       facturation envoyé en test interne
@@ -259,6 +270,9 @@
 - [ ] Fiche Play Store : mention « Achats intégrés » apparaîtra automatiquement
 
 ### D. Nouvelles fonctionnalités (à décider)
+- [ ] DÉCIDÉ (2026-11-17) : APRÈS la mise en ligne du payant, construire le « Dossier
+      d'étude » (docs/ai-roadmap.md, vague 3) réservé à Abide Plus, avec plafond quotidien.
+      Pas de TTS pour l'instant (coût). Bonus possible : modèles d'images de versets premium
 - [ ] Revue de l'app avec l'utilisateur pour choisir les ajouts, notamment ce qui rend
       le premium attractif (voix TTS des réponses IA, audio hors ligne, plans exclusifs…)
 

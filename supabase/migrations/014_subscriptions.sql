@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   user_id             UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   entitlement_expires TIMESTAMPTZ,       -- fin de l'accès payé (NULL = aucun accès payé)
   product_id          TEXT,
-  store               TEXT,              -- PLAY_STORE, APP_STORE… (valeur RevenueCat)
+  store               TEXT,              -- valeur RevenueCat : play_store, app_store… (API REST v1, minuscules)
   will_renew          BOOLEAN,
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -36,6 +36,8 @@ ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Lecture de SA propre ligne uniquement. Aucune policy d'écriture : seules les
 -- Edge Functions (service_role, qui contourne RLS) écrivent.
+-- DROP IF EXISTS : la migration reste rejouable sans erreur.
+DROP POLICY IF EXISTS "Utilisateur lit son abonnement" ON subscriptions;
 CREATE POLICY "Utilisateur lit son abonnement" ON subscriptions
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -69,7 +71,9 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+-- search_path figé : une fonction SECURITY DEFINER sans search_path peut être
+-- détournée (alerte « function_search_path_mutable » de Supabase).
 
 -- 5. Recalcul du statut premium affiché à partir des deux sources.
 -- Idempotent : on peut l'appeler autant de fois qu'on veut.
@@ -99,7 +103,8 @@ BEGIN
   END IF;
 
   IF v_paid IS NOT NULL AND v_paid >= COALESCE(v_referral, '-infinity'::TIMESTAMPTZ) THEN
-    v_source := CASE WHEN v_store = 'APP_STORE' THEN 'apple_iap' ELSE 'google_iap' END;
+    -- LOWER : l'API REST v1 de RevenueCat renvoie « app_store », les webhooks « APP_STORE ».
+    v_source := CASE WHEN LOWER(v_store) = 'app_store' THEN 'apple_iap' ELSE 'google_iap' END;
   ELSE
     v_source := 'referral';
   END IF;
