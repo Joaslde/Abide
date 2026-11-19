@@ -272,6 +272,12 @@
 - [ ] Tests : comptes testeurs de licence Play Console (achats sans débit réel),
       cycle complet achat → webhook → premium → pubs coupées → résiliation → expiration,
       remboursement, restauration, parrainage + abonnement
+- [x] 2026-11-19 CGU (landing/terms.html) et politique de confidentialité (landing/privacy.html)
+      réécrites avec Abide Plus. ⏳ À VALIDER par l'utilisateur puis déployer la landing (Vercel).
+      Points à décider : e-mail de contact (ldejoas@gmail.com est public), politique de
+      remboursement, entité légale. docs/privacy-policy-draft.md est obsolète
+      TODO produit : l'écran de suppression de compte doit prévenir que l'abonnement Google
+      Play n'est PAS annulé (et idéalement supprimer le client RevenueCat)
 - [ ] Conformité : questionnaire IARC à refaire (achats numériques = OUI), formulaire
       Sécurité des données (historique d'achats), CGU (abonnement, renouvellement,
       résiliation, remboursement) et politique de confidentialité (RevenueCat, Google
