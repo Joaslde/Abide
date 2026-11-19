@@ -139,7 +139,9 @@ export default {
     nothingToRestore: 'No se encontró ninguna suscripción activa para esta cuenta.',
     error: 'El pago no se completó. Revisa tu conexión e inténtalo de nuevo.',
     restoreError: 'La restauración falló. Revisa tu conexión e inténtalo de nuevo.',
-    discover: 'Descubrir Abide Plus'
+    discover: 'Descubrir Abide Plus',
+    activeBanner: 'Abide Plus está activo',
+    badgeLabel: 'Suscriptor de Abide Plus, ver mi suscripción'
   },
   sanctuaire: {
     title: 'Santuario',

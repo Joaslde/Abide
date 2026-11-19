@@ -41,6 +41,7 @@ import { rescheduleFromStores, registerNotificationTapHandler, ensureNotificatio
 import { initAdMob } from '@/lib/admob'
 import { initAppsFlyer } from '@/lib/appsflyer'
 import { syncPurchasesUser } from '@/lib/purchases'
+import { App as CapApp } from '@capacitor/app'
 import { useAuthStore } from '@/stores/auth'
 import { shouldAskBatteryExemption, requestIgnoreBatteryOptimizations } from '@/lib/battery-optimization'
 import AudioPlayerSheet from '@/components/bible/AudioPlayerSheet.vue'
@@ -81,6 +82,18 @@ const auth = useAuthStore()
 // C'est cet identifiant qui permet au webhook de créditer le bon profil.
 // No-op sur web ou tant qu'aucune clé RevenueCat n'est configurée.
 watch(() => auth.user?.id ?? null, (id) => { syncPurchasesUser(id) }, { immediate: true })
+
+// Statut premium à jour : une résiliation, un remboursement ou une échéance
+// doivent couper les avantages SANS redémarrer l'app (bug du 2026-11-19).
+// - chaque minute : l'horloge avance, une échéance passée est prise en compte ;
+// - au retour au premier plan : on relit le profil (écrit par le serveur via
+//   le webhook RevenueCat). Hors ligne, la copie locale reste utilisée.
+setInterval(() => auth.touchClock(), 60 * 1000)
+CapApp.addListener('appStateChange', ({ isActive }) => {
+  if (!isActive) return
+  auth.touchClock()
+  if (auth.isAuthenticated) auth.fetchProfile().catch(() => { /* hors ligne */ })
+}).catch(() => { /* web : pas d'événement natif */ })
 
 /**
  * Fermeture de la feuille de partage : on vide AUSSI la sélection de versets.

@@ -12,11 +12,11 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <!-- Abide Plus : seulement pour un compte connecté non premium. -->
-      <section v-if="auth.isAuthenticated && !auth.isPremium" class="block">
-        <button class="plus-banner" @click="go('/premium')">
-          <ion-icon :icon="sparklesOutline" />
-          <span>{{ t('premium.discover') }}</span>
+      <!-- Abide Plus : invitation pour un compte non premium, statut pour un abonné. -->
+      <section v-if="auth.isAuthenticated" class="block">
+        <button class="plus-banner" :class="{ active: auth.isPremium }" @click="go('/premium')">
+          <ion-icon :icon="auth.isPremium ? sparkles : sparklesOutline" />
+          <span>{{ auth.isPremium ? t('premium.activeBanner') : t('premium.discover') }}</span>
           <ion-icon class="chev" :icon="chevronForward" />
         </button>
       </section>
@@ -82,7 +82,7 @@ import {
 import {
   createOutline, bookmarkOutline, colorWandOutline,
   heartOutline, bookOutline, flameOutline, settingsOutline, mapOutline,
-  sparklesOutline, chevronForward
+  sparklesOutline, sparkles, chevronForward
 } from 'ionicons/icons'
 import { useAuthStore } from '@/stores/auth'
 
@@ -153,4 +153,6 @@ ion-title { font-family: var(--font-app); font-weight: 600; }
 .plus-banner span { flex: 1; }
 .plus-banner ion-icon { font-size: 22px; color: var(--gold); flex-shrink: 0; }
 .plus-banner .chev { font-size: 18px; color: var(--muted); }
+/* Abonné : fond or discret, le texte reste --cream (lisible dans les deux thèmes). */
+.plus-banner.active { background: color-mix(in srgb, var(--gold) 14%, var(--card-bg)); }
 </style>

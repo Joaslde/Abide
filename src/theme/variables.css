@@ -33,6 +33,9 @@
   --color-warning: #D4840A;
   --color-streak:  #E85C20;
   --color-premium: var(--gold);
+  /* Texte posé SUR un fond or : sombre et FIXE dans les deux thèmes.
+     (--navy devient ivoire en thème clair : illisible sur l'or.) */
+  --on-gold: #0B1624;
 
   /* === ESPACEMENTS (base 4px) === */
   --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;

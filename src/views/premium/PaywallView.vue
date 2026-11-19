@@ -321,7 +321,9 @@ ion-content {
   font-family: var(--font-app);
   font-size: 13px;
   line-height: 1.5;
-  color: var(--cream-70);
+  /* --muted et non --cream-70 : le thème clair ne redéfinit pas --cream-70,
+     qui restait crème sur fond crème (invisible, signalé le 2026-11-19). */
+  color: var(--muted);
   text-align: center;
   margin: var(--space-5) 0 var(--space-2);
 }

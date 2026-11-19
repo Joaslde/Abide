@@ -140,7 +140,9 @@ export default {
     nothingToRestore: 'Aucun abonnement actif trouvé pour ce compte.',
     error: 'Le paiement n\'a pas abouti. Vérifie ta connexion et réessaie.',
     restoreError: 'La restauration a échoué. Vérifie ta connexion et réessaie.',
-    discover: 'Découvrir Abide Plus'
+    discover: 'Découvrir Abide Plus',
+    activeBanner: 'Abide Plus est actif',
+    badgeLabel: 'Abonné Abide Plus, voir mon abonnement'
   },
   sanctuaire: {
     title: 'Sanctuaire',

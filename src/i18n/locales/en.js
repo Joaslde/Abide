@@ -140,7 +140,9 @@ export default {
     nothingToRestore: 'No active subscription found for this account.',
     error: 'The payment didn\'t go through. Check your connection and try again.',
     restoreError: 'Restoring failed. Check your connection and try again.',
-    discover: 'Discover Abide Plus'
+    discover: 'Discover Abide Plus',
+    activeBanner: 'Abide Plus is active',
+    badgeLabel: 'Abide Plus subscriber, view my subscription'
   },
   sanctuaire: {
     title: 'Sanctuary',

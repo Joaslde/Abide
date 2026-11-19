@@ -262,6 +262,13 @@
       `REVENUECAT_WEBHOOK_AUTH` (accord requis)
 - [ ] ⏳ Appliquer 014 puis déployer payment-webhook, premium-sync, referral-attribute
       (DANS CET ORDRE, referral-attribute dépend de la colonne de 014). Accord requis
+- [x] 2026-11-19 MainActivity launchMode singleTask → singleTop (doc RevenueCat : sinon
+      un achat peut être annulé quand l'app passe en arrière-plan). ⚠️ android/ non versionné.
+      À vérifier : ouverture de l'app depuis une notification
+- [ ] Contraste thème clair : 11 écrans utilisent --cream-70 / --cream-50 / --white (non redéfinis
+      en clair) : auth, onboarding, Réglages, AccountManage, BugReportModal. Vérifier un par un
+- [ ] Badge « Abide Plus » visible pour un abonné : titre du Guide IA, Accueil (près du prénom),
+      onglet Plus (« Abide Plus actif » à la place de la bannière). À valider avec l'utilisateur
 - [ ] Tests : comptes testeurs de licence Play Console (achats sans débit réel),
       cycle complet achat → webhook → premium → pubs coupées → résiliation → expiration,
       remboursement, restauration, parrainage + abonnement

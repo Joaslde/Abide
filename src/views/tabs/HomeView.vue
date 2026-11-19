@@ -3,6 +3,8 @@
     <ion-header class="ion-no-border">
       <ion-toolbar>
         <ion-title>{{ greeting }}</ion-title>
+        <!-- Badge Abide Plus (abonné actif uniquement). -->
+        <ion-buttons slot="end"><plus-badge /></ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -24,7 +26,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue'
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons } from '@ionic/vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useStreakStore } from '@/stores/streak'
@@ -33,6 +35,7 @@ import { usePrayerStore } from '@/stores/prayer'
 import { usePreferencesStore } from '@/stores/preferences'
 import { localDateStr } from '@/stores/streak'
 import VerseOfDayCard from '@/components/home/VerseOfDayCard.vue'
+import PlusBadge from '@/components/PlusBadge.vue'
 import PrayerMomentCard from '@/components/sanctuaire/PrayerMomentCard.vue'
 import StreakWeek from '@/components/home/StreakWeek.vue'
 import DailyPlanCard from '@/components/plan/DailyPlanCard.vue'

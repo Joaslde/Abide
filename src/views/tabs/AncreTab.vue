@@ -59,6 +59,8 @@
             {{ store.activeConversation?.title || t('ai.title') }}
           </ion-title>
           <ion-buttons slot="end">
+            <!-- Badge Abide Plus (abonné actif uniquement). -->
+            <plus-badge />
             <ion-button :aria-label="t('ai.newConversation')" @click="newChat">
               <ion-icon slot="icon-only" :icon="createOutline" />
             </ion-button>
@@ -174,6 +176,7 @@ import { useBibleStore } from '@/stores/bible'
 import { useAdsStore } from '@/stores/ads'
 import { isOnline } from '@/lib/network'
 import ChatBubble from '@/components/ai/ChatBubble.vue'
+import PlusBadge from '@/components/PlusBadge.vue'
 import ModeSelector, { MODES, MODE_ICONS } from '@/components/ai/ModeSelector.vue'
 
 const { t } = useI18n()

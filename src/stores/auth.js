@@ -27,11 +27,19 @@ export const useAuthStore = defineStore('auth', () => {
   // à l'échéance : sans ce test de date, un parrainage ou un abonnement terminé
   // laissait l'app sans pub pour toujours (bug corrigé le 2026-11-15).
   // premium_expires null = premium sans échéance.
+  //
+  // ⚠️ `clock` rend le calcul DÉPENDANT DU TEMPS. Un computed ne se recalcule
+  // que si une donnée réactive change : avec Date.now() seul, un abonnement
+  // arrivé à échéance restait « premium » tant que le profil ne changeait pas
+  // (bug du 2026-11-19, test de résiliation). touchClock() est appelée chaque
+  // minute et au retour au premier plan (App.vue).
+  const clock = ref(Date.now())
+  function touchClock() { clock.value = Date.now() }
   const isPremium = computed(() => {
     const p = profile.value
     if (p?.is_premium !== true) return false
     if (!p.premium_expires) return true
-    return new Date(p.premium_expires).getTime() > Date.now()
+    return new Date(p.premium_expires).getTime() > clock.value
   })
   const onboardingDone = computed(() => profile.value?.onboarding_done ?? false)
   /**
@@ -437,6 +445,7 @@ export const useAuthStore = defineStore('auth', () => {
     initials,
     init,
     fetchProfile,
+    touchClock,
     loadCachedProfile,
     login,
     register,
