@@ -179,7 +179,7 @@ Déclencheurs et fréquence :
 - **Utiliser le prénom de l'utilisateur fréquemment** : salutations, questions de l'onboarding, notifications, messages du guide IA, écrans de félicitation. Le but est une relation chaleureuse et personnelle, jamais administrative.
 - Toujours prévoir un **repli gracieux** si le prénom est absent (invité, nom non renseigné) — ne jamais afficher "Bonjour ," ou "Bonjour {name}".
 - Source unique du prénom : le computed `firstName` du store auth (`src/stores/auth.js`) — ne pas redupliquer l'extraction du premier mot ailleurs.
-- Ton pastoral et bienveillant, tutoiement ("tu"), voir `design-pattern.md` (voix de marque).
+- Ton pastoral et bienveillant, tutoiement ("tu"), voir `docs/copywriting.md` (voix, vocabulaire, typographie, gabarits FR/EN/ES) avant d'écrire ou traduire un texte.
 
 ### Capacitor / Mobile
 
@@ -214,6 +214,11 @@ Déclencheurs et fréquence :
 4. **Tester** → compiler, vérifier iOS + Android, cas d'erreur
 5. **Marquer** → cocher la tâche dans `tasks/todo.md`
 6. **Apprendre** → si correction de bug, mettre à jour `tasks/lessons.md`
+7. **Historiser** → toute fonctionnalité ou correction VISIBLE par l'utilisateur s'ajoute
+   aussitôt dans `CHANGELOG.md`, section « En cours » (Ajouté / Modifié / Corrigé, en
+   langage simple). À chaque envoi sur Play Console : « En cours » devient la nouvelle
+   version (nom, versionCode, date d'import, piste), et le commit reçoit l'étiquette git
+   `vX.Y`. Un nouveau texte ou changement de ton suit `docs/copywriting.md`.
 
 ### Format tasks/todo.md
 
@@ -257,6 +262,8 @@ Exemple :
 | Design et charte graphique | `design-pattern.md` |
 | État des tâches | `tasks/todo.md` |
 | Leçons apprises | `tasks/lessons.md` |
+| Historique des versions | `CHANGELOG.md` |
+| Guide de rédaction (ton, vocabulaire) | `docs/copywriting.md` |
 | Client Supabase | `src/lib/supabase.js` |
 | Client OpenRouter | `src/lib/openrouter.js` |
 | Interface Bible SQLite | `src/lib/bible-db.js` |
