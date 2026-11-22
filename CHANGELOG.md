@@ -16,9 +16,13 @@ réinstaller une ancienne version pour comparer.
 
 ---
 
-## En cours (prochaine version : 1.6, versionCode 8)
+## En cours
 
-Branche `feat/capacitor-8-paiement`, non publiée.
+Rien pour l'instant.
+
+---
+
+## 1.6 (versionCode 8), importée le 22 novembre 2026, test interne puis production
 
 ### Ajouté
 - Abide Plus : abonnement mensuel via Google Play (RevenueCat), écran de présentation,
