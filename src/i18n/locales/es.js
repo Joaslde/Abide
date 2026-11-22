@@ -859,6 +859,7 @@ export default {
     deleteItem2: 'Tu progreso de lectura, tus rachas y tus planes',
     deleteItem3: 'Tus oraciones, notas, resaltados y marcadores',
     deleteItem4: 'Todo tu historial con el guía IA',
+    deleteSubWarning: 'Eliminar tu cuenta no cancela tu suscripción a Abide Plus. Si está activa, cancélala primero en Google Play; si no, se seguirá cobrando.',
     deleteConfirmHint: 'Para confirmar, escribe {word} abajo.',
     deleteConfirmWord: 'ELIMINAR',
     deletePlaceholder: 'Escribe {word}',

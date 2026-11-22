@@ -865,6 +865,7 @@ export default {
     deleteItem2: 'Your reading progress, streaks and plans',
     deleteItem3: 'Your prayers, notes, highlights and bookmarks',
     deleteItem4: 'Your entire history with the AI guide',
+    deleteSubWarning: 'Deleting your account does not cancel your Abide Plus subscription. If it is active, cancel it in Google Play first, or you will keep being charged.',
     deleteConfirmHint: 'To confirm, type {word} below.',
     deleteConfirmWord: 'DELETE',
     deletePlaceholder: 'Type {word}',

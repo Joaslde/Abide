@@ -26,6 +26,8 @@ Branche `feat/capacitor-8-paiement`, non publiée.
   jour, quiz sans limite. La Bible, son audio et la prière restent gratuits.
 - Badge doré « Abide Plus » pour les abonnés, sur l'Accueil et dans le Guide ; l'onglet
   Plus affiche « Abide Plus est actif ». Un appui ouvre l'écran de l'abonnement.
+- Écran « Supprimer mon compte » : rappel que la suppression n'annule pas l'abonnement
+  Google Play, avec un bouton « Gérer mon abonnement ».
 
 ### Modifié
 - Passage de Capacitor 6 à Capacitor 8 (prérequis de Google Play Billing).

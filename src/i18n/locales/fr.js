@@ -872,6 +872,7 @@ export default {
     deleteItem2: 'Ta progression de lecture, tes séries et tes plans',
     deleteItem3: 'Tes prières, notes, surlignages et signets',
     deleteItem4: 'Tout ton historique avec le guide IA',
+    deleteSubWarning: "Supprimer ton compte n'annule pas ton abonnement Abide Plus. S'il est actif, résilie-le d'abord dans Google Play, sinon il continuera d'être facturé.",
     deleteConfirmHint: 'Pour confirmer, écris {word} ci-dessous.',
     deleteConfirmWord: 'SUPPRIMER',
     deletePlaceholder: 'Écris {word}',

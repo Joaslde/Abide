@@ -30,6 +30,16 @@
             <li>{{ t('settings.deleteItem4') }}</li>
           </ul>
 
+          <!-- L'abonnement est géré par Google Play : supprimer le compte ne
+               l'annule pas. On le dit avant la suppression, avec un accès
+               direct à la résiliation. -->
+          <div class="sub-notice">
+            <p>{{ t('settings.deleteSubWarning') }}</p>
+            <button class="sub-manage-btn" type="button" :disabled="loading" @click="sub.manage()">
+              {{ t('premium.manage') }}
+            </button>
+          </div>
+
           <p class="confirm-hint">{{ t('settings.deleteConfirmHint', { word: confirmWord }) }}</p>
           <input
             v-model="typed"
@@ -69,10 +79,12 @@ import {
 } from '@ionic/vue'
 import { trashOutline } from 'ionicons/icons'
 import { useAuthStore } from '@/stores/auth'
+import { useSubscriptionStore } from '@/stores/subscription'
 
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
+const sub = useSubscriptionStore()
 
 const confirming = ref(false)
 const typed = ref('')
@@ -166,8 +178,32 @@ ion-title { font-family: var(--font-app); font-weight: 600; }
 .delete-list li {
   font-family: var(--font-app);
   font-size: 13px;
-  color: var(--cream-70);
+  color: var(--muted);
   margin-bottom: 4px;
+}
+
+.sub-notice {
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+.sub-notice p {
+  font-family: var(--font-app);
+  font-size: 13px;
+  color: var(--cream);
+  margin: 0 0 var(--space-2);
+}
+.sub-manage-btn {
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--gold);
+  font-family: var(--font-app);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .confirm-hint {
